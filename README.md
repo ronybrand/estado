@@ -46,4 +46,5 @@ Importar coleção de testes (contido no item 1.2.1 - <dir_projeto>/src/test/pos
 ![Importar o projeto no postman](https://github.com/ronybrand/numero_por_extenso/blob/feature/numero_por_extenso/importar_projeto_postman.png)
 
 Após importar, aparecerão os seguintes testes, favor rodá-los na ordem da imagem:
+
 ![Executar testes](https://github.com/ronybrand/estado/blob/feature/estado/sequencia%20de%20execu%C3%A7%C3%A3o%20de%20teste%20no%20postman.png)
