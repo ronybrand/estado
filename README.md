@@ -30,12 +30,12 @@ mvn package
 1.2.3 - Rodar
 - Para rodar usando a porta padrão do projeto (8090), execue o comando abaixo:
 ```
-java -jar target\numero-por_extenso-0.0.1-SNAPSHOT.jar
+java -jar target\estado-0.0.1-SNAPSHOT.jar
 ```
 
 - Caso já tenha outro serviço rodando nesta porta (como meu caso). Informe a porta na tag abaixo ex: 8090
 ```
-java -jar -Dserver.port=<porta> target\numero-por_extenso-0.0.1-SNAPSHOT.jar
+java -jar -Dserver.port=<porta> target\estado-0.0.1-SNAPSHOT.jar
 ```
 1.2.4 - Abra um navegador e obtenha os números por extenso através da URL demonstrada abaixo. 
 - Infome a porta escolhida no passo anterior.
