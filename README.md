@@ -39,7 +39,7 @@ java -jar -Dserver.port=<porta> target\estado-0.0.1-SNAPSHOT.jar
 ```
 
 # 2 - Postman
-Para obter número por extenso pelo postman:
+Para usar o projeto Estado pelo postman siga os seguintes passos:
 - [Postman](https://www.postman.com/downloads/)
 
 Importar coleção de testes (contido no item 1.2.1 - <dir_projeto>/src/test/postman):
