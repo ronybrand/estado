@@ -1,5 +1,5 @@
 # Estado
-Projeto para criar cadastro de unidades federativas do Brasil (estados).
+Projeto CRUD de unidades federativas do Brasil (estados).
 
 O Projeto Estado trata-se de um sistema sob arquitetura Java/Spring Boot configuração de depndência em Maven para disponibilização de um serviço HTTP. 
 
