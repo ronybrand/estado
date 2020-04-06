@@ -35,4 +35,8 @@ public class EstadoService {
     public List<Estado> listar() {
     	return repository.listar();
     }
+    
+    public Estado getDomainById(long idDomain) {
+    	return repository.getDomainById(idDomain);
+    }
 }

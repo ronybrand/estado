@@ -36,11 +36,9 @@ public class EstadoResource {
 	      return service.listar();
 	}
 	
-	@GetMapping
-	public @ResponseBody ResponseEntity < String > get(@Valid @RequestBody Estado estado) { 
-    	service.salvar(estado);
-    	
-    	return ResponseEntity.status(HttpStatus.CREATED).build();
+	@GetMapping("/{id}")
+	public Estado get(@Valid @PathVariable("id") Long idDomain) { 
+		return service.getDomainById(idDomain);
     }
 	
 	@PostMapping
@@ -53,8 +51,8 @@ public class EstadoResource {
 	@PutMapping
 	public @ResponseBody ResponseEntity < String > atualizar(@Valid @RequestBody Estado estado) { 
     	service.atualizar(estado);
-    	
-    	return new ResponseEntity<String>("Response from PUT method", HttpStatus.OK);
+
+    	return ResponseEntity.status(HttpStatus.OK).build();
     }
 
 	@DeleteMapping("/{id}")

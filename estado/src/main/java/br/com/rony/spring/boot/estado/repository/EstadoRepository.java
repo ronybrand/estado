@@ -41,4 +41,8 @@ public class EstadoRepository {
         return em.createQuery("select e from Estado e", Estado.class)
                 .getResultList();
     }
+
+    public Estado getDomainById(long idDomain) {
+    	return em.find(Estado.class, idDomain);
+    }
 }

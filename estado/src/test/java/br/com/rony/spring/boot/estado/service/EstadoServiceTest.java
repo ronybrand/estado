@@ -66,7 +66,6 @@ public class EstadoServiceTest {
 		assertNotNull(retorno);
 	}
 	
-
 	@Test
 	public void excluir() {
 		Long idDomain = new Long(1);
@@ -77,4 +76,13 @@ public class EstadoServiceTest {
 		assertNotNull(domain);
 	}
 
+	@Test
+	public void getDomainById() {
+		Long idDomain = new Long(1);
+		Estado domain = this.getDomain(idDomain, "Santa Catarina", "SC");
+		domain.setId(null);
+		when(repository.getDomainById(idDomain)).thenReturn(domain);
+		Estado retorno = service.getDomainById(idDomain);
+		assertEquals(domain, retorno);
+	}
 }
