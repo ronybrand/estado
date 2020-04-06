@@ -61,6 +61,7 @@ public class EstadoServiceTest {
 	@Test
 	public void atualizar() {
 		Estado domain = this.getDomain(new Long(1), "Santa Catarina", "SC");
+		when(repository.getDomainById(domain.getId())).thenReturn(domain);
 		when(repository.atualizar(domain)).thenReturn(domain);
 		Estado retorno = service.atualizar(domain);;
 		assertNotNull(retorno);

@@ -1,5 +1,7 @@
 package br.com.rony.spring.boot.estado.domain;
 
+import java.util.Date;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -16,6 +18,7 @@ public class Estado {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", updatable = false, nullable = false)
     private Long id;
 
     @NotNull
@@ -27,6 +30,12 @@ public class Estado {
     @Size(min = 2, max = 2)
     @Column(nullable = false, length = 2)
     private String sigla;
+    
+	@Column(name = "ts_data_hora_cadastro", nullable = false)
+	private Date dataHoraCadastro;
+	
+	@Column(name = "ts_data_hora_ultima_atualizacao", nullable = true)
+	private Date dataHoraUltimaAtualizacao;
 
 	public Estado() {
 	}
@@ -60,4 +69,19 @@ public class Estado {
 		this.sigla = sigla;
 	}
 
+	public Date getDataHoraCadastro() {
+		return dataHoraCadastro;
+	}
+
+	public void setDataHoraCadastro(Date dataHoraCadastro) {
+		this.dataHoraCadastro = dataHoraCadastro;
+	}
+
+	public Date getDataHoraUltimaAtualizacao() {
+		return dataHoraUltimaAtualizacao;
+	}
+
+	public void setDataHoraUltimaAtualizacao(Date dataHoraUltimaAtualizacao) {
+		this.dataHoraUltimaAtualizacao = dataHoraUltimaAtualizacao;
+	}
 }

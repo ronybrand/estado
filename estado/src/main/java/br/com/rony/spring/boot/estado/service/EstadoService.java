@@ -1,5 +1,6 @@
 package br.com.rony.spring.boot.estado.service;
 
+import java.util.Date;
 import java.util.List;
 
 import javax.transaction.Transactional;
@@ -19,12 +20,17 @@ public class EstadoService {
 
     
     public Estado salvar(Estado domain) {
+    	domain.setDataHoraCadastro(new Date());
         return repository.salvar(domain);
     }
 
     
     public Estado atualizar(Estado domain) {
-    	return repository.atualizar(domain);
+    	Estado domainBD = this.getDomainById(domain.getId());
+    	domainBD.setNome(domain.getNome());
+    	domainBD.setSigla(domain.getSigla());
+    	domainBD.setDataHoraUltimaAtualizacao(new Date());
+    	return repository.atualizar(domainBD);
     }
 
     
