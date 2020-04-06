@@ -11,6 +11,9 @@ O Projeto Estado trata-se de um sistema sob arquitetura Java/Spring Boot configu
 - Excluir uma unidade da federação passando seu Id.
 
 # 1 - Compilar com Maven e executar local com java -jar
+
+Observação: os passos abaixo foram montandos para windows.
+
 ## 1.1 Pre-requisistos
 Para construir e rodaar a aplicação você precisa de:
 - [JDK 1.8](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html)
