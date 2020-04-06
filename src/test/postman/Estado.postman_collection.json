@@ -1,0 +1,222 @@
+{
+	"info": {
+		"_postman_id": "00d663cc-4e5a-4bd1-a7e5-3fd420f3561c",
+		"name": "Estado",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Crud",
+			"item": [
+				{
+					"name": "Insert SC",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json; charset=UTF-8"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"nome\": \t\"Santa Catarina\",\r\n    \"sigla\":    \"SC\"\r\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8090/estado/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8090",
+							"path": [
+								"estado",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetDomainById",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8090/estado/1",
+							"host": [
+								"localhost"
+							],
+							"port": "8090",
+							"path": [
+								"estado",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Insert SP",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json; charset=UTF-8"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"nome\": \t\"São Paulo\",\r\n    \"sigla\":    \"SP\"\r\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8090/estado/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8090",
+							"path": [
+								"estado",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetALL",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "6dfcfcb9-0981-4204-bc4f-d5c2d812da9e",
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8090/estado/",
+							"host": [
+								"localhost"
+							],
+							"port": "8090",
+							"path": [
+								"estado",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"id\": 1,\n    \"nome\": \t\"Santa catarina\",\n    \"sigla\":    \"Sc\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8090/estado/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8090",
+							"path": [
+								"estado",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:8090/estado/2",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8090",
+							"path": [
+								"estado",
+								"2"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		}
+	],
+	"protocolProfileBehavior": {}
+}
