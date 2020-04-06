@@ -1,7 +1,7 @@
 # Estado
 Projeto CRUD de unidades federativas do Brasil (estados).
 
-O Projeto Estado trata-se de um sistema sob arquitetura Java/Spring Boot, configuração de dependência em Maven e banco de dados H2 persistido sistema operacional Windows para disponibilização de um serviço HTTP. 
+O Projeto Estado trata-se de um sistema sob arquitetura Java/Spring Boot, configuração de dependência em Maven e banco de dados H2 persistido no disco em sistema operacional Windows para disponibilização de um serviço HTTP. 
 
 ## Funcionalidades:
 - Cadastrar uma unidade federativa por vez com data e hora do registro;
