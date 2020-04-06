@@ -3,6 +3,13 @@ Projeto para criar cadastro de unidades federativas do Brasil (estados).
 
 O Projeto Estado trata-se de um sistema sob arquitetura Java/Spring Boot configuração de depndência em Maven para disponibilização de um serviço HTTP. 
 
+##Funcionalidades:
+- Cadastrar uma unidade federativa por vez com data e hora do registro;
+- Apresentar a lista das unidades federativas;
+- Permitir alterar o nome completo e sigla das unidades federativas com data e hora atualizadas;
+- Consultar a unidade da federação pelo seu Id;
+- Excluir uma unidade da federação passando seu Id.
+
 # 1 - Compilar com Maven e executar local com java -jar
 ## 1.1 Pre-requisistos
 Para construir e rodaar a aplicação você precisa de:
