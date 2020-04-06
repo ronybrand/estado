@@ -18,6 +18,7 @@ Para construir e rodaar a aplicação você precisa de:
 
 ## 1.2 Passo a passo
 1.2.1 - [Baixar o projeto](https://github.com/ronybrand/estado/archive/feature/estado.zip)
+
 1.2.2 - Descompacte o zip, entre no diretório descompactado e execute na linha de comando:
 ```
 mvn package
