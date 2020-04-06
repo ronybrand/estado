@@ -33,15 +33,9 @@ mvn package
 java -jar target\estado-0.0.1-SNAPSHOT.jar
 ```
 
-- Caso já tenha outro serviço rodando nesta porta (como meu caso). Informe a porta na tag abaixo ex: 8090
+- Caso já tenha outro serviço rodando nesta porta (como meu caso). Informe a porta na tag abaixo ex: 8091
 ```
 java -jar -Dserver.port=<porta> target\estado-0.0.1-SNAPSHOT.jar
-```
-1.2.4 - Abra um navegador e obtenha os números por extenso através da URL demonstrada abaixo. 
-- Infome a porta escolhida no passo anterior.
-- Informe o número que deseja por extenso. Lembre-se da faixa na descrição do projeto.
-```
-http://localhost:<porta>/<numero>
 ```
 
 # 2 - Postman
