@@ -15,7 +15,7 @@ O Projeto Estado trata-se de um sistema sob arquitetura Java/Spring Boot configu
 Observação: os passos abaixo foram montandos para windows.
 
 ## 1.1 Pre-requisistos
-Para construir e rodaar a aplicação você precisa de:
+Para construir e rodar a aplicação você precisa de:
 - [JDK 1.8](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html)
 - [Maven 3.6.3](https://maven.apache.org)
 
