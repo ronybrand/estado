@@ -33,7 +33,7 @@ mvn package
 java -jar target\estado-0.0.1-SNAPSHOT.jar
 ```
 
-- Caso já tenha outro serviço rodando nesta porta (como meu caso). Informe a porta na tag abaixo ex: 8091
+- Caso já tenha outro serviço rodando nesta porta. Informe a porta na tag abaixo ex: 8091
 ```
 java -jar -Dserver.port=<porta> target\estado-0.0.1-SNAPSHOT.jar
 ```
