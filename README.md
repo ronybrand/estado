@@ -1,7 +1,7 @@
 # Estado
 Projeto CRUD de unidades federativas do Brasil (estados).
 
-O Projeto Estado trata-se de um sistema sob arquitetura Java/Spring Boot, configuração de dependência em Maven e banco de dados PostgreSQL para disponibilização de um serviço HTTP. 
+O Projeto Estado trata-se de um sistema sob arquitetura Java/Spring Boot, configuração de dependência em Maven e banco de dados H2 persistido em unidade de disco do Windows para disponibilização de um serviço HTTP. 
 
 ## Funcionalidades:
 - Cadastrar uma unidade federativa por vez com data e hora do registro;
@@ -12,7 +12,7 @@ O Projeto Estado trata-se de um sistema sob arquitetura Java/Spring Boot, config
 
 # 1 - Compilar com Maven e executar local com java -jar
 
-Observação: os passos abaixo foram montandos para windows.
+Observação: os passos abaixo foram montandos para Windows.
 
 ## 1.1 Pre-requisistos
 Para construir e rodar a aplicação você precisa de:
@@ -33,7 +33,7 @@ mvn package
 java -jar target\estado-0.0.1-SNAPSHOT.jar
 ```
 
-- Caso já tenha outro serviço rodando nesta porta (como meu caso). Informe a porta na tag abaixo ex: 8091
+- Caso já tenha outro serviço rodando nesta porta. Informe a porta na tag abaixo ex: 8091
 ```
 java -jar -Dserver.port=<porta> target\estado-0.0.1-SNAPSHOT.jar
 ```
