@@ -8,27 +8,30 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 
 @Entity
-@Table(name = "estado")
+@Table(name = "estado", uniqueConstraints = {
+        @UniqueConstraint(columnNames = "nome", name = "uniqueNomeConstraint"), 
+        @UniqueConstraint(columnNames = "sigla", name = "uniqueSiglaConstraint")})
 public class Estado {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", updatable = false, nullable = false)
     private Long id;
-
+    
     @NotNull
-    @Size(min = 2, max = 100)
-    @Column(nullable = false, length = 100)
+    @Size(min = 3, max = 100)
+    @Column(nullable = false, length = 100, unique = true)
     private String nome;
 
     @NotNull
     @Size(min = 2, max = 2)
-    @Column(nullable = false, length = 2)
+    @Column(nullable = false, length = 2, unique = true)
     private String sigla;
     
 	@Column(name = "ts_data_hora_cadastro", nullable = false)
