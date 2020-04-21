@@ -25,7 +25,7 @@ import br.com.rony.spring.boot.estado.service.EstadoService;
 
 @RestController
 @Validated
-@RequestMapping( value = "/estado")
+@RequestMapping( value = "/")
 public class EstadoResource {
 	@Autowired
 	private EstadoService service;
