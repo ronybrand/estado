@@ -9,6 +9,7 @@ O Projeto Estado trata-se de um sistema sob arquitetura Java/Spring Boot, config
 - Permitir alterar o nome completo e sigla das unidades federativas com data e hora atualizadas;
 - Consultar a unidade da federação pelo seu Id;
 - Excluir uma unidade da federação passando seu Id.
+Observações: Não é permitido inserir/alterar um nome de estado que já exista ou mesmo para sigla.
 
 # 1 - Compilar com Maven e executar local com java -jar
 
@@ -20,7 +21,7 @@ Para construir e rodar a aplicação você precisa de:
 - [Maven 3.6.3](https://maven.apache.org)
 
 ## 1.2 Passo a passo
-1.2.1 - [Baixar o projeto](https://github.com/ronybrand/estado/archive/feature/estado.zip)
+1.2.1 - [Baixar o projeto](https://github.com/ronybrand/estado/archive/master.zip)
 
 1.2.2 - Descompacte o zip, entre no diretório descompactado
 
