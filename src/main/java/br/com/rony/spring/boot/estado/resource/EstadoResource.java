@@ -27,7 +27,6 @@ import br.com.rony.spring.boot.estado.service.EstadoService;
 @RestController
 @Validated
 @RequestMapping( value = "/estado")
-@CrossOrigin(exposedHeaders="Access-Control-Allow-Origin")
 public class EstadoResource {
 	@Autowired
 	private EstadoService service;
