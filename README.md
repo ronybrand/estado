@@ -22,20 +22,12 @@ Para construir e rodar a aplicação você precisa de:
 ## 1.2 Passo a passo
 1.2.1 - [Baixar o projeto](https://github.com/ronybrand/estado/archive/feature/estado.zip)
 
-1.2.2 - Descompacte o zip, entre no diretório descompactado e execute na linha de comando:
-```
-mvn package
-```
+1.2.2 - Descompacte o zip, entre no diretório descompactado
 
 1.2.3 - Rodar
-- Para rodar usando a porta padrão do projeto (8090), execue o comando abaixo:
+- Para rodar usando a porta padrão do projeto (8080), execue o comando abaixo:
 ```
-java -jar target\estado-0.0.1-SNAPSHOT.jar
-```
-
-- Caso já tenha outro serviço rodando nesta porta. Informe a porta na tag abaixo ex: 8091
-```
-java -jar -Dserver.port=<porta> target\estado-0.0.1-SNAPSHOT.jar
+mvn spring-boot:run
 ```
 
 # 2 - Postman
@@ -48,3 +40,9 @@ Importar coleção de testes (contido no item 1.2.1 - <dir_projeto>/src/test/pos
 Após importar, aparecerão os seguintes testes, favor rodá-los na ordem da imagem:
 
 ![Executar testes](https://github.com/ronybrand/estado/blob/feature/estado/sequencia%20de%20execu%C3%A7%C3%A3o%20de%20teste%20no%20postman.png)
+
+# 3 - Navegador - Local
+http://localhost:8080/
+
+# 4 - Heroku
+https://rony-estado.herokuapp.com/
