@@ -22,4 +22,4 @@ logging:
   level:
     org.springframework: info
 server:
-  port: 8090 #set your port
+  port: 4200 #set your port
