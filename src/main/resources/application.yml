@@ -1,9 +1,9 @@
 spring:
   datasource:  
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://ec2-52-201-55-4.compute-1.amazonaws.com:5432/detnvmplgcehc?currentSchema=public
-    username: puqpctdwianqmp
-    password: 200a236de1f957a861f8e99663d71df88647bd13db4ac3c1d3f2ad34fa2df56e
+    url: jdbc:postgresql://ec2-34-200-72-77.compute-1.amazonaws.com:5432/d4o4q51jropirt?currentSchema=public
+    username: dgpkvoifqlmoae
+    password: d182bd7cd9b1dd47cdca65d79dfad003e1dad088ad100f46abe6f44cc4e871db
   # JPA properties
   jpa:
     hibernate:
