@@ -24,11 +24,13 @@ import org.springframework.web.bind.annotation.RestController;
 import br.com.rony.spring.boot.estado.domain.Estado;
 import br.com.rony.spring.boot.estado.service.EstadoService;
 
+//@CrossOrigin(origins = "*", maxAge = 3600)
+@CrossOrigin("https://rony-estado.herokuapp.com/")
 @RestController
 @Validated
 @RequestMapping( value = "/estado")
 //@CrossOrigin(exposedHeaders="Access-Control-Allow-Origin")
-@CrossOrigin(origins = "*", maxAge = 3600)
+//@CrossOrigin
 public class EstadoResource {
 	@Autowired
 	private EstadoService service;
