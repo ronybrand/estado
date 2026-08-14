@@ -9,6 +9,8 @@ spring:
       ddl-auto: update
     show-sql: true
     open-in-view: false
+api:
+  origin-permitida: ${API_ORIGIN_PERMITIDA:http://localhost:8000}
 logging:
   pattern:
     console: "%d %-5level %logger : %msg%n"
