@@ -33,5 +33,5 @@ logging:
     console: "%d %-5level %logger : %msg%n"
   level:
     org.springframework: info
-server:
-  port: 8080 #set your port
+#server:
+#  port: 8080 #set your port
