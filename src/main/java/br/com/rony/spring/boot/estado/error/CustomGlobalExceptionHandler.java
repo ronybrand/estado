@@ -2,8 +2,8 @@ package br.com.rony.spring.boot.estado.error;
 
 import java.io.IOException;
 
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.ConstraintViolationException;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.ConstraintViolationException;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
