@@ -1,4 +1,4 @@
-package br.com.rony.spring.boot.estado.resource;
+package br.com.rony.spring.boot.estado.controller;
 
 import java.util.List;
 
@@ -31,7 +31,7 @@ import br.com.rony.spring.boot.estado.service.EstadoService;
 @RequestMapping( value = "/estado")
 //@CrossOrigin(exposedHeaders="Access-Control-Allow-Origin")
 //@CrossOrigin
-public class EstadoResource {
+public class EstadoController {
 	@Autowired
 	private EstadoService service;
 
