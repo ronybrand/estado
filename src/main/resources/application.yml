@@ -1,37 +1,18 @@
 spring:
-  datasource:  
+  datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://ec2-34-200-72-77.compute-1.amazonaws.com:5432/d4o4q51jropirt?currentSchema=public
-    username: dgpkvoifqlmoae
-    password: d182bd7cd9b1dd47cdca65d79dfad003e1dad088ad100f46abe6f44cc4e871db
-  # JPA properties
+    url: ${JDBC_DATABASE_URL}
+    username: ${JDBC_DATABASE_USERNAME}
+    password: ${JDBC_DATABASE_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
-    database: postgresql
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
     open-in-view: false
-    #driver-class-name: org.h2.Driver
-    #url: jdbc:h2:file:~/estado_db_rony
-    #username: sa
-   # password: 
-  #h2:
-   #console:
-   #   enabled: true
-   #   path: /h2
-  # JPA properties
-  #jpa:
-   # hibernate:
-    #  ddl-auto: update # When you launch the application for the first time - switch "none" at "create"
-    #show-sql: true
-    #database-platform: org.hibernate.dialect.H2Dialect
-    #open-in-view: false
-    #generate-ddl: true
 logging:
   pattern:
     console: "%d %-5level %logger : %msg%n"
   level:
     org.springframework: info
-#server:
-#  port: 8080 #set your port
+server:
+  port: 8080 #set your port
