@@ -25,10 +25,8 @@ lado da aplicação — sem usar RDS (banco gerenciado da AWS).
 ## Consequências
 - Positivo: crédito estica por mais tempo; uma instância só, mais simples de
   gerenciar; espaço pra hospedar mais apps de portfólio na mesma verba.
-- Negativo real, sem mitigação ainda: **não há backup do banco**. Se o volume
-  EBS corromper ou a instância for terminada sem querer, os dados somem. Esse é
-  o item de maior risco/menor custo de correção que ficou pendente — ver
-  discussão de priorização de confiabilidade na case study.
+- ~~Negativo real, sem mitigação ainda: **não há backup do banco**~~ — fechado,
+  ver [ADR 0006](0006-backup-pg-dump-s3.md).
 - Negativo aceito conscientemente: instância única, zona de disponibilidade
   única, sem failover automático de infraestrutura. Um load balancer + segunda
   instância + Multi-AZ resolveria isso, mas custaria mais por mês do que a

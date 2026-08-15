@@ -104,18 +104,22 @@ o que foi descartado, e por quê.
 | [0003](docs/adr/0003-sslip-io-vs-dominio-proprio.md) | sslip.io + Caddy pra HTTPS | Domínio próprio via Route 53 |
 | [0004](docs/adr/0004-deploy-pull-via-systemd-timer.md) | Timer systemd puxando do GHCR | GitHub Actions empurrando via SSH |
 | [0005](docs/adr/0005-rolling-swap-sem-canario-blue-green.md) | Rolling swap com health check | Canário, blue-green |
+| [0006](docs/adr/0006-backup-pg-dump-s3.md) | pg_dump diário para S3, write-only | WAL archiving contínuo, RDS |
 
 ## Postura de confiabilidade: o que está coberto, o que é risco em aberto
 
-O rolling swap fecha o único modo de falha totalmente sob controle deste projeto. Não faz nada
-pelos que não estão — nomeados aqui em vez de deixados pra um revisor achar primeiro.
+O rolling swap fecha o único modo de falha totalmente sob controle deste projeto. O backup fecha o
+de maior risco entre os que não estavam. O que ainda falta é nomeado aqui em vez de deixado pra um
+revisor achar primeiro.
 
 - ✅ **Deploys ruins**: com health check antes de qualquer tráfego chegar na versão nova; falha no
   check mantém a anterior rodando.
 - ✅ **Downtime de deploy**: rolling swap, validado com polling contínuo durante um redeploy real —
   zero respostas fora de 200.
-- ⚠️ **Backup do banco**: nenhum ainda. Maior lacuna de valor nesta lista — mais barata de fechar, e
-  a única onde o modo de falha é perda de dado, não downtime.
+- ✅ **Perda de dado por corrupção/exclusão acidental**: `pg_dump` diário pra um bucket S3 write-only
+  (a instância não consegue ler nem apagar backups já enviados, mesmo comprometida) — validado
+  baixando um backup e confirmando que é um dump SQL íntegro. Restore de ponta a ponta ainda não
+  testado — ver [ADR 0006](docs/adr/0006-backup-pg-dump-s3.md).
 - ⚠️ **Falha de instância/zona de disponibilidade**: `t3.small` único, zona de disponibilidade
   única, sem load balancer. Um setup multi-AZ custaria mais por mês do que a instância inteira
   custa hoje — não se justifica nessa escala, deixado de fora por escolha, não por descuido.
