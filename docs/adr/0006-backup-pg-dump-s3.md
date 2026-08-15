@@ -26,10 +26,20 @@ IAM role restrita a `s3:PutObject` nesse bucket específico — sem permissão d
   poderia verificar ou limpar backups antigos). Descartado deliberadamente — só `PutObject` significa
   que, mesmo com a instância inteira comprometida, um invasor não consegue ler backups existentes
   nem apagá-los pra cobrir rastro.
-- **Tiering pra S3 Glacier**: mais barato por GB armazenado. Descartado porque os dumps atuais têm
-  menos de 1KB — pra arquivos desse tamanho, o mínimo cobrável por objeto e a latência/custo de
-  retrieval do Glacier tendem a custar mais do que só deixar em S3 Standard, além de adicionar
-  complexidade (job de restore assíncrono) sem ganho real nessa escala.
+- **Tiering pra S3 Glacier**: mais barato por GB armazenado. Descartado por três critérios, todos
+  apontando na mesma direção aqui:
+  - **Tamanho do objeto vs. mínimo cobrável**: Glacier IR/Flexible cobra por objeto como se tivesse
+    no mínimo 128KB, não importa o tamanho real. Com Glacier IR em ~US$0,004/GB contra ~US$0,04/GB
+    do Standard em `sa-east-1`, o ponto de equilíbrio fica perto de 22KB por objeto — abaixo disso,
+    Glacier sai mais caro que Standard, não mais barato. Os dumps atuais têm menos de 1KB.
+  - **Volume agregado**: mesmo ignorando o mínimo por objeto, a diferença de custo total (30
+    backups de ~1KB) é uma fração de centavo por mês — não paga a complexidade extra.
+  - **Padrão de acesso**: Glacier Flexible/Deep Archive leva de minutos a horas pra devolver o
+    dado — aceitável pra arquivo de compliance que nunca se espera tocar, não pra única cópia de
+    recuperação, onde velocidade de restore importa mais justamente num incidente real.
+  - A conta viraria com banco na casa de dezenas/centenas de MB por dump, retenção longa por
+    exigência real, e uma estratégia em camadas (recentes em Standard, antigos em Glacier só pra
+    cumprir retenção) — nenhuma dessas condições existe nesta aplicação hoje.
 
 ## Consequências
 - Positivo: lacuna de maior risco da lista de confiabilidade fechada; custo mensal do bucket é
