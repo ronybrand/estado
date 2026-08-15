@@ -1,0 +1,25 @@
+# Roda em ~/estado/ na instância. Só cuida do Postgres — o container da app
+# (estado-app) é gerenciado inteiramente por deploy.sh, não pelo Compose,
+# pra evitar os dois mecanismos disputando o mesmo container (ver ADR 0005).
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - internal
+
+networks:
+  # externa: deploy.sh precisa anexar o container da app na mesma rede via
+  # "docker run --network internal", fora do ciclo de vida do Compose.
+  # Criar uma vez com: docker network create internal
+  internal:
+    external: true
+
+volumes:
+  postgres-data:

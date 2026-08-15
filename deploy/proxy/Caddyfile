@@ -1,0 +1,19 @@
+54.94.231.248.sslip.io {
+	# Front Angular chama a API com prefixo /api (environment.prod.ts), esperando
+	# que o proxy remova o prefixo antes do backend — mesmo comportamento do
+	# proxy.config.js em desenvolvimento local. Sem isso: 404 em todo o front
+	# (ver Bug 1 no plano de deploy / case study).
+	handle_path /api/* {
+		reverse_proxy estado-app:8080
+	}
+
+	# /estado direto continua funcionando também (compatibilidade).
+	handle {
+		reverse_proxy estado-app:8080
+	}
+}
+
+# Exemplo pra adicionar o proximo app do portfolio (ver deploy/README.md):
+# <app>.54.94.231.248.sslip.io {
+# 	reverse_proxy <app>-app:8080
+# }

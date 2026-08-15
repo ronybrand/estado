@@ -1,0 +1,9 @@
+[Unit]
+Description=Rolling swap da imagem mais recente do app estado
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/ec2-user/estado
+ExecStart=/home/ec2-user/estado/deploy.sh

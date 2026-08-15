@@ -1,0 +1,9 @@
+[Unit]
+Description=Backup diario do Postgres do app estado para S3
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/ec2-user/estado
+ExecStart=/home/ec2-user/estado/backup.sh

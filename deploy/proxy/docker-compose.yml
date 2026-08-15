@@ -1,0 +1,26 @@
+# Roda em ~/proxy/ na instância. Desacoplado do ciclo de vida de ~/estado/ —
+# mexe só quando for adicionar/remover um app do portfólio (ver Fase 7 do
+# plano de deploy).
+services:
+  caddy:
+    image: caddy:2
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - portfolio
+
+networks:
+  # criar uma vez com: docker network create portfolio
+  portfolio:
+    external: true
+
+volumes:
+  caddy-data:
+  caddy-config:
