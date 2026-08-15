@@ -4,7 +4,6 @@
 services:
   caddy:
     image: caddy:2
-    container_name: caddy
     restart: unless-stopped
     ports:
       - "80:80"

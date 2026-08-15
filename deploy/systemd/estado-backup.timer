@@ -2,10 +2,9 @@
 Description=Roda estado-backup.service diariamente as 06:00 UTC
 
 [Timer]
-OnCalendar=*-*-* 06:00:00 UTC
-RandomizedDelaySec=10min
+OnCalendar=*-*-* 06:00:00
 Persistent=true
-Unit=estado-backup.service
+RandomizedDelaySec=600
 
 [Install]
 WantedBy=timers.target

@@ -8,7 +8,9 @@
 #   ./rollback.sh <sha>    # usa uma tag/sha especifica ja publicada no GHCR
 set -euo pipefail
 cd "$(dirname "$0")"
+set -a
 source .env
+set +a
 source ./lib-swap.sh
 
 CURRENT="estado-app"
@@ -26,7 +28,7 @@ fi
 
 IMAGE="ghcr.io/ronybrand/estado:${TAG}"
 echo "Rollback para $IMAGE"
-docker pull "$IMAGE"
+docker pull "$IMAGE" >/dev/null
 
 if swap_to "$IMAGE"; then
     promote

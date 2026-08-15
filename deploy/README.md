@@ -9,21 +9,40 @@ manualmente por SSH e sem histórico — ver Fase 3/6 do plano de deploy e
 [ADR 0006](../docs/adr/0006-backup-pg-dump-s3.md) /
 [ADR 0008](../docs/adr/0008-rollback-manual-por-tag-registrada.md).
 
-## Importante: isto é uma reconstrução, não um espelho automático
+## Importante: não há pipeline puxando o estado real da EC2 pra cá
 
-Estes arquivos foram escritos a partir do comportamento documentado (plano de deploy + ADRs +
-case study), não copiados byte a byte do servidor — não há pipeline puxando o estado real da EC2
-pra cá. Antes de confiar neles como fonte da verdade, faça um diff manual contra o que está
-rodando:
+Depois de escrever esses arquivos a partir do comportamento documentado (plano de deploy + ADRs +
+case study), foi feito um diff real via SSH contra o servidor (2026-08-15) e as divergências
+encontradas foram corrigidas aqui — ver detalhe abaixo. Mas isso é uma reconciliação pontual, não
+sincronização contínua: qualquer mudança futura direto no servidor (por SSH, sem passar por aqui)
+volta a divergir sem aviso. Antes de confiar cegamente neste diretório de novo depois de um tempo
+sem tocar nele, vale repetir o diff:
 
 ```
-ssh -i ~/.ssh/estado-key.pem ec2-user@54.94.231.248
-diff ~/estado/docker-compose.yml -   # cole o conteúdo daqui, ou use scp pra trazer os arquivos reais
+ssh -i ~/.ssh/estado-key.pem ec2-user@54.94.231.248 'cat ~/estado/docker-compose.yml'
 ```
 
-Ajuste o que divergir. Depois desse primeiro alinhamento, trate este diretório como fonte da
-verdade e replique manualmente pro servidor a cada mudança (deploy dessas configs continua sendo
-manual, deliberadamente — ver ADR 0004: não existe canal automatizado de push pra dentro da EC2).
+Depois de alinhado, trate este diretório como fonte da verdade e replique manualmente pro servidor
+a cada mudança (deploy dessas configs continua sendo manual, deliberadamente — ver ADR 0004: não
+existe canal automatizado de push pra dentro da EC2).
+
+**Divergências reais encontradas na reconciliação de 2026-08-15** (o que estava errado aqui antes
+de comparar com o servidor):
+- Rede do Postgres/app é `estado_internal` (nome fixado explicitamente no `docker-compose.yml` via
+  `networks.internal.name`), não `internal` — `deploy.sh`/`lib-swap.sh` referenciavam o nome errado,
+  o que teria feito o `docker run` do container novo falhar por completo no próximo deploy.
+- `POSTGRES_DB`/`POSTGRES_USER` não são variáveis de `.env` — vêm fixos como `estado` no
+  `docker-compose.yml` e nos scripts. Os scripts aqui referenciavam `${POSTGRES_DB}`/`${POSTGRES_USER}`
+  vazios, que teriam gerado uma JDBC URL quebrada.
+- As units systemd reais rodam como `User=ec2-user Group=docker`, não como root (padrão quando
+  `User=` não é definido) — corrigido.
+- O health check real sobe um container `curlimages/curl` efêmero na rede `portfolio` e testa de
+  fora (valida DNS/rede do Compose, não só "processo respondeu"), em vez de `docker exec` + `wget`
+  de dentro do container — adotado o mecanismo real, já provado em produção.
+- Existe um `~/estado/Caddyfile` (`reverse_proxy app:8080`) esquecido no servidor — resquício de
+  antes da Fase 7, quando o Caddy ainda fazia parte do stack `~/estado/`. Não é usado por nada hoje
+  (o Caddy ativo é o de `~/proxy/`), não foi versionado aqui de propósito, e vale apagar do servidor
+  pra não confundir no futuro (`ssh ... rm ~/estado/Caddyfile`).
 
 ## Layout
 

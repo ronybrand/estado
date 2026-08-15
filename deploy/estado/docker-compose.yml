@@ -6,8 +6,8 @@ services:
     image: postgres:16
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: estado
+      POSTGRES_USER: estado
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres-data:/var/lib/postgresql/data
@@ -15,11 +15,12 @@ services:
       - internal
 
 networks:
-  # externa: deploy.sh precisa anexar o container da app na mesma rede via
-  # "docker run --network internal", fora do ciclo de vida do Compose.
-  # Criar uma vez com: docker network create internal
+  # nome fixo (nao o "estado_internal" que o Compose geraria por padrao a
+  # partir do nome do projeto) pra deploy.sh conseguir anexar o container da
+  # app na mesma rede via "docker run --network estado_internal", fora do
+  # ciclo de vida do Compose.
   internal:
-    external: true
+    name: estado_internal
 
 volumes:
   postgres-data:

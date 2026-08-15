@@ -4,23 +4,26 @@
 # IAM role da instancia (estado-backup-role), nao de chave fixa.
 set -euo pipefail
 cd "$(dirname "$0")"
+set -a
 source .env
+set +a
 
 BUCKET="estado-db-backups-70a63b1a"
 REGION="sa-east-1"
-MIN_BYTES=200  # abaixo disso, o dump esta suspeito de vazio/quebrado
-TIMESTAMP="$(date -u +%Y%m%dT%H%M%SZ)"
-DUMP_FILE="/tmp/estado-${TIMESTAMP}.sql.gz"
+MIN_BYTES=100  # abaixo disso, o dump esta suspeito de vazio/quebrado
+TIMESTAMP="$(date -u +%Y-%m-%dT%H-%M-%SZ)"
+FILENAME="estado-${TIMESTAMP}.sql.gz"
+TMPFILE="/tmp/${FILENAME}"
 
-docker compose exec -T postgres pg_dump -U "${POSTGRES_USER}" "${POSTGRES_DB}" | gzip > "$DUMP_FILE"
+docker exec estado-postgres-1 pg_dump -U estado estado | gzip > "$TMPFILE"
 
-SIZE="$(stat -c%s "$DUMP_FILE")"
+SIZE="$(stat -c%s "$TMPFILE")"
 if [ "$SIZE" -lt "$MIN_BYTES" ]; then
-    echo "Dump suspeito de vazio (${SIZE} bytes), abortando sem enviar."
-    rm -f "$DUMP_FILE"
+    echo "Dump suspeito de vazio (${SIZE} bytes), abortando upload." >&2
+    rm -f "$TMPFILE"
     exit 1
 fi
 
-aws s3 cp "$DUMP_FILE" "s3://${BUCKET}/estado-${TIMESTAMP}.sql.gz" --region "$REGION"
-rm -f "$DUMP_FILE"
-echo "Backup enviado: estado-${TIMESTAMP}.sql.gz (${SIZE} bytes)"
+aws s3 cp "$TMPFILE" "s3://${BUCKET}/${FILENAME}" --region "$REGION" --only-show-errors
+rm -f "$TMPFILE"
+echo "Backup enviado: ${FILENAME} (${SIZE} bytes)"
