@@ -38,3 +38,10 @@ IAM role restrita a `s3:PutObject` nesse bucket específico — sem permissão d
 - Negativo aceito: até 24h de dados podem ser perdidos num desastre entre dois backups diários —
   trade-off consciente contra a complexidade de WAL archiving, dado o volume de escrita desta
   aplicação.
+- Em aberto, deliberadamente: os 30 dias de retenção no lifecycle rule são um placeholder, não uma
+  decisão pensada — não existe, nesta aplicação, nenhum requisito real (legal, de compliance, ou de
+  RPO de negócio) que justifique esse número especificamente em vez de 90 dias, um ano, ou
+  indefinido. Numa aplicação real, essa retenção deveria vir de um requisito concreto — por exemplo
+  LGPD, se o dado guardado fosse pessoal — e não de uma escolha arbitrária feita só porque o custo
+  de manter mais tempo é irrelevante nessa escala. Preferível nomear a lacuna a preencher o número
+  e apresentar como se fosse decisão informada.
