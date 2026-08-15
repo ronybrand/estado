@@ -1,11 +1,11 @@
 package br.com.rony.spring.boot.estado.config;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.filter.UrlHandlerFilter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.web.util.pattern.PathPatternParser;
 
 import br.com.rony.spring.boot.estado.property.ApiProperty;
 
@@ -29,13 +29,8 @@ public class WebConfig implements WebMvcConfigurer {
 				.maxAge(3600);
 	}
 
-	// Spring Framework 7 parou de tratar "/x" e "/x/" como equivalentes por
-	// padrao; isso restaura o comportamento antigo pra todos os mappings,
-	// sem precisar declarar {"", "/"} em cada endpoint.
-	@Override
-	public void configurePathMatch(PathMatchConfigurer configurer) {
-		PathPatternParser parser = new PathPatternParser();
-		parser.setMatchOptionalTrailingSeparator(true);
-		configurer.setPatternParser(parser);
+	@Bean
+	public UrlHandlerFilter trailingSlashFilter() {
+		return UrlHandlerFilter.trailingSlashHandler("/**").wrapRequest().build();
 	}
 }
