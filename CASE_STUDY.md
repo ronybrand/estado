@@ -117,9 +117,9 @@ revisor achar primeiro.
 - ✅ **Downtime de deploy**: rolling swap, validado com polling contínuo durante um redeploy real —
   zero respostas fora de 200.
 - ✅ **Perda de dado por corrupção/exclusão acidental**: `pg_dump` diário pra um bucket S3 write-only
-  (a instância não consegue ler nem apagar backups já enviados, mesmo comprometida) — validado
-  baixando um backup e confirmando que é um dump SQL íntegro. Restore de ponta a ponta ainda não
-  testado — ver [ADR 0006](docs/adr/0006-backup-pg-dump-s3.md).
+  (a instância não consegue ler nem apagar backups já enviados, mesmo comprometida). Restore
+  testado de ponta a ponta — backup restaurado num Postgres descartável, conteúdo conferido igual ao
+  que estava em produção — ver [ADR 0006](docs/adr/0006-backup-pg-dump-s3.md).
 - ⚠️ **Falha de instância/zona de disponibilidade**: `t3.small` único, zona de disponibilidade
   única, sem load balancer. Um setup multi-AZ custaria mais por mês do que a instância inteira
   custa hoje — não se justifica nessa escala, deixado de fora por escolha, não por descuido.

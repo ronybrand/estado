@@ -31,9 +31,10 @@ IAM role restrita a `s3:PutObject` nesse bucket específico — sem permissão d
 - Positivo: lacuna de maior risco da lista de confiabilidade fechada; custo mensal do bucket é
   irrisório pro tamanho atual do banco.
 - Positivo: modelo de permissão write-only limita o dano de uma instância comprometida.
-- Negativo/pendente: o procedimento de restore não foi testado de ponta a ponta ainda — o backup
-  existe e o conteúdo foi validado como dump SQL legível, mas "nunca restaurei" é um risco residual
-  real que fica registrado aqui, não escondido.
+- Positivo: restore testado de ponta a ponta — baixado o backup mais recente, restaurado num
+  Postgres descartável (`psql -f` do dump), e o conteúdo conferido bate exatamente com o que estava
+  em produção no momento do backup (mesmo id, mesmo timestamp de cadastro). Backup sem teste de
+  restore é metade da proteção; esse ciclo foi fechado, não só documentado como pendente.
 - Negativo aceito: até 24h de dados podem ser perdidos num desastre entre dois backups diários —
   trade-off consciente contra a complexidade de WAL archiving, dado o volume de escrita desta
   aplicação.
