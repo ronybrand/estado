@@ -26,6 +26,10 @@ IAM role restrita a `s3:PutObject` nesse bucket específico — sem permissão d
   poderia verificar ou limpar backups antigos). Descartado deliberadamente — só `PutObject` significa
   que, mesmo com a instância inteira comprometida, um invasor não consegue ler backups existentes
   nem apagá-los pra cobrir rastro.
+- **Tiering pra S3 Glacier**: mais barato por GB armazenado. Descartado porque os dumps atuais têm
+  menos de 1KB — pra arquivos desse tamanho, o mínimo cobrável por objeto e a latência/custo de
+  retrieval do Glacier tendem a custar mais do que só deixar em S3 Standard, além de adicionar
+  complexidade (job de restore assíncrono) sem ganho real nessa escala.
 
 ## Consequências
 - Positivo: lacuna de maior risco da lista de confiabilidade fechada; custo mensal do bucket é
