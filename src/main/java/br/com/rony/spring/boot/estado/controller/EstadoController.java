@@ -41,15 +41,15 @@ public class EstadoController {
 		return service.getDomainById(idDomain);
     }
 	
-	@PostMapping
-	public @ResponseBody ResponseEntity < String > salvar(@Valid @RequestBody Estado estado) { 
+	@PostMapping({ "", "/" })
+	public @ResponseBody ResponseEntity < String > salvar(@Valid @RequestBody Estado estado) {
     	service.salvar(estado);
-    	
+
     	return ResponseEntity.status(HttpStatus.CREATED).build();
     }
-	
-	@PutMapping
-	public @ResponseBody ResponseEntity < String > atualizar(@Valid @RequestBody Estado estado) { 
+
+	@PutMapping({ "", "/" })
+	public @ResponseBody ResponseEntity < String > atualizar(@Valid @RequestBody Estado estado) {
     	service.atualizar(estado);
 
     	return ResponseEntity.status(HttpStatus.OK).build();
