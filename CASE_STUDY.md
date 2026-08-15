@@ -126,6 +126,10 @@ revisor achar primeiro.
   Elastic IP, volumes EBS e instance ID. Monitoramento básico (gratuito), detecção em ~10min —
   validado com o alarme em estado `OK`, recebendo dados reais da instância. Ver
   [ADR 0007](docs/adr/0007-ec2-auto-recovery.md).
+- ✅ **Crash espontâneo do container da app**: achado revisando o próprio ADR 0007 — o `deploy.sh`
+  subia a app sem `--restart`, diferente do Postgres/Caddy. Corrigido com `unless-stopped` e
+  validado matando o processo de dentro do container (não `docker kill`, que o Docker trata como
+  parada intencional): voltou sozinho em menos de 30s.
 - ⚠️ **Falha de zona de disponibilidade inteira**: `t3.small` único, zona de disponibilidade única,
   sem load balancer. Um setup multi-AZ custaria mais por mês do que a instância inteira custa hoje
   — não se justifica nessa escala, deixado de fora por escolha, não por descuido.

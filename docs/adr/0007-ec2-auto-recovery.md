@@ -37,9 +37,21 @@ Elastic IP.
   0002, sem custo adicional relevante (o alarme do CloudWatch em si é gratuito nessa quantidade).
 - Positivo: recuperação preserva Elastic IP, volumes EBS (incluindo os dados do Postgres) e o
   instance ID — não é uma instância nova, é a mesma restaurada num host diferente.
-- Negativo aceito: não cobre falha de zona de disponibilidade inteira nem falha de aplicação dentro
-  do SO (isso já é coberto por outro mecanismo — o rolling swap com health check do
-  [ADR 0005](0005-rolling-swap-sem-canario-blue-green.md) — mas só para deploys, não para uma
-  falha espontânea do container fora de um ciclo de deploy).
+- Negativo aceito: não cobre falha de zona de disponibilidade inteira.
 - Detecção em ~10 minutos (2 períodos de 5 min), não instantânea — trade-off aceito contra o custo
   de monitoramento detalhado.
+
+## Correção: container da app sem política de restart
+Ao revisar essa ADR, ficou claro um erro na versão original deste documento: ela afirmava que o
+rolling swap ([ADR 0005](0005-rolling-swap-sem-canario-blue-green.md)) cobria uma falha espontânea
+do container fora de um ciclo de deploy — **isso estava errado**. O `deploy.sh` sobe o container da
+app via `docker run` sem `--restart`, diferente do Postgres e do Caddy no `docker-compose.yml`, que
+já tinham `restart: unless-stopped`. Um crash espontâneo do processo Java (OOM, exceção fatal) não
+seria recuperado por nada — ficaria parado até o próximo deploy encontrar uma imagem nova pra
+puxar, o que podia nunca acontecer.
+
+Corrigido adicionando `--restart unless-stopped` ao `docker run` do `deploy.sh` e ao container já
+em execução (`docker update --restart unless-stopped estado-app`). Validado simulando um crash real
+— `docker exec estado-app kill -9 1` (mata o processo de dentro, diferente de `docker kill`/`docker
+stop`, que o Docker registra como parada intencional e `unless-stopped` propositalmente ignora) — e
+confirmando que o container voltou sozinho e o site respondeu 200 de novo em menos de 30s.
