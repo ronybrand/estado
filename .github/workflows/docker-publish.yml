@@ -36,3 +36,17 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          # o comando real e forcado pelo "command=" no authorized_keys do
+          # servidor (chave de deploy so pode rodar "docker compose pull && up -d",
+          # nada mais) - o que vai aqui e ignorado, mas precisa de algo
+          script: "true"
