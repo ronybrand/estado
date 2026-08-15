@@ -1,0 +1,4 @@
+# Tudo aqui roda na EC2 (Linux). Forca LF no checkout independente de
+# core.autocrlf local, pra scripts com shebang (deploy.sh, backup.sh) nunca
+# virarem CRLF sem querer numa maquina Windows.
+* text eol=lf
