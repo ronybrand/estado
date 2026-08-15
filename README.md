@@ -3,6 +3,11 @@ Projeto CRUD de unidades federativas do Brasil (estados).
 
 O Projeto Estado trata-se de um sistema sob arquitetura Java 25/Spring Boot 4, configuração de dependência em Maven e banco de dados PostgreSQL para disponibilização de um serviço HTTP. O front-end (Angular) é servido pelo próprio jar, embutido em `src/main/resources/static`.
 
+**No ar**: https://54.94.231.248.sslip.io/ — deploy próprio na AWS (EC2 + Docker + Caddy), com CI/CD,
+backup automático e recuperação de falhas. A história completa da migração e do deploy, incluindo
+os bugs encontrados em produção e as decisões de arquitetura, está em [`CASE_STUDY.md`](CASE_STUDY.md)
+e em [`docs/adr/`](docs/adr/).
+
 ## Funcionalidades:
 - Cadastrar uma unidade federativa por vez com data e hora do registro;
 - Apresentar a lista das unidades federativas;
@@ -55,5 +60,14 @@ http://localhost:8080/ (interface Angular)
 
 A API fica em http://localhost:8080/estado
 
-# 4 - Heroku
-https://rony-estado.herokuapp.com/
+# 4 - Docker
+Também dá pra buildar e rodar via container, sem instalar Maven/JDK localmente:
+```
+docker build -t estado .
+docker run -p 8080:8080 -e JDBC_DATABASE_URL=... -e JDBC_DATABASE_USERNAME=... -e JDBC_DATABASE_PASSWORD=... estado
+```
+A imagem publicada em produção fica em `ghcr.io/ronybrand/estado` (publicada automaticamente a
+cada push na `master`, ver [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml)).
+
+# 5 - Produção
+https://54.94.231.248.sslip.io/ — detalhes do deploy em [`CASE_STUDY.md`](CASE_STUDY.md).
