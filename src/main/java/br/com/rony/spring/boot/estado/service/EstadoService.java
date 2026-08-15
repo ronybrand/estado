@@ -3,10 +3,9 @@ package br.com.rony.spring.boot.estado.service;
 import java.util.Date;
 import java.util.List;
 
-import javax.transaction.Transactional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import br.com.rony.spring.boot.estado.domain.Estado;
 import br.com.rony.spring.boot.estado.repository.EstadoRepository;

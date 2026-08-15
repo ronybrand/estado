@@ -1,14 +1,13 @@
-package br.com.rony.spring.boot.estado.resource;
+package br.com.rony.spring.boot.estado.controller;
 
 import java.util.List;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,14 +23,10 @@ import org.springframework.web.bind.annotation.RestController;
 import br.com.rony.spring.boot.estado.domain.Estado;
 import br.com.rony.spring.boot.estado.service.EstadoService;
 
-//@CrossOrigin(origins = "*", maxAge = 3600)
-@CrossOrigin("https://rony-estado.herokuapp.com/")
 @RestController
 @Validated
 @RequestMapping( value = "/estado")
-//@CrossOrigin(exposedHeaders="Access-Control-Allow-Origin")
-//@CrossOrigin
-public class EstadoResource {
+public class EstadoController {
 	@Autowired
 	private EstadoService service;
 
