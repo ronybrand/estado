@@ -106,6 +106,7 @@ o que foi descartado, e por quê.
 | [0005](docs/adr/0005-rolling-swap-sem-canario-blue-green.md) | Rolling swap com health check | Canário, blue-green |
 | [0006](docs/adr/0006-backup-pg-dump-s3.md) | pg_dump diário para S3, write-only | WAL archiving contínuo, RDS |
 | [0007](docs/adr/0007-ec2-auto-recovery.md) | Alarme CloudWatch + EC2 Auto Recovery | Multi-AZ com load balancer |
+| [0008](docs/adr/0008-rollback-manual-por-tag-registrada.md) | Rollback manual via tag registrada | Histórico de N tags, pipeline de rollback automático |
 
 ## Postura de confiabilidade: o que está coberto, o que é risco em aberto
 
@@ -130,6 +131,10 @@ revisor achar primeiro.
   subia a app sem `--restart`, diferente do Postgres/Caddy. Corrigido com `unless-stopped` e
   validado matando o processo de dentro do container (não `docker kill`, que o Docker trata como
   parada intencional): voltou sozinho em menos de 30s.
+- ✅ **Versão nova saudável mas funcionalmente quebrada**: o health check do rolling swap não pega
+  regressão de lógica, só "processo de pé". `deploy.sh` grava a tag da versão substituída a cada
+  troca; `rollback.sh` reaplica essa tag (ou uma explícita) com o mesmo swap com health check. Ver
+  [ADR 0008](docs/adr/0008-rollback-manual-por-tag-registrada.md).
 - ⚠️ **Falha de zona de disponibilidade inteira**: `t3.small` único, zona de disponibilidade única,
   sem load balancer. Um setup multi-AZ custaria mais por mês do que a instância inteira custa hoje
   — não se justifica nessa escala, deixado de fora por escolha, não por descuido.
