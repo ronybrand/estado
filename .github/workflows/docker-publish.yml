@@ -33,7 +33,7 @@ jobs:
           images: ghcr.io/${{ github.repository }}
           tags: |
             type=raw,value=latest
-            type=sha,prefix=
+            type=sha,prefix=,format=long
 
       - uses: docker/build-push-action@v6
         with:

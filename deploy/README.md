@@ -6,7 +6,8 @@ viviam só no servidor (`~/estado/`, `~/proxy/`, `/etc/systemd/system/`), digita
 manualmente por SSH e sem histórico — ver Fase 3/6 do plano de deploy e
 [ADR 0004](../docs/adr/0004-deploy-pull-via-systemd-timer.md) /
 [ADR 0005](../docs/adr/0005-rolling-swap-sem-canario-blue-green.md) /
-[ADR 0006](../docs/adr/0006-backup-pg-dump-s3.md).
+[ADR 0006](../docs/adr/0006-backup-pg-dump-s3.md) /
+[ADR 0008](../docs/adr/0008-rollback-manual-por-tag-registrada.md).
 
 ## Importante: isto é uma reconstrução, não um espelho automático
 
@@ -29,7 +30,9 @@ manual, deliberadamente — ver ADR 0004: não existe canal automatizado de push
 | Neste repo | Na instância | O que é |
 |---|---|---|
 | `deploy/estado/docker-compose.yml` | `~/estado/docker-compose.yml` | Só o Postgres (o container da app não é mais gerenciado pelo Compose, ver ADR 0005) |
-| `deploy/estado/deploy.sh` | `~/estado/deploy.sh` | Rolling swap: sobe a imagem nova, espera `/actuator/health`, só então troca |
+| `deploy/estado/deploy.sh` | `~/estado/deploy.sh` | Rolling swap: sobe a imagem nova, espera `/actuator/health`, só então troca. Grava a tag anterior em `last-good-tag` |
+| `deploy/estado/rollback.sh` | `~/estado/rollback.sh` | Reaplica uma tag anterior (padrão: `last-good-tag`) com o mesmo swap — ver [ADR 0008](../docs/adr/0008-rollback-manual-por-tag-registrada.md) |
+| `deploy/estado/lib-swap.sh` | `~/estado/lib-swap.sh` | Lógica de swap compartilhada entre `deploy.sh` e `rollback.sh` |
 | `deploy/estado/backup.sh` | `~/estado/backup.sh` | `pg_dump` diário comprimido, valida tamanho mínimo, envia pro S3 |
 | `deploy/estado/.env.example` | `~/estado/.env` (real, `chmod 600`) | Template — segredo real nunca vai pro repo, fica só na instância + Bitwarden |
 | `deploy/proxy/docker-compose.yml` | `~/proxy/docker-compose.yml` | Caddy, stack compartilhada entre apps do portfólio |
@@ -39,7 +42,7 @@ manual, deliberadamente — ver ADR 0004: não existe canal automatizado de push
 ## Aplicar uma mudança na instância
 
 ```
-scp -i ~/.ssh/estado-key.pem deploy/estado/docker-compose.yml deploy/estado/deploy.sh deploy/estado/backup.sh ec2-user@54.94.231.248:~/estado/
+scp -i ~/.ssh/estado-key.pem deploy/estado/docker-compose.yml deploy/estado/deploy.sh deploy/estado/rollback.sh deploy/estado/lib-swap.sh deploy/estado/backup.sh ec2-user@54.94.231.248:~/estado/
 scp -i ~/.ssh/estado-key.pem deploy/proxy/docker-compose.yml deploy/proxy/Caddyfile ec2-user@54.94.231.248:~/proxy/
 
 scp -i ~/.ssh/estado-key.pem deploy/systemd/*.service deploy/systemd/*.timer ec2-user@54.94.231.248:/tmp/

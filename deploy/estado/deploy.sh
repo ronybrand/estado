@@ -4,6 +4,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 source .env
+source ./lib-swap.sh
 
 IMAGE="ghcr.io/ronybrand/estado:latest"
 CURRENT="estado-app"
@@ -19,36 +20,24 @@ if [ "$NEW_ID" = "$CURRENT_ID" ]; then
     exit 0
 fi
 
-docker rm -f "$NEXT" >/dev/null 2>&1 || true
-
-docker run -d \
-    --name "$NEXT" \
-    --restart unless-stopped \
-    --network internal \
-    -e JDBC_DATABASE_URL="jdbc:postgresql://postgres:5432/${POSTGRES_DB}" \
-    -e JDBC_DATABASE_USERNAME="${POSTGRES_USER}" \
-    -e JDBC_DATABASE_PASSWORD="${POSTGRES_PASSWORD}" \
-    -e API_ORIGIN_PERMITIDA="${API_ORIGIN_PERMITIDA}" \
-    "$IMAGE" >/dev/null
-
-docker network connect portfolio "$NEXT"
-
-healthy=false
-for _ in $(seq 1 60); do
-    if docker exec "$NEXT" wget -qO- http://localhost:8080/actuator/health 2>/dev/null | grep -q '"status":"UP"'; then
-        healthy=true
-        break
-    fi
-    sleep 1
-done
-
-if [ "$healthy" != true ]; then
-    echo "Health check nao ficou UP em 60s, descartando container novo. Versao atual continua no ar."
-    docker logs "$NEXT" --tail 50 || true
-    docker rm -f "$NEXT" >/dev/null 2>&1 || true
-    exit 1
+# Guarda a tag da versao que esta rodando agora (presumivelmente boa, ja
+# passou por este mesmo health check no deploy anterior) antes de troca-la
+# — permite rollback manual rapido se a versao nova tiver um bug funcional
+# que nao derruba o health check. Ver ADR 0008 e ./rollback.sh.
+PREVIOUS_TAG=""
+if [ -n "$CURRENT_ID" ]; then
+    PREVIOUS_TAG="$(image_revision "$CURRENT_ID")"
 fi
 
-docker rm -f "$CURRENT" >/dev/null 2>&1 || true
-docker rename "$NEXT" "$CURRENT"
-echo "Deploy concluido: $CURRENT agora roda $IMAGE ($NEW_ID)"
+if swap_to "$IMAGE"; then
+    promote
+    echo "Deploy concluido: $CURRENT agora roda $IMAGE ($NEW_ID)"
+
+    if [ -n "$PREVIOUS_TAG" ]; then
+        echo "$PREVIOUS_TAG" > last-good-tag
+        echo "Tag anterior registrada em last-good-tag: $PREVIOUS_TAG"
+    fi
+else
+    echo "Deploy abortado, versao atual continua no ar."
+    exit 1
+fi
