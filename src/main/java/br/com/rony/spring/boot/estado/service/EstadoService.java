@@ -3,7 +3,6 @@ package br.com.rony.spring.boot.estado.service;
 import java.util.Date;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,10 +13,13 @@ import br.com.rony.spring.boot.estado.repository.EstadoRepository;
 @Transactional
 public class EstadoService {
 
-    @Autowired
-    private EstadoRepository repository;
+    private final EstadoRepository repository;
 
-    
+    public EstadoService(EstadoRepository repository) {
+        this.repository = repository;
+    }
+
+
     public Estado salvar(Estado domain) {
     	domain.setDataHoraCadastro(new Date());
         return repository.salvar(domain);
