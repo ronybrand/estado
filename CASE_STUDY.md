@@ -105,6 +105,7 @@ o que foi descartado, e por quê.
 | [0004](docs/adr/0004-deploy-pull-via-systemd-timer.md) | Timer systemd puxando do GHCR | GitHub Actions empurrando via SSH |
 | [0005](docs/adr/0005-rolling-swap-sem-canario-blue-green.md) | Rolling swap com health check | Canário, blue-green |
 | [0006](docs/adr/0006-backup-pg-dump-s3.md) | pg_dump diário para S3, write-only | WAL archiving contínuo, RDS |
+| [0007](docs/adr/0007-ec2-auto-recovery.md) | Alarme CloudWatch + EC2 Auto Recovery | Multi-AZ com load balancer |
 
 ## Postura de confiabilidade: o que está coberto, o que é risco em aberto
 
@@ -120,6 +121,11 @@ revisor achar primeiro.
   (a instância não consegue ler nem apagar backups já enviados, mesmo comprometida). Restore
   testado de ponta a ponta — backup restaurado num Postgres descartável, conteúdo conferido igual ao
   que estava em produção — ver [ADR 0006](docs/adr/0006-backup-pg-dump-s3.md).
-- ⚠️ **Falha de instância/zona de disponibilidade**: `t3.small` único, zona de disponibilidade
-  única, sem load balancer. Um setup multi-AZ custaria mais por mês do que a instância inteira
-  custa hoje — não se justifica nessa escala, deixado de fora por escolha, não por descuido.
+- ✅ **Falha de hardware/hypervisor da instância**: alarme do CloudWatch na métrica
+  `StatusCheckFailed_System` aciona o `EC2 Auto Recovery` nativo da AWS — recuperação preserva
+  Elastic IP, volumes EBS e instance ID. Monitoramento básico (gratuito), detecção em ~10min —
+  validado com o alarme em estado `OK`, recebendo dados reais da instância. Ver
+  [ADR 0007](docs/adr/0007-ec2-auto-recovery.md).
+- ⚠️ **Falha de zona de disponibilidade inteira**: `t3.small` único, zona de disponibilidade única,
+  sem load balancer. Um setup multi-AZ custaria mais por mês do que a instância inteira custa hoje
+  — não se justifica nessa escala, deixado de fora por escolha, não por descuido.

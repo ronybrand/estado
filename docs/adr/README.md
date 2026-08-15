@@ -10,3 +10,4 @@ consequências (incluindo as que ficaram conscientemente sem mitigação).
 - [0004 — Deploy via systemd timer (pull), não GitHub Actions (push)](0004-deploy-pull-via-systemd-timer.md)
 - [0005 — Rolling swap simples, não canário/blue-green](0005-rolling-swap-sem-canario-blue-green.md)
 - [0006 — Backup diário via pg_dump + S3, não WAL archiving nem RDS](0006-backup-pg-dump-s3.md)
+- [0007 — EC2 Auto Recovery via alarme do CloudWatch](0007-ec2-auto-recovery.md)
