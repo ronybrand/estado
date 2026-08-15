@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,24 +30,24 @@ public class EstadoController {
 	private EstadoService service;
 
 
-	@RequestMapping(value = { "" , "/" } , method = RequestMethod.GET)
+	@GetMapping
 	public List<Estado> getAll() {
 	      return service.listar();
 	}
-	
+
 	@GetMapping("/{id}")
-	public Estado get(@Valid @PathVariable("id") Long idDomain) { 
+	public Estado get(@Valid @PathVariable("id") Long idDomain) {
 		return service.getDomainById(idDomain);
     }
-	
-	@PostMapping({ "", "/" })
+
+	@PostMapping
 	public @ResponseBody ResponseEntity < String > salvar(@Valid @RequestBody Estado estado) {
     	service.salvar(estado);
 
     	return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-	@PutMapping({ "", "/" })
+	@PutMapping
 	public @ResponseBody ResponseEntity < String > atualizar(@Valid @RequestBody Estado estado) {
     	service.atualizar(estado);
 
