@@ -1,0 +1,10 @@
+[Unit]
+Description=Remove imagens Docker dangling acumuladas pelas trocas do deploy.sh
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/docker image prune -f
+User=ec2-user
+Group=docker

@@ -1,0 +1,10 @@
+[Unit]
+Description=Roda estado-prune.service semanalmente
+
+[Timer]
+OnCalendar=weekly
+Persistent=true
+RandomizedDelaySec=600
+
+[Install]
+WantedBy=timers.target

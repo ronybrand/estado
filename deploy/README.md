@@ -56,7 +56,7 @@ de comparar com o servidor):
 | `deploy/estado/.env.example` | `~/estado/.env` (real, `chmod 600`) | Template — segredo real nunca vai pro repo, fica só na instância + Bitwarden |
 | `deploy/proxy/docker-compose.yml` | `~/proxy/docker-compose.yml` | Caddy, stack compartilhada entre apps do portfólio |
 | `deploy/proxy/Caddyfile` | `~/proxy/Caddyfile` | Roteamento HTTPS, inclui o fix do prefixo `/api` |
-| `deploy/systemd/*.service`, `*.timer` | `/etc/systemd/system/` | Timers de deploy (5 min) e backup (diário 06:00 UTC) |
+| `deploy/systemd/*.service`, `*.timer` | `/etc/systemd/system/` | Timers de deploy (5 min), backup (diário 06:00 UTC) e prune de imagens dangling (semanal) |
 
 ## Aplicar uma mudança na instância
 
@@ -64,7 +64,7 @@ de comparar com o servidor):
 scp -i ~/.ssh/estado-key.pem deploy/estado/docker-compose.yml deploy/estado/deploy.sh deploy/estado/rollback.sh deploy/estado/lib-swap.sh deploy/estado/backup.sh ec2-user@54.94.231.248:~/estado/
 scp -i ~/.ssh/estado-key.pem deploy/proxy/docker-compose.yml deploy/proxy/Caddyfile ec2-user@54.94.231.248:~/proxy/
 
-scp -i ~/.ssh/estado-key.pem deploy/systemd/*.service deploy/systemd/*.timer ec2-user@54.94.231.248:/tmp/
+scp -i ~/.ssh/estado-key.pem deploy/systemd/estado-deploy.* deploy/systemd/estado-backup.* deploy/systemd/estado-prune.* ec2-user@54.94.231.248:/tmp/
 ssh -i ~/.ssh/estado-key.pem ec2-user@54.94.231.248 '
   sudo mv /tmp/estado-*.service /tmp/estado-*.timer /etc/systemd/system/ &&
   sudo systemctl daemon-reload

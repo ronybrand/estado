@@ -12,3 +12,4 @@ consequências (incluindo as que ficaram conscientemente sem mitigação).
 - [0006 — Backup diário via pg_dump + S3, não WAL archiving nem RDS](0006-backup-pg-dump-s3.md)
 - [0007 — EC2 Auto Recovery via alarme do CloudWatch](0007-ec2-auto-recovery.md)
 - [0008 — Rollback manual via tag registrada](0008-rollback-manual-por-tag-registrada.md)
+- [0009 — Prune semanal de imagens Docker dangling](0009-prune-semanal-de-imagens-dangling.md)
