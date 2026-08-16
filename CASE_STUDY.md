@@ -142,6 +142,14 @@ revisor achar primeiro.
   numa ADR anterior — o volume EBS raiz nunca teve o flag ligado. Corrigido via snapshot → cópia
   criptografada → troca do volume raiz, validado com a aplicação respondendo `200` depois do corte.
   Ver [ADR 0010](docs/adr/0010-encriptar-volume-raiz-ebs.md).
+- ✅ **Drift silencioso depois de reconciliar via SSH**: revisão de código sobre o `deploy/`
+  reconciliado (commit `7d42c48`) achou que a sincronização contra o servidor real tinha revertido
+  duas proteções — a captura de log do container no path de falha do swap, e o sufixo `UTC` explícito
+  do timer de backup (rodando 3h atrasado sem ninguém notar) — e apontou duas lacunas no Terraform:
+  `metadata_options` nunca declarado (IMDSv2 não garantido pelo código, mesmo já ativo na instância
+  real) e `admin_cidr` sem `validation` block contra `0.0.0.0/0`. Todas as quatro corrigidas e
+  validadas: diff limpo contra o servidor, `terraform plan` sem mudanças, próximo disparo do timer
+  conferido em `06:02 UTC`, app respondendo `200` depois do deploy do script atualizado.
 - ⚠️ **Falha de zona de disponibilidade inteira**: `t3.small` único, zona de disponibilidade única,
   sem load balancer. Um setup multi-AZ custaria mais por mês do que a instância inteira custa hoje
   — não se justifica nessa escala, deixado de fora por escolha, não por descuido.

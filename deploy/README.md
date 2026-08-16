@@ -58,3 +58,10 @@ A primeira versão deste diretório foi escrita a partir da documentação (não
 divergências reais que teriam quebrado o deploy se sincronizadas sem checar — detalhe completo no
 commit `7d42c48` e no [ADR 0008](../docs/adr/0008-rollback-manual-por-tag-registrada.md). Já
 corrigido; o layout acima reflete o estado atual, reconciliado e sincronizado com a instância real.
+
+Essa reconciliação trouxe o repo pra bater com o servidor, mas o servidor real também tinha regredido
+duas coisas sem ninguém notar: `lib-swap.sh` perdeu o `docker logs` no path de falha do health check
+(diagnosticar um deploy quebrado ficou sem informação nenhuma), e o container efêmero do health check
+passou a usar `curlimages/curl:latest` sem pin de versão. Achado numa revisão de código posterior,
+corrigido e sincronizado de volta pro servidor — `docker logs` restaurado, imagem pinada em
+`curlimages/curl:8.11.1`.
