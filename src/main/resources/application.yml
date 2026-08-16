@@ -34,3 +34,10 @@ management:
       # prepara pra quando outro app do portfolio reusar o mesmo Alloy/Grafana
       # Cloud - sem isso, series de apps diferentes ficariam indistinguiveis.
       application: estado
+    distribution:
+      percentiles-histogram:
+        # sem isso, http.server.requests so tem count+sum (media) - nao da pra
+        # calcular P95/P99 de verdade. Custo (mais series, um contador por
+        # bucket de latencia x endpoint x status) irrelevante pro volume desse
+        # app - confirmado contra o teto do free tier do Grafana Cloud.
+        http.server.requests: true
