@@ -178,3 +178,35 @@ pro próximo app do portfólio entrar como bloco novo no mesmo `main.tf`, sem du
 criar um state novo — o que também é o motivo de Terragrunt ter sido avaliado e descartado por
 enquanto (ver ADR 0011): o valor dele aparece com múltiplos state/root modules, e este projeto tem
 um só.
+
+## De caixa-preta a observável: métricas, logs e correlação de request
+
+Até aqui, saber se a aplicação estava saudável dependia inteiramente do health check do rolling swap
+("processo respondeu") — nenhuma visibilidade de dentro. Fechado com Grafana Cloud + Alloy
+([ADR 0012](docs/adr/0012-grafana-cloud-alloy-observabilidade.md)): métrica de host, métrica da
+aplicação (JVM, latência/erro por endpoint com histograma real — não só média — via
+`/actuator/prometheus`), log de container e log das units systemd, tudo empurrado direto pra nuvem
+sem custo incremental na AWS.
+
+O trabalho revelou dois problemas reais no código que existiam antes, mas nunca tinham sido testados
+de verdade:
+- **Vazamento de detalhe interno**: o handler de `DataIntegrityViolationException` devolvia o SQL
+  bruto e o nome da constraint do banco direto pro cliente — só apareceu validando o
+  `/actuator/prometheus` contra um Postgres real, forçando uma violação de constraint de propósito.
+  Corrigido com mensagem genérica ao cliente; detalhe completo continua só no log, pro operador.
+- **Correlação de request**: nem cliente nem log tinham como se referenciar mutuamente antes disso —
+  um `RequestIdFilter` (backend) e um interceptor equivalente (frontend Angular, reaproveitando o
+  mesmo id nas tentativas de retry) fecham esse ciclo. Validado contra produção: um 500 de teste
+  seguro (`DELETE` num id inexistente, sem apagar nada real) voltou pro cliente com um `requestId`, e
+  a mesma string apareceu na linha exata do log de erro no Grafana.
+
+Acesso à instância também precisou de ajuste no meio do caminho: SSH restrito por IP parou de bastar
+quando a rede móvel usada como contingência passou a bloquear a porta 22 de saída. Resolvido
+habilitando AWS Systems Manager Session Manager como caminho alternativo, autenticado por IAM em vez
+de endereço de origem — sem abrir mão do SSH restrito já existente.
+
+Os dois alertas criados (5xx da aplicação, ausência de backup em 26h) foram validados dificultando de
+propósito, não só configurados: um 500 real e seguro disparado contra produção revelou que `sum()` do
+PromQL sobre uma métrica sem nenhuma ocorrência retorna vazio, não zero — o alerta estava notificando
+sempre que **não** havia erro, o oposto do desejado. Corrigido (`Alert state if no data` de `NoData`
+pra `OK`) e revalidado disparando o mesmo 500 de novo antes de considerar fechado.
