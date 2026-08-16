@@ -4,9 +4,10 @@ Projeto CRUD de unidades federativas do Brasil (estados).
 O Projeto Estado trata-se de um sistema sob arquitetura Java 25/Spring Boot 4, configuração de dependência em Maven e banco de dados PostgreSQL para disponibilização de um serviço HTTP. O front-end (Angular) é servido pelo próprio jar, embutido em `src/main/resources/static`.
 
 **No ar**: https://54.94.231.248.sslip.io/ — deploy próprio na AWS (EC2 + Docker + Caddy), com CI/CD,
-backup automático e recuperação de falhas. A história completa da migração e do deploy, incluindo
-os bugs encontrados em produção e as decisões de arquitetura, está em [`CASE_STUDY.md`](CASE_STUDY.md)
-e em [`docs/adr/`](docs/adr/).
+backup automático e recuperação de falhas. Infra provisionada via Terraform (importada da conta real,
+não escrita do zero — ver [`terraform/`](terraform/)). A história completa da migração e do deploy,
+incluindo os bugs encontrados em produção e as decisões de arquitetura, está em
+[`CASE_STUDY.md`](CASE_STUDY.md) e em [`docs/adr/`](docs/adr/).
 
 ## Funcionalidades:
 - Cadastrar uma unidade federativa por vez com data e hora do registro;

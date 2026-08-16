@@ -107,7 +107,9 @@ o que foi descartado, e por quê.
 | [0006](docs/adr/0006-backup-pg-dump-s3.md) | pg_dump diário para S3, write-only | WAL archiving contínuo, RDS |
 | [0007](docs/adr/0007-ec2-auto-recovery.md) | Alarme CloudWatch + EC2 Auto Recovery | Multi-AZ com load balancer |
 | [0008](docs/adr/0008-rollback-manual-por-tag-registrada.md) | Rollback manual via tag registrada | Histórico de N tags, pipeline de rollback automático |
+| [0009](docs/adr/0009-prune-semanal-de-imagens-dangling.md) | Prune semanal de imagens dangling | `docker system prune -a`, aumentar o volume |
 | [0010](docs/adr/0010-encriptar-volume-raiz-ebs.md) | Criptografar volume EBS raiz | Registrar como risco aceito |
+| [0011](docs/adr/0011-terraform-import-sem-terragrunt.md) | Terraform via import, state local | Recriar do zero, backend S3 desde o início, Terragrunt |
 
 ## Postura de confiabilidade: o que está coberto, o que é risco em aberto
 
@@ -143,3 +145,23 @@ revisor achar primeiro.
 - ⚠️ **Falha de zona de disponibilidade inteira**: `t3.small` único, zona de disponibilidade única,
   sem load balancer. Um setup multi-AZ custaria mais por mês do que a instância inteira custa hoje
   — não se justifica nessa escala, deixado de fora por escolha, não por descuido.
+
+## De clicado pra revisável: terraformando a infra existente
+
+As ADRs acima documentam o raciocínio de cada recurso AWS desde o início, mas os recursos em si
+sempre foram criados manualmente (console ou `aws` CLI direto) — nunca existiram como código. Os 11
+recursos reais (instância, Security Group, Elastic IP, IAM role/instance profile, bucket S3, alarme
+CloudWatch) foram trazidos pro Terraform via `terraform import`, comparando cada atributo do código
+contra o estado real da conta até `terraform plan` mostrar zero criações ou destruições — só então
+qualquer `apply` foi considerado seguro. Ver [ADR 0011](docs/adr/0011-terraform-import-sem-terragrunt.md).
+
+O processo pegou um bug real antes de qualquer mudança em produção: a `description` do Security
+Group, escrita de memória durante o código, não batia com o valor já existente — e como esse campo é
+imutável na AWS, um `apply` teria forçado destroy+recreate do SG de produção. Corrigido comparando
+contra a realidade antes de aplicar, não depois de quebrar algo.
+
+Estrutura em módulos (`portfolio-instance` compartilhado, `app-backup` parametrizado por app) pensada
+pro próximo app do portfólio entrar como bloco novo no mesmo `main.tf`, sem duplicar código nem
+criar um state novo — o que também é o motivo de Terragrunt ter sido avaliado e descartado por
+enquanto (ver ADR 0011): o valor dele aparece com múltiplos state/root modules, e este projeto tem
+um só.

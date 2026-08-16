@@ -14,3 +14,4 @@ consequências (incluindo as que ficaram conscientemente sem mitigação).
 - [0008 — Rollback manual via tag registrada](0008-rollback-manual-por-tag-registrada.md)
 - [0009 — Prune semanal de imagens Docker dangling](0009-prune-semanal-de-imagens-dangling.md)
 - [0010 — Criptografar o volume raiz EBS](0010-encriptar-volume-raiz-ebs.md)
+- [0011 — Terraform via import, sem Terragrunt](0011-terraform-import-sem-terragrunt.md)
