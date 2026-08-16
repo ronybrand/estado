@@ -87,6 +87,10 @@ logs aparecendo em Explore → Loki (filtrando por `container="estado-app"` etc.
 `alloy` — confirmar isso no output da instalação antes do `systemctl enable`, já que não validei esse
 passo numa instância real (SSH bloqueado nesta sessão, ver histórico da conversa).
 
+Depois de confirmado que os dados estão chegando: criar o alerta de 5xx na UI do Grafana Cloud
+(Alerting → New alert rule) com a query/limiar exatos documentados na
+[ADR 0012](../docs/adr/0012-grafana-cloud-alloy-observabilidade.md#decis%C3%A3o).
+
 Isso também significa que uma mudança feita direto no servidor por SSH, sem passar por aqui, faz este
 diretório divergir sem aviso. Pra conferir se ainda bate com a realidade:
 

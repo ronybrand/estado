@@ -34,9 +34,30 @@ publicar a mesma porta do host ao mesmo tempo. Resolvido descobrindo o IP intern
 dinamicamente via `discovery.docker` (mesmo mecanismo já usado pros logs) em vez de abrir porta nova —
 sobrevive a cada rolling swap sem reconfiguração.
 
-Alertas de limiar (disco/memória altos) são configurados manualmente na UI do Grafana Cloud (Grafana
-Alerting), não via Terraform — mesmo raciocínio de proporcionalidade do ADR 0011 pra não trazer mais
-um provider Terraform só pra 1-2 regras de alerta.
+Alertas de limiar (disco/memória altos, 5xx da app) são configurados manualmente na UI do Grafana
+Cloud (Grafana Alerting), não via Terraform — mesmo raciocínio de proporcionalidade do ADR 0011 pra
+não trazer mais um provider Terraform só pra 3-4 regras de alerta.
+
+**Especificação do alerta de 5xx** (a implementar na UI do Grafana Cloud assim que a conta existir —
+não dá pra automatizar isso daqui, ver ["Instalar o Grafana Alloy"](../../deploy/README.md#instalar-o-grafana-alloy-uma-vez)
+no `deploy/README.md`):
+
+```promql
+sum(increase(http_server_requests_seconds_count{application="estado", outcome="SERVER_ERROR"}[10m]))
+```
+- **Limiar**: `> 0` — qualquer 5xx dispara, não um percentual.
+- **Janela**: 10 minutos, avaliada a cada 1-2 min.
+- **Contact point**: e-mail (o mesmo já usado na assinatura do SNS/CloudTrail — ver ADR 0011).
+- **Por que valor absoluto, não `taxa de erro > 5%`** (o exemplo didático mais comum de alerta): com o
+  volume de tráfego desse app (uso pessoal/demonstração), 5% de uma janela de poucas dezenas de
+  requisições é 1 erro isolado — um alerta percentual dispararia por ruído estatístico, não por
+  problema real, e a resposta natural depois de alguns falsos positivos é passar a ignorar o alerta
+  (fadiga de alerta), o que é pior que não ter alerta nenhum.
+- **Por que só 5xx, não 4xx+5xx junto**: `outcome="CLIENT_ERROR"` (validação, tipo inválido, sigla
+  duplicada) é tráfego *esperado* pelo próprio design do `CustomGlobalExceptionHandler` — alertar
+  nisso dispara toda vez que alguém testa a API errado. `outcome="SERVER_ERROR"` só acontece no
+  handler catch-all de `Exception` — por desenho, deveria ser raríssimo, então qualquer ocorrência já
+  é um sinal real, sem precisar de limiar percentual pra ser confiável.
 
 Config versionada em `deploy/alloy/` (nível compartilhado da instância, ao lado de `deploy/proxy/` —
 não é um app específico do portfólio). Credenciais do Grafana Cloud num `.env` gitignorado na
@@ -77,3 +98,51 @@ instância, mesmo padrão do `POSTGRES_PASSWORD` (ver `deploy/README.md`).
 - Negativo aceito: volume de logs sem controle explícito de nível — se a aplicação for deixada em
   `DEBUG` por engano, o consumo da cota de 50GB/mês sobe rápido sem ninguém notar até estourar.
   Nenhuma salvaguarda automática hoje além de checar o uso manualmente na UI do Grafana Cloud.
+- Negativo aceito: alerta de 5xx sozinho não distingue causa — um `DataIntegrityViolationException`
+  isolado (que já é WARN, 400, não deveria nem chegar aqui) e uma falha real do catch-all disparam o
+  mesmo jeito. Pra esse volume/escala, correlacionar manualmente pelo log no momento em que o alerta
+  chega é suficiente; não justifica alertas separados por tipo de exceção.
+
+## Fora de escopo: o que uma aplicação real de produção precisaria além disso
+
+Registrado aqui pra não passar a impressão de que essa stack de observabilidade é "completa" fora do
+contexto de portfólio — o que seria proporcional numa aplicação real, com tráfego e time de verdade,
+e por que não faz sentido implementar aqui:
+
+- **Alertas correlacionados, não isolados** (RED: rate/errors/duration, ou USE: utilization/
+  saturation/errors) — combinar sinais (erro sobe *e* latência sobe *e* pool de conexão satura) em vez
+  de um limiar por métrica solto. Aqui, um único operador olhando um e-mail de vez em quando não
+  justifica essa sofisticação.
+- **Escalonamento/on-call de verdade** (PagerDuty, Opsgenie, rotação) — e-mail sozinho já é adequado
+  pra um operador único sem SLA com terceiros. Isso é sobre estrutura de time, não sobre a
+  aplicação.
+- **Alertas por orçamento de erro (SLO/error budget)** em vez de limiar estático — exige antes ter um
+  SLO definido e tráfego real o bastante pra ele significar algo; sem uso real, qualquer SLO aqui
+  seria número inventado.
+- **Runbook por alerta** (o que fazer quando dispara, não só que algo disparou) — vale a partir do
+  momento em que mais de uma pessoa responde a incidente; com um operador só, o contexto já está na
+  cabeça de quem vai olhar.
+- **Tracing distribuído** (OpenTelemetry/Tempo) — já descartado acima; ganha valor real quando existe
+  mais de um serviço se chamando. Aqui é uma app, um banco, sem chamada entre serviços.
+- **Log estruturado (JSON)** em vez do padrão texto atual (`%d %-5level [%X{requestId}] ...`) — LogQL
+  em campo JSON é mais preciso que regex sobre texto solto; vale a pena quando o volume de log
+  justifica automatizar parsing/alerta em cima dele, não pra consulta manual ocasional.
+- **Observabilidade de autenticação/autorização** — essa API não tem autenticação nenhuma hoje; uma
+  aplicação real precisaria de log de auditoria (quem fez o quê) e métricas de tentativa de acesso
+  negado, que simplesmente não existem aqui porque o conceito de "usuário" não existe.
+- **Anotações de deploy no dashboard** (marcar quando uma versão nova subiu, pra correlacionar com
+  mudança de latência/erro) — o Grafana suporta nativamente, não configurado aqui; ganha valor com
+  deploys frequentes e múltiplas versões em produção ao mesmo tempo, não com o volume desse projeto.
+- **Baseline de carga real** — o P95/P99 habilitado nesta sessão é tecnicamente real, mas
+  estatisticamente pouco significativo sem tráfego de verdade; numa aplicação real, "normal" se
+  estabelece com uso de produção ao longo do tempo, não é assumido.
+- **Observabilidade da camada de dados** (slow query log do Postgres, `pg_stat_statements`) — hoje só
+  existe métrica de pool de conexão (Hikari), não da query em si; relevante quando o app tem consultas
+  complexas o bastante pra precisar identificar qual é lenta, não é o caso desse CRUD simples.
+- **Alerta de falha/atraso de backup** — o backup diário (ADR 0006) roda e loga, mas nada verifica
+  proativamente se ele falhou ou atrasou; numa aplicação real com dado que importa de verdade, isso
+  seria um alerta, não uma checagem manual ocasional.
+- **Guarda-corpo de custo de observabilidade** (sampling, ajuste de nível por ambiente) — irrelevante
+  na escala/cardinalidade desse projeto (bem abaixo dos tetos do free tier), mas uma aplicação real
+  precisa ativamente evitar que cardinalidade de métrica ou volume de log cresçam sem controle e
+  virem custo real.
