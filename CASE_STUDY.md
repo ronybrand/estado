@@ -210,3 +210,8 @@ propósito, não só configurados: um 500 real e seguro disparado contra produç
 PromQL sobre uma métrica sem nenhuma ocorrência retorna vazio, não zero — o alerta estava notificando
 sempre que **não** havia erro, o oposto do desejado. Corrigido (`Alert state if no data` de `NoData`
 pra `OK`) e revalidado disparando o mesmo 500 de novo antes de considerar fechado.
+
+Um dashboard único (`estado — visão geral`) consolida os sinais que antes só davam pra ver um de cada
+vez no Explore: latência P95, taxa de erro 5xx, CPU, disco e conexões ativas do pool Hikari — com as
+anotações de deploy/rollback já aparecendo como marcador vertical em cada painel de série temporal,
+sem configuração extra.
