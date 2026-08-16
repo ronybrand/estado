@@ -13,7 +13,7 @@ api:
   origin-permitida: ${API_ORIGIN_PERMITIDA:http://localhost:8000}
 logging:
   pattern:
-    console: "%d %-5level %logger : %msg%n"
+    console: "%d %-5level [%X{requestId}] %logger : %msg%n"
   level:
     org.springframework: info
 server:
