@@ -25,7 +25,7 @@ swap_to() {
         "$image" >/dev/null
     docker network connect portfolio "$NEXT"
 
-    if docker run --rm --network portfolio curlimages/curl:latest sh -c "
+    if docker run --rm --network portfolio curlimages/curl:8.11.1 sh -c "
         for i in \$(seq 1 30); do
             curl -sf http://${NEXT}:8080/actuator/health >/dev/null 2>&1 && exit 0
             sleep 2
@@ -35,6 +35,7 @@ swap_to() {
         return 0
     fi
 
+    docker logs "$NEXT" --tail 50 2>&1 || true
     docker rm -f "$NEXT" >/dev/null 2>&1 || true
     return 1
 }

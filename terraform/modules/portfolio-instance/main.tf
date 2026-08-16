@@ -83,6 +83,11 @@ resource "aws_instance" "portfolio" {
 
   user_data_replace_on_change = false
 
+  metadata_options {
+    http_tokens   = "required"
+    http_endpoint = "enabled"
+  }
+
   tags = {
     Name = var.instance_name
   }

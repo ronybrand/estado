@@ -27,4 +27,8 @@ module "portfolio" {
 # fizer sentido reusar a EC2 - normalmente cada app novo do portfolio
 # gerencia seu proprio deploy dentro da instancia via Docker, nao precisa de
 # instance profile extra na maquina inteira a menos que precise de outro
-# recurso AWS proprio)
+# recurso AWS proprio.
+# ATENCAO: uma instancia EC2 aceita um unico instance profile - anexar dois
+# apps que precisem de recursos AWS proprios exige unificar as roles/policies
+# num profile so, nao dois modules "app-backup" apontando pro mesmo
+# instance_profile_name)
