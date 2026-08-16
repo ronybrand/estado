@@ -18,3 +18,19 @@ logging:
     org.springframework: info
 server:
   port: 8080 #set your port
+management:
+  endpoints:
+    web:
+      exposure:
+        # health ja era exposto por padrao (usado pelo lib-swap.sh no rolling
+        # swap) - prometheus adicionado, nao substitui.
+        include: health,prometheus
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  metrics:
+    tags:
+      # prepara pra quando outro app do portfolio reusar o mesmo Alloy/Grafana
+      # Cloud - sem isso, series de apps diferentes ficariam indistinguiveis.
+      application: estado

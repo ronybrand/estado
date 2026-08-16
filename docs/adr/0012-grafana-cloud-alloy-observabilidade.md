@@ -25,6 +25,15 @@ trade-off que o `ec2-user` já assume pros próprios scripts (grupo `docker` é 
 host); não é um problema novo introduzido aqui, só mais um processo operando com esse mesmo nível de
 acesso.
 
+**Extensão posterior**: métricas da própria aplicação (JVM, HTTP por endpoint/status, pool de conexão)
+via `/actuator/prometheus` (`micrometer-registry-prometheus`), coletadas com o mesmo Alloy. O container
+`estado-app` não publica a porta 8080 pro host de propósito (só vive nas redes Docker internas) —
+publicar quebraria o rolling swap sem downtime do [ADR 0005](0005-rolling-swap-sem-canario-blue-green.md):
+container antigo e novo coexistem por até 60s durante o health check, e dois containers não podem
+publicar a mesma porta do host ao mesmo tempo. Resolvido descobrindo o IP interno do container
+dinamicamente via `discovery.docker` (mesmo mecanismo já usado pros logs) em vez de abrir porta nova —
+sobrevive a cada rolling swap sem reconfiguração.
+
 Alertas de limiar (disco/memória altos) são configurados manualmente na UI do Grafana Cloud (Grafana
 Alerting), não via Terraform — mesmo raciocínio de proporcionalidade do ADR 0011 pra não trazer mais
 um provider Terraform só pra 1-2 regras de alerta.

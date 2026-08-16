@@ -64,6 +64,44 @@ discovery.relabel "containers" {
   }
 }
 
+// Metricas da app (JVM, HTTP por endpoint/status, pool de conexao) via
+// /actuator/prometheus. O container estado-app NAO publica a porta 8080 pro
+// host de proposito - so vive nas redes Docker internas (estado_internal,
+// portfolio) - porque publicar pro host quebraria o rolling swap sem downtime
+// (ADR 0005): container antigo e novo coexistem por ate 60s durante o health
+// check, e dois containers nao podem publicar a mesma porta do host ao mesmo
+// tempo. Em vez disso, descobre o IP interno do container dinamicamente via
+// Docker (mesmo mecanismo do discovery.docker acima) - sobrevive a cada
+// rolling swap sem reconfigurar nada, sem abrir porta nova.
+discovery.relabel "estado_app_metrics" {
+  targets = discovery.docker.containers.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "^/estado-app$"
+    action        = "keep"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_network_ip"]
+    regex         = "(.+)"
+    target_label  = "__address__"
+    replacement   = "${1}:8080"
+  }
+
+  rule {
+    target_label = "job"
+    replacement  = "estado-app"
+  }
+}
+
+prometheus.scrape "estado_app" {
+  scrape_interval = "60s"
+  metrics_path    = "/actuator/prometheus"
+  targets         = discovery.relabel.estado_app_metrics.output
+  forward_to      = [prometheus.remote_write.grafana_cloud.receiver]
+}
+
 loki.source.docker "containers" {
   host          = "unix:///var/run/docker.sock"
   targets       = discovery.relabel.containers.output
