@@ -62,6 +62,16 @@ sum(increase(http_server_requests_seconds_count{application="estado", outcome="S
   nisso dispara toda vez que alguém testa a API errado. `outcome="SERVER_ERROR"` só acontece no
   handler catch-all de `Exception` — por desenho, deveria ser raríssimo, então qualquer ocorrência já
   é um sinal real, sem precisar de limiar percentual pra ser confiável.
+- **Achado testando ao vivo (2026-08-16)**: `sum()` do PromQL sobre uma métrica que nunca teve nenhuma
+  ocorrência (nenhum 5xx desde que a app subiu) não retorna `0` — retorna **sem dado nenhum**. Com
+  "Alert state if no data" no padrão (`NoData`), isso disparava notificação toda vez que *não* havia
+  5xx (o estado bom), via um alerta sintético `DatasourceNoData` diferente do `estado-5xx` de verdade —
+  o oposto do que se queria. Corrigido setando esse campo pra **`OK`** (sem dado = tudo bem, silêncio).
+  Validado disparando um 500 de teste seguro (`DELETE /estado/<id-inexistente>`, aciona
+  `EntityNotFoundException` no `EstadoRepository.excluir` — não apaga nada real): antes da correção,
+  virava `DatasourceNoData`; depois, `alertname=estado-5xx` de verdade, com o valor real do
+  `increase()`. Essa mesma armadilha **não** se aplica ao alerta de backup abaixo — lá, "sem dado" é
+  literalmente a condição de alarme, então `NoData` continua correto.
 
 **Especificação do alerta de backup** (dead man's switch — dispara tanto se o backup falhar
 explicitamente quanto se o timer simplesmente parar de rodar, os dois casos que importam):
@@ -134,6 +144,12 @@ instância, mesmo padrão do `POSTGRES_PASSWORD` (ver `deploy/README.md`).
   host, métrica da app (IP dinâmico do container resolvido certo), log de container e log de systemd
   (`relabel_rules` do `loki.source.journal`, a única sintaxe não testada antes) todos confirmados
   chegando com dado real no Explore do Grafana Cloud. Nenhum ajuste de config foi necessário.
+- **Os dois alertas (5xx e backup) foram criados e o de 5xx validado disparando de verdade** (ver
+  achado do `NoData` acima). O de backup não foi testado ao vivo de propósito — exigiria desabilitar o
+  `estado-backup.timer` real pra forçar a ausência, risco desproporcional ao ganho de confiança pra
+  uma proteção que o projeto trata como a lacuna de maior risco (ADR 0006). Confiança vem por outra
+  via: a string exata logada por `backup.sh` (`"Backup enviado: ..."`) confirmada batendo com o filtro
+  da query, e a regra salva sem erro de sintaxe no Grafana.
 
 ## Fora de escopo: o que uma aplicação real de produção precisaria além disso
 

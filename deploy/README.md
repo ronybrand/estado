@@ -106,9 +106,16 @@ com o label `unit` populado corretamente) confirmados aparecendo no Explore do G
 real. O `relabel_rules` do `loki.source.journal` (a única sintaxe não testada antes) funcionou sem
 ajuste.
 
-Depois de confirmado que os dados estão chegando: criar o alerta de 5xx na UI do Grafana Cloud
-(Alerting → New alert rule) com a query/limiar exatos documentados na
-[ADR 0012](../docs/adr/0012-grafana-cloud-alloy-observabilidade.md#decis%C3%A3o).
+**Alertas criados e validados** (2026-08-16) — os dois de `estado-5xx` e `estado-backup-ausente`, spec
+completa na [ADR 0012](../docs/adr/0012-grafana-cloud-alloy-observabilidade.md#decis%C3%A3o). Achado
+na validação: "Alert state if no data" precisa ser `OK` no alerta de 5xx (não o padrão `NoData`) —
+`sum()` sobre uma métrica sem nenhuma ocorrência retorna vazio, não zero, e com `NoData` isso
+disparava notificação todo santo minuto sem 5xx nenhum acontecer.
+
+Preencher `deploy/estado/.env` com `GRAFANA_CLOUD_URL`/`GRAFANA_CLOUD_ANNOTATIONS_TOKEN` (Service
+Account token do Grafana, papel Editor, escopo diferente do token de métrica/log) ativa a anotação de
+deploy — feito via `sudo tee -a /home/ec2-user/estado/.env` (caminho absoluto, não `~`, se o acesso
+for por SSM — usuário `ssm-user` não tem permissão de escrita no `.env` do `ec2-user` sem `sudo`).
 
 Isso também significa que uma mudança feita direto no servidor por SSH, sem passar por aqui, faz este
 diretório divergir sem aviso. Pra conferir se ainda bate com a realidade:
