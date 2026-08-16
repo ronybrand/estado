@@ -18,12 +18,16 @@ cartão) + [Grafana Alloy](https://grafana.com/docs/alloy/) rodando na instânci
   `remote_write`.
 - Logs dos containers Docker (`estado-app`, `postgres`, `caddy`) via `loki.source.docker`, lendo
   direto do socket do Docker, empurrados via `loki.write`.
+- Logs das units systemd que rodam no host, fora de container (`estado-backup.service`,
+  `estado-deploy.service`, `estado-prune.service`) via `loki.source.journal`, filtrado só por essas
+  três (não o journal inteiro do host — kernel/sshd/cloud-init seriam ruído).
 
 Ambos direto pro Grafana Cloud — sem passar pelo CloudWatch nem por qualquer API da AWS. O usuário de
 sistema `alloy` (criado pelo pacote) precisa estar no grupo `docker` pra ler o socket — mesmo
 trade-off que o `ec2-user` já assume pros próprios scripts (grupo `docker` é root-equivalente no
 host); não é um problema novo introduzido aqui, só mais um processo operando com esse mesmo nível de
-acesso.
+acesso. Pro journal, o grupo é `systemd-journal` — bem mais restrito (só leitura de log), risco novo
+praticamente nenhum.
 
 **Extensão posterior**: métricas da própria aplicação (JVM, HTTP por endpoint/status, pool de conexão)
 via `/actuator/prometheus` (`micrometer-registry-prometheus`), coletadas com o mesmo Alloy. O container
@@ -58,6 +62,28 @@ sum(increase(http_server_requests_seconds_count{application="estado", outcome="S
   nisso dispara toda vez que alguém testa a API errado. `outcome="SERVER_ERROR"` só acontece no
   handler catch-all de `Exception` — por desenho, deveria ser raríssimo, então qualquer ocorrência já
   é um sinal real, sem precisar de limiar percentual pra ser confiável.
+
+**Especificação do alerta de backup** (dead man's switch — dispara tanto se o backup falhar
+explicitamente quanto se o timer simplesmente parar de rodar, os dois casos que importam):
+
+```logql
+sum(count_over_time({job="integrations/systemd-journal", unit="estado-backup.service"} |= "Backup enviado" [26h]))
+```
+- **Limiar**: `== 0` (ou `< 1`) — a linha de sucesso (`backup.sh`, ver ADR 0006) não apareceu numa
+  janela de 26h, folga sobre o `RandomizedDelaySec=600` do timer diário. Cobre falha explícita
+  (`backup.sh` sai com erro antes de logar sucesso) e falha silenciosa (timer desabilitado, instância
+  não ligou no horário sem o `Persistent=true` conseguir recuperar) com uma query só.
+- **Avaliação**: a cada 30-60min é suficiente — não é uma condição que muda rápido.
+
+**Anotação de deploy/rollback**: `deploy.sh`/`rollback.sh` mandam uma anotação pra API do Grafana
+(`POST /api/annotations`) depois de um swap bem-sucedido, marcando exatamente quando uma versão nova
+subiu — pra correlacionar visualmente com mudança de latência/erro no dashboard sem cruzar manualmente
+o histórico do GHCR/GitHub Actions com o horário no Grafana. Melhor esforço de propósito
+(`annotate_deploy()` em `lib-swap.sh`): credencial ausente ou Grafana fora do ar nunca falham o
+deploy, a anotação não faz parte do caminho crítico do swap. Credencial (`GRAFANA_CLOUD_ANNOTATIONS_TOKEN`,
+Service Account token, escopo diferente do usado pra métrica/log) fica em `deploy/estado/.env`, não em
+`deploy/alloy/.env` — mora onde o script que a consome já lê o ambiente, mesmo que conceitualmente seja
+"observabilidade".
 
 Config versionada em `deploy/alloy/` (nível compartilhado da instância, ao lado de `deploy/proxy/` —
 não é um app específico do portfólio). Credenciais do Grafana Cloud num `.env` gitignorado na
@@ -102,6 +128,10 @@ instância, mesmo padrão do `POSTGRES_PASSWORD` (ver `deploy/README.md`).
   isolado (que já é WARN, 400, não deveria nem chegar aqui) e uma falha real do catch-all disparam o
   mesmo jeito. Pra esse volume/escala, correlacionar manualmente pelo log no momento em que o alerta
   chega é suficiente; não justifica alertas separados por tipo de exceção.
+- Negativo aceito: sintaxe do `loki.source.journal`/`relabel_rules` (filtro por unit systemd) não foi
+  validada contra uma instância real nesta sessão (SSH bloqueado) — mesma ressalva já aceita pro resto
+  do `config.alloy`, conferir `journalctl -u alloy` na primeira instalação antes de confiar no alerta
+  de backup.
 
 ## Fora de escopo: o que uma aplicação real de produção precisaria além disso
 
@@ -130,18 +160,12 @@ e por que não faz sentido implementar aqui:
 - **Observabilidade de autenticação/autorização** — essa API não tem autenticação nenhuma hoje; uma
   aplicação real precisaria de log de auditoria (quem fez o quê) e métricas de tentativa de acesso
   negado, que simplesmente não existem aqui porque o conceito de "usuário" não existe.
-- **Anotações de deploy no dashboard** (marcar quando uma versão nova subiu, pra correlacionar com
-  mudança de latência/erro) — o Grafana suporta nativamente, não configurado aqui; ganha valor com
-  deploys frequentes e múltiplas versões em produção ao mesmo tempo, não com o volume desse projeto.
 - **Baseline de carga real** — o P95/P99 habilitado nesta sessão é tecnicamente real, mas
   estatisticamente pouco significativo sem tráfego de verdade; numa aplicação real, "normal" se
   estabelece com uso de produção ao longo do tempo, não é assumido.
 - **Observabilidade da camada de dados** (slow query log do Postgres, `pg_stat_statements`) — hoje só
   existe métrica de pool de conexão (Hikari), não da query em si; relevante quando o app tem consultas
   complexas o bastante pra precisar identificar qual é lenta, não é o caso desse CRUD simples.
-- **Alerta de falha/atraso de backup** — o backup diário (ADR 0006) roda e loga, mas nada verifica
-  proativamente se ele falhou ou atrasou; numa aplicação real com dado que importa de verdade, isso
-  seria um alerta, não uma checagem manual ocasional.
 - **Guarda-corpo de custo de observabilidade** (sampling, ajuste de nível por ambiente) — irrelevante
   na escala/cardinalidade desse projeto (bem abaixo dos tetos do free tier), mas uma aplicação real
   precisa ativamente evitar que cardinalidade de métrica ou volume de log cresçam sem controle e

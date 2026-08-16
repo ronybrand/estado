@@ -51,3 +51,23 @@ promote() {
     docker rm -f "$CURRENT" >/dev/null 2>&1 || true
     docker rename "$NEXT" "$CURRENT"
 }
+
+# Marca no Grafana quando um deploy/rollback aconteceu, pra correlacionar
+# visualmente com mudanca de latencia/erro no dashboard (ver ADR 0012).
+# Melhor esforco de proposito: GRAFANA_CLOUD_URL/GRAFANA_CLOUD_ANNOTATIONS_TOKEN
+# nao configurados, ou Grafana fora do ar, nunca falham o deploy - a
+# anotacao e so uma conveniencia de observabilidade, nao faz parte do
+# caminho critico do swap.
+annotate_deploy() {
+    local texto="$1"
+    local tags="$2"
+
+    if [ -z "${GRAFANA_CLOUD_URL:-}" ] || [ -z "${GRAFANA_CLOUD_ANNOTATIONS_TOKEN:-}" ]; then
+        return 0
+    fi
+
+    curl -sf --max-time 5 -X POST "${GRAFANA_CLOUD_URL}/api/annotations" \
+        -H "Authorization: Bearer ${GRAFANA_CLOUD_ANNOTATIONS_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -d "{\"text\":\"${texto}\",\"tags\":${tags}}" >/dev/null 2>&1 || true
+}

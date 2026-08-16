@@ -67,6 +67,7 @@ ssh -i ~/.ssh/estado-key.pem ec2-user@54.94.231.248 '
   sudo mv /tmp/config.alloy /etc/alloy/config.alloy &&
   mkdir -p ~/alloy && mv /tmp/.env ~/alloy/.env && chmod 600 ~/alloy/.env &&
   sudo usermod -aG docker alloy &&
+  sudo usermod -aG systemd-journal alloy &&
   sudo mkdir -p /etc/systemd/system/alloy.service.d &&
   echo -e "[Service]\nEnvironmentFile=/home/ec2-user/alloy/.env" | sudo tee /etc/systemd/system/alloy.service.d/override.conf &&
   sudo systemctl daemon-reload &&
@@ -76,13 +77,18 @@ ssh -i ~/.ssh/estado-key.pem ec2-user@54.94.231.248 '
 ```
 
 `usermod -aG docker alloy` é o que dá ao agente permissão de ler `/var/run/docker.sock` pra coletar
-logs dos containers (`loki.source.docker`) — sem isso, essa parte falha silenciosamente. Mudança de
-grupo só é aplicada em processos novos, por isso o `usermod` precisa vir antes do primeiro
-`systemctl enable --now`, não depois.
+logs dos containers (`loki.source.docker`) — sem isso, essa parte falha silenciosamente.
+`usermod -aG systemd-journal alloy` é o equivalente pro journal do systemd (`loki.source.journal`,
+usado pelos logs de `backup.sh`/`deploy.sh`/`prune.sh`, que rodam no host, não em container) — bem
+mais restrito que o grupo `docker`, só leitura do journal. Mudança de grupo só é aplicada em processos
+novos, por isso os dois `usermod` precisam vir antes do primeiro `systemctl enable --now`, não depois.
 
 Validar: `journalctl -u alloy -n 50 --no-pager` sem erro de autenticação/conexão/permissão no socket,
-métricas aparecendo em Grafana Cloud → Explore (filtrando por `job="integrations/node_exporter"`), e
-logs aparecendo em Explore → Loki (filtrando por `container="estado-app"` etc.). O comando
+métricas aparecendo em Grafana Cloud → Explore (filtrando por `job="integrations/node_exporter"`),
+logs de container aparecendo em Explore → Loki (filtrando por `container="estado-app"` etc.), e logs
+das units systemd aparecendo filtrando por `job="integrations/systemd-journal"` (confirmar que o
+`unit` label existe e bate com `estado-backup.service` etc. — sintaxe do `relabel_rules` não validada
+contra uma instância real nesta sessão). O comando
 `dnf install alloy` acima assume que o pacote cria o unit em `/etc/alloy/config.alloy` e usuário/grupo
 `alloy` — confirmar isso no output da instalação antes do `systemctl enable`, já que não validei esse
 passo numa instância real (SSH bloqueado nesta sessão, ver histórico da conversa).

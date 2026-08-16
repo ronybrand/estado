@@ -41,6 +41,9 @@ if swap_to "$IMAGE"; then
         echo "$PREVIOUS_TAG" > last-good-tag
         echo "Tag anterior registrada em last-good-tag: $PREVIOUS_TAG"
     fi
+
+    NEW_TAG="$(image_revision "$NEW_ID")"
+    annotate_deploy "Deploy: estado-app -> ${NEW_TAG:-$NEW_ID}" '["deploy","estado"]'
 else
     echo "Health check falhou, mantendo versao anterior no ar." >&2
     exit 1

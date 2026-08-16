@@ -109,6 +109,33 @@ loki.source.docker "containers" {
   forward_to    = [loki.write.grafana_cloud.receiver]
 }
 
+// backup.sh/deploy.sh/prune.sh rodam via systemd direto no host, nao em
+// container - loki.source.docker acima nao ve esses logs. Filtrado so pras 3
+// units que interessam (nao o journal inteiro do host: kernel/sshd/cloud-init
+// seriam ruido). Sintaxe do relabel_rules nao validada contra uma instancia
+// real (SSH bloqueado nesta sessao) - conferir via `journalctl -u alloy`
+// depois de instalado, mesma ressalva do resto deste arquivo.
+discovery.relabel "systemd_units" {
+  targets = []
+
+  rule {
+    source_labels = ["__journal__systemd_unit"]
+    regex         = "estado-(backup|deploy|prune)\\.service"
+    action        = "keep"
+  }
+
+  rule {
+    source_labels = ["__journal__systemd_unit"]
+    target_label  = "unit"
+  }
+}
+
+loki.source.journal "systemd_units" {
+  relabel_rules = discovery.relabel.systemd_units.rules
+  labels        = {job = "integrations/systemd-journal"}
+  forward_to    = [loki.write.grafana_cloud.receiver]
+}
+
 loki.write "grafana_cloud" {
   endpoint {
     url = sys.env("GRAFANA_CLOUD_LOKI_URL")
