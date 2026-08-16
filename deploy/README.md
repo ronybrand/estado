@@ -6,6 +6,16 @@ são gerenciados por Terraform em [`../terraform/`](../terraform/) — este dire
 dentro da instância, que o Terraform não gerencia de propósito (ver
 [ADR 0011](../docs/adr/0011-terraform-import-sem-terragrunt.md)).
 
+**Acesso à instância**: SSH restrito por IP (`admin_cidr` no Terraform — precisa reaplicar toda vez
+que o IP do administrador mudar) é o caminho principal, usado pros comandos `scp`/`ssh` abaixo. Como
+alternativa que não depende de IP nenhum (útil em rede móvel, que às vezes bloqueia a porta 22 de
+saída), a instância também aceita **AWS Systems Manager Session Manager**
+(`aws ssm start-session --target i-07cffc5ce75898ad0 --region sa-east-1`, requer o
+[Session Manager Plugin](https://s3.amazonaws.com/session-manager-downloads/plugin/latest/windows/SessionManagerPluginSetup.exe)
+instalado localmente) — login como `ssm-user`, não `ec2-user`, o que muda caminhos tipo
+`~/alloy/.env`. `scp` não funciona por SSM; nesse caso, criar arquivo via heredoc
+(`cat > arquivo << 'EOF' ... EOF`) direto na sessão.
+
 ## Layout
 
 | Neste repo | Na instância | O que é |
@@ -76,6 +86,11 @@ ssh -i ~/.ssh/estado-key.pem ec2-user@54.94.231.248 '
 '
 ```
 
+Se o acesso for via SSM em vez de SSH, o usuário logado é `ssm-user`, não `ec2-user` — o
+`EnvironmentFile` no override precisa apontar pra `/home/ssm-user/alloy/.env` nesse caso (confirmar
+com `pwd`/`whoami` na sessão antes de escrever o override, os dois caminhos coexistem sem problema
+dependendo de por onde a instalação foi feita).
+
 `usermod -aG docker alloy` é o que dá ao agente permissão de ler `/var/run/docker.sock` pra coletar
 logs dos containers (`loki.source.docker`) — sem isso, essa parte falha silenciosamente.
 `usermod -aG systemd-journal alloy` é o equivalente pro journal do systemd (`loki.source.journal`,
@@ -83,15 +98,13 @@ usado pelos logs de `backup.sh`/`deploy.sh`/`prune.sh`, que rodam no host, não 
 mais restrito que o grupo `docker`, só leitura do journal. Mudança de grupo só é aplicada em processos
 novos, por isso os dois `usermod` precisam vir antes do primeiro `systemctl enable --now`, não depois.
 
-Validar: `journalctl -u alloy -n 50 --no-pager` sem erro de autenticação/conexão/permissão no socket,
-métricas aparecendo em Grafana Cloud → Explore (filtrando por `job="integrations/node_exporter"`),
-logs de container aparecendo em Explore → Loki (filtrando por `container="estado-app"` etc.), e logs
-das units systemd aparecendo filtrando por `job="integrations/systemd-journal"` (confirmar que o
-`unit` label existe e bate com `estado-backup.service` etc. — sintaxe do `relabel_rules` não validada
-contra uma instância real nesta sessão). O comando
-`dnf install alloy` acima assume que o pacote cria o unit em `/etc/alloy/config.alloy` e usuário/grupo
-`alloy` — confirmar isso no output da instalação antes do `systemctl enable`, já que não validei esse
-passo numa instância real (SSH bloqueado nesta sessão, ver histórico da conversa).
+**Validado de ponta a ponta em produção** (2026-08-16, via SSM): `journalctl -u alloy` sem nenhum erro
+de autenticação/conexão/permissão; métrica de host (`up{job="integrations/node_exporter"}`), métrica
+da app (`up{job="estado-app"}`, IP dinâmico do container resolvido certo via `discovery.docker`), log
+de container (`{container="estado-app"}`) e log de systemd (`{job="integrations/systemd-journal"}`,
+com o label `unit` populado corretamente) confirmados aparecendo no Explore do Grafana Cloud com dado
+real. O `relabel_rules` do `loki.source.journal` (a única sintaxe não testada antes) funcionou sem
+ajuste.
 
 Depois de confirmado que os dados estão chegando: criar o alerta de 5xx na UI do Grafana Cloud
 (Alerting → New alert rule) com a query/limiar exatos documentados na

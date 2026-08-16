@@ -128,10 +128,12 @@ instância, mesmo padrão do `POSTGRES_PASSWORD` (ver `deploy/README.md`).
   isolado (que já é WARN, 400, não deveria nem chegar aqui) e uma falha real do catch-all disparam o
   mesmo jeito. Pra esse volume/escala, correlacionar manualmente pelo log no momento em que o alerta
   chega é suficiente; não justifica alertas separados por tipo de exceção.
-- Negativo aceito: sintaxe do `loki.source.journal`/`relabel_rules` (filtro por unit systemd) não foi
-  validada contra uma instância real nesta sessão (SSH bloqueado) — mesma ressalva já aceita pro resto
-  do `config.alloy`, conferir `journalctl -u alloy` na primeira instalação antes de confiar no alerta
-  de backup.
+- **Validado em produção (2026-08-16)**: instalação feita via AWS SSM Session Manager (SSH bloqueado
+  por bloqueio de porta 22 da operadora móvel do administrador — motivou o [`terraform/ssm.tf`](../../terraform/ssm.tf),
+  ver ADR sobre acesso à instância no `deploy/README.md`). `journalctl -u alloy` sem erro; métrica de
+  host, métrica da app (IP dinâmico do container resolvido certo), log de container e log de systemd
+  (`relabel_rules` do `loki.source.journal`, a única sintaxe não testada antes) todos confirmados
+  chegando com dado real no Explore do Grafana Cloud. Nenhum ajuste de config foi necessário.
 
 ## Fora de escopo: o que uma aplicação real de produção precisaria além disso
 
