@@ -15,3 +15,4 @@ consequências (incluindo as que ficaram conscientemente sem mitigação).
 - [0009 — Prune semanal de imagens Docker dangling](0009-prune-semanal-de-imagens-dangling.md)
 - [0010 — Criptografar o volume raiz EBS](0010-encriptar-volume-raiz-ebs.md)
 - [0011 — Terraform via import, sem Terragrunt](0011-terraform-import-sem-terragrunt.md)
+- [0012 — Observabilidade via Grafana Cloud + Alloy, push direto sem custo AWS](0012-grafana-cloud-alloy-observabilidade.md)

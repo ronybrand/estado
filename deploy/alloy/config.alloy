@@ -1,0 +1,83 @@
+// Coleta metricas de host (disco, memoria, CPU) e logs dos containers Docker,
+// empurra direto pra Grafana Cloud via remote_write/loki.write - nenhuma
+// chamada a API da AWS, custo incremental na AWS fica em zero. Ver ADR 0012.
+//
+// Requer no ambiente (via EnvironmentFile do systemd, ver deploy/README.md):
+// GRAFANA_CLOUD_PROMETHEUS_URL, GRAFANA_CLOUD_INSTANCE_ID,
+// GRAFANA_CLOUD_LOKI_URL, GRAFANA_CLOUD_LOKI_INSTANCE_ID, GRAFANA_CLOUD_API_KEY
+//
+// O usuario "alloy" (criado pelo pacote) precisa estar no grupo "docker" pra
+// ler /var/run/docker.sock - ver deploy/README.md. Mesmo trade-off que o
+// ec2-user ja tem: grupo docker e root-equivalente no host.
+
+prometheus.exporter.unix "host" {
+  enable_collectors = ["meminfo", "filesystem", "cpu", "loadavg"]
+
+  filesystem {
+    fs_types_exclude     = "^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|tmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs)$"
+    mount_points_exclude = "^/(dev|proc|run/credentials/.+|sys|var/lib/docker/.+)($|/)"
+  }
+}
+
+discovery.relabel "host" {
+  targets = prometheus.exporter.unix.host.targets
+
+  rule {
+    target_label = "instance"
+    replacement  = "estado-portfolio"
+  }
+
+  rule {
+    target_label = "job"
+    replacement  = "integrations/node_exporter"
+  }
+}
+
+prometheus.scrape "host" {
+  scrape_interval = "60s"
+  targets         = discovery.relabel.host.output
+  forward_to      = [prometheus.remote_write.grafana_cloud.receiver]
+}
+
+prometheus.remote_write "grafana_cloud" {
+  endpoint {
+    url = sys.env("GRAFANA_CLOUD_PROMETHEUS_URL")
+
+    basic_auth {
+      username = sys.env("GRAFANA_CLOUD_INSTANCE_ID")
+      password = sys.env("GRAFANA_CLOUD_API_KEY")
+    }
+  }
+}
+
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+discovery.relabel "containers" {
+  targets = discovery.docker.containers.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+  }
+}
+
+loki.source.docker "containers" {
+  host          = "unix:///var/run/docker.sock"
+  targets       = discovery.relabel.containers.output
+  relabel_rules = discovery.relabel.containers.rules
+  forward_to    = [loki.write.grafana_cloud.receiver]
+}
+
+loki.write "grafana_cloud" {
+  endpoint {
+    url = sys.env("GRAFANA_CLOUD_LOKI_URL")
+
+    basic_auth {
+      username = sys.env("GRAFANA_CLOUD_LOKI_INSTANCE_ID")
+      password = sys.env("GRAFANA_CLOUD_API_KEY")
+    }
+  }
+}

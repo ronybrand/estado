@@ -110,6 +110,7 @@ o que foi descartado, e por quê.
 | [0009](docs/adr/0009-prune-semanal-de-imagens-dangling.md) | Prune semanal de imagens dangling | `docker system prune -a`, aumentar o volume |
 | [0010](docs/adr/0010-encriptar-volume-raiz-ebs.md) | Criptografar volume EBS raiz | Registrar como risco aceito |
 | [0011](docs/adr/0011-terraform-import-sem-terragrunt.md) | Terraform via import, state local | Recriar do zero, backend S3 desde o início, Terragrunt |
+| [0012](docs/adr/0012-grafana-cloud-alloy-observabilidade.md) | Grafana Cloud + Alloy, push direto | Datadog, CloudWatch Agent + SNS, Grafana lendo do CloudWatch, Prometheus self-hosted |
 
 ## Postura de confiabilidade: o que está coberto, o que é risco em aberto
 
@@ -130,6 +131,10 @@ revisor achar primeiro.
   Elastic IP, volumes EBS e instance ID. Monitoramento básico (gratuito), detecção em ~10min —
   validado com o alarme em estado `OK`, recebendo dados reais da instância. Ver
   [ADR 0007](docs/adr/0007-ec2-auto-recovery.md).
+- ✅ **Esgotamento de recurso dentro do SO (disco/memória)**: achado numa revisão red-team pós-
+  Terraform — nenhum alarme cobria isso, só falha de hardware (ver item anterior). Fechado com Grafana
+  Alloy publicando métricas de host pro Grafana Cloud, alertas configurados na própria UI do Grafana.
+  Ver [ADR 0012](docs/adr/0012-grafana-cloud-alloy-observabilidade.md).
 - ✅ **Crash espontâneo do container da app**: achado revisando o próprio ADR 0007 — o `deploy.sh`
   subia a app sem `--restart`, diferente do Postgres/Caddy. Corrigido com `unless-stopped` e
   validado matando o processo de dentro do container (não `docker kill`, que o Docker trata como
