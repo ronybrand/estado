@@ -12,3 +12,7 @@ buildNumber.properties
 .classpath
 .project
 .settings/
+
+# Segredo real nunca vai pro repo (POSTGRES_PASSWORD, tokens do Grafana Cloud
+# etc.) - so o .env.example, template sem valor real, fica versionado.
+.env
