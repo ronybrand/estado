@@ -1,6 +1,7 @@
 package br.com.rony.spring.boot.estado.error;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -69,10 +70,13 @@ public class CustomGlobalExceptionHandlerTest {
 	}
 
 	@Test
-	public void excecaoRegraNegocioRetorna400ComWarn() {
+	public void excecaoRegraNegocioRetorna400ComWarnEMensagemDeNegocio() {
+		// mensagem de ExcecaoRegraNegocio e autorada pelo codigo da app (ex:
+		// "Sigla ja cadastrada") - diferente de DataIntegrityViolationException,
+		// e seguro devolver ao cliente.
 		ExcecaoRegraNegocio ex = new ExcecaoRegraNegocio("sigla ja cadastrada");
 
-		ResponseEntity<ErrorResponseDto> resposta = handler.requisicaoInvalidaComAlerta(ex);
+		ResponseEntity<ErrorResponseDto> resposta = handler.regraDeNegocioViolada(ex);
 
 		assertEquals(HttpStatus.BAD_REQUEST, resposta.getStatusCode());
 		assertEquals("sigla ja cadastrada", resposta.getBody().message());
@@ -81,12 +85,20 @@ public class CustomGlobalExceptionHandlerTest {
 	}
 
 	@Test
-	public void dataIntegrityViolationRetorna400ComWarn() {
-		DataIntegrityViolationException ex = new DataIntegrityViolationException("constraint unica violada");
+	public void dataIntegrityViolationRetorna400ComWarnENaoVazaMensagemDoDriver() {
+		// achado validando end-to-end contra um Postgres real: getMessage() de
+		// DataIntegrityViolationException inclui o SQL bruto e o nome da
+		// constraint (ex: "could not execute statement [ERROR: duplicate key
+		// value violates unique constraint \"uniquenomeconstraint\"...") - nunca
+		// deveria ir pro cliente, mesma logica do handler catch-all.
+		DataIntegrityViolationException ex = new DataIntegrityViolationException(
+				"could not execute statement [ERROR: duplicate key value violates unique constraint \"uniquenomeconstraint\"]");
 
-		ResponseEntity<ErrorResponseDto> resposta = handler.requisicaoInvalidaComAlerta(ex);
+		ResponseEntity<ErrorResponseDto> resposta = handler.integridadeDeDadosViolada(ex);
 
 		assertEquals(HttpStatus.BAD_REQUEST, resposta.getStatusCode());
+		assertFalse(resposta.getBody().message().contains("uniquenomeconstraint"));
+		assertFalse(resposta.getBody().message().toLowerCase().contains("statement"));
 		assertEquals(1, logs.list.size());
 		assertEquals(Level.WARN, logs.list.get(0).getLevel());
 	}

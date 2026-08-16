@@ -18,6 +18,7 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
 
     private static final Logger log = LoggerFactory.getLogger(CustomGlobalExceptionHandler.class);
     private static final String MENSAGEM_ERRO_INTERNO = "Erro interno do servidor";
+    private static final String MENSAGEM_INTEGRIDADE_DADOS = "Dado duplicado ou restricao de integridade violada";
 
     // Erro esperado de input do cliente - tráfego normal, logar em WARN aqui
     // vira só ruído em produção real.
@@ -26,11 +27,21 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(corpo(ex.getMessage()));
     }
 
-    // Regra de negócio violada ou integridade de dado - vale o operador saber.
-    @ExceptionHandler({ExcecaoRegraNegocio.class, DataIntegrityViolationException.class})
-    public ResponseEntity<ErrorResponseDto> requisicaoInvalidaComAlerta(Exception ex) {
+    // Mensagem autorada pelo codigo da app (ex: "Sigla ja cadastrada") -
+    // diferente de excecoes de infraestrutura, e seguro devolver ao cliente.
+    @ExceptionHandler(ExcecaoRegraNegocio.class)
+    public ResponseEntity<ErrorResponseDto> regraDeNegocioViolada(ExcecaoRegraNegocio ex) {
         log.warn("Requisicao invalida ({}): {}", ex.getClass().getSimpleName(), ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(corpo(ex.getMessage()));
+    }
+
+    // getMessage() aqui vem do driver JDBC/Hibernate e inclui SQL bruto e nome
+    // de constraint (achado validando contra um Postgres real) - nunca vai pro
+    // cliente, so pro log. Mesmo cuidado do handler catch-all de Exception.
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponseDto> integridadeDeDadosViolada(DataIntegrityViolationException ex) {
+        log.warn("Requisicao invalida ({}): {}", ex.getClass().getSimpleName(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(corpo(MENSAGEM_INTEGRIDADE_DADOS));
     }
 
     // Catch-all: nada previsto chegou até aqui. Loga stack trace completo pra
