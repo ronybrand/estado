@@ -7,7 +7,8 @@ manualmente por SSH e sem histórico — ver Fase 3/6 do plano de deploy e
 [ADR 0004](../docs/adr/0004-deploy-pull-via-systemd-timer.md) /
 [ADR 0005](../docs/adr/0005-rolling-swap-sem-canario-blue-green.md) /
 [ADR 0006](../docs/adr/0006-backup-pg-dump-s3.md) /
-[ADR 0008](../docs/adr/0008-rollback-manual-por-tag-registrada.md).
+[ADR 0008](../docs/adr/0008-rollback-manual-por-tag-registrada.md) /
+[ADR 0009](../docs/adr/0009-prune-semanal-de-imagens-dangling.md).
 
 ## Importante: não há pipeline puxando o estado real da EC2 pra cá
 
@@ -39,10 +40,16 @@ de comparar com o servidor):
 - O health check real sobe um container `curlimages/curl` efêmero na rede `portfolio` e testa de
   fora (valida DNS/rede do Compose, não só "processo respondeu"), em vez de `docker exec` + `wget`
   de dentro do container — adotado o mecanismo real, já provado em produção.
-- Existe um `~/estado/Caddyfile` (`reverse_proxy app:8080`) esquecido no servidor — resquício de
-  antes da Fase 7, quando o Caddy ainda fazia parte do stack `~/estado/`. Não é usado por nada hoje
-  (o Caddy ativo é o de `~/proxy/`), não foi versionado aqui de propósito, e vale apagar do servidor
-  pra não confundir no futuro (`ssh ... rm ~/estado/Caddyfile`).
+- Existia um `~/estado/Caddyfile` (`reverse_proxy app:8080`) esquecido no servidor — resquício de
+  antes da Fase 7, quando o Caddy ainda fazia parte do stack `~/estado/`. Não era usado por nada (o
+  Caddy ativo é o de `~/proxy/`), não foi versionado aqui de propósito, e já foi apagado do servidor
+  na mesma sessão desta reconciliação.
+
+**Desde então** (mesma sessão, 2026-08-15): `deploy.sh`/`rollback.sh`/`lib-swap.sh`/`backup.sh`
+sincronizados de verdade na EC2 (não só reconciliados no repo) via `scp`, `estado-prune.timer`
+aplicado e habilitado no servidor (ADR 0009), e o mecanismo de rollback testado de ponta a ponta
+contra imagens reais do GHCR — ver ADR 0008. Este README descreve o layout atual; o histórico
+completo de validação fica nos commits, não repetido aqui.
 
 ## Layout
 
