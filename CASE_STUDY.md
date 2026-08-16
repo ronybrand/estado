@@ -107,6 +107,7 @@ o que foi descartado, e por quê.
 | [0006](docs/adr/0006-backup-pg-dump-s3.md) | pg_dump diário para S3, write-only | WAL archiving contínuo, RDS |
 | [0007](docs/adr/0007-ec2-auto-recovery.md) | Alarme CloudWatch + EC2 Auto Recovery | Multi-AZ com load balancer |
 | [0008](docs/adr/0008-rollback-manual-por-tag-registrada.md) | Rollback manual via tag registrada | Histórico de N tags, pipeline de rollback automático |
+| [0010](docs/adr/0010-encriptar-volume-raiz-ebs.md) | Criptografar volume EBS raiz | Registrar como risco aceito |
 
 ## Postura de confiabilidade: o que está coberto, o que é risco em aberto
 
@@ -135,6 +136,10 @@ revisor achar primeiro.
   regressão de lógica, só "processo de pé". `deploy.sh` grava a tag da versão substituída a cada
   troca; `rollback.sh` reaplica essa tag (ou uma explícita) com o mesmo swap com health check. Ver
   [ADR 0008](docs/adr/0008-rollback-manual-por-tag-registrada.md).
+- ✅ **Dado em repouso sem criptografia**: achado numa auditoria de inventário pro Terraform, não
+  numa ADR anterior — o volume EBS raiz nunca teve o flag ligado. Corrigido via snapshot → cópia
+  criptografada → troca do volume raiz, validado com a aplicação respondendo `200` depois do corte.
+  Ver [ADR 0010](docs/adr/0010-encriptar-volume-raiz-ebs.md).
 - ⚠️ **Falha de zona de disponibilidade inteira**: `t3.small` único, zona de disponibilidade única,
   sem load balancer. Um setup multi-AZ custaria mais por mês do que a instância inteira custa hoje
   — não se justifica nessa escala, deixado de fora por escolha, não por descuido.
