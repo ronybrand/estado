@@ -84,8 +84,16 @@ resource "aws_instance" "portfolio" {
   user_data_replace_on_change = false
 
   metadata_options {
-    http_tokens   = "required"
+    http_tokens = "required"
     http_endpoint = "enabled"
+    # Nenhum processo containerizado hoje precisa do IMDS (o unico consumidor
+    # de credenciais AWS e o backup.sh, que roda no host via systemd, nao em
+    # container) - hop 1 basta. O ecs-agent (unico processo que rodava em
+    # container e precisaria de hop 2) foi desativado, ver DEPLOY_AWS.md.
+    # Ver revisao red-team pos-import do Terraform: hop_limit 2 (herdado do
+    # import, nunca declarado aqui) dava a qualquer container - inclusive o
+    # da app, exposto a internet - alcance ao IMDS sem necessidade real.
+    http_put_response_hop_limit = 1
   }
 
   tags = {
