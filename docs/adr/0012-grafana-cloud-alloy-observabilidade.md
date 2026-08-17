@@ -111,15 +111,21 @@ Service Account token, escopo diferente do usado pra métrica/log) fica em `depl
 `deploy/alloy/.env` — mora onde o script que a consome já lê o ambiente, mesmo que conceitualmente seja
 "observabilidade".
 
-**Como recriar o Service Account** (necessário quando o token expirar — ver abaixo — ou se for
-revogado): no Grafana em si (`https://<stack>.grafana.net`, não o Cloud Portal onde ficam os tokens de
-métrica/log) → *Administration → Service accounts → New service account* → nome
-`estado-deploy-annotations` → papel **Editor** (não existe papel mais restrito só pra anotação) → *Add
-service account token* → **expiração entre 90 dias e 1 ano**, não "No expiry" (diferente do token do
-Alloy): esse token tem papel Editor no Grafana inteiro, escopo bem mais largo que
-`set:alloy-data-write`, e o custo de deixar expirar é baixo (a anotação para de aparecer, silenciosamente,
-sem quebrar o deploy — `annotate_deploy()` é best-effort de propósito) — a troca risco-vazamento vs.
-custo-de-expirar inverte a recomendação do token do Alloy. Copiar o valor gerado (só aparece uma vez)
+**Como renovar o token quando expirar** (caso comum — o Service Account em si não expira, só o
+token): no Grafana em si (`https://<stack>.grafana.net`, não o Cloud Portal onde ficam os tokens de
+métrica/log) → *Administration → Service accounts* → abrir o `estado-deploy-annotations` já existente
+→ *Add service account token* de novo (mesma entidade, não recria o Service Account nem escolhe o
+papel de novo) → **expiração entre 90 dias e 1 ano**, não "No expiry" (diferente do token do Alloy):
+esse token tem papel Editor no Grafana inteiro, escopo bem mais largo que `set:alloy-data-write`, e o
+custo de deixar expirar é baixo (a anotação para de aparecer, silenciosamente, sem quebrar o deploy —
+`annotate_deploy()` é best-effort de propósito) — a troca risco-vazamento vs. custo-de-expirar inverte
+a recomendação do token do Alloy.
+
+**Como recriar do zero** (só no caso raro do Service Account ter sido apagado, não só o token expirado):
+mesmo caminho acima, mas *New service account* → nome `estado-deploy-annotations` → papel **Editor**
+(não existe papel mais restrito só pra anotação) → depois *Add service account token* como acima.
+
+Em qualquer um dos dois casos, copiar o valor gerado (só aparece uma vez)
 pra `GRAFANA_CLOUD_ANNOTATIONS_TOKEN` em `~/estado/.env` na instância. `GRAFANA_CLOUD_URL` é a própria
 URL do Grafana usada no primeiro passo.
 
