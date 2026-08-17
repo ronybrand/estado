@@ -255,3 +255,11 @@ no bucket (o deploy faz `s3 sync --delete`, e sem isso um build quebrado apaga o
 sem volta — expira versões antigas em 30 dias pra não acumular custo), e **sem** access logging no
 bucket/CloudFront por enquanto — dado o escopo atual (portfolio pessoal, sem dado sensível de usuário
 no front estático), o custo de manter outro bucket de logs não paga o benefício ainda.
+
+**Bug real, achado no próprio deploy.yml**: o workflow foi commitado vazio por engano (erro de cópia
+entre worktrees) — o GitHub rejeitava o arquivo inteiro ("workflow file issue") em vez de simplesmente
+falhar um job, e isso só apareceu depois do push. Corrigido no commit seguinte, mas o problema de fundo
+era não ter nenhuma validação local de YAML de workflow. Fechado plugando `actionlint` (via Docker, pra
+não herdar a vulnerabilidade high sem fix do `adm-zip` que o único wrapper npm disponível trazia como
+dependência) no hook de pre-commit já existente (Husky + `lint-staged`) — um arquivo de workflow vazio
+ou malformado agora é pego antes do commit, não depois do push.
