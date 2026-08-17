@@ -14,3 +14,13 @@ variable "ami_id" {
   type        = string
   default     = "ami-064f44895dd6e892a"
 }
+
+variable "frontend_bucket_name" {
+  description = "Nome do bucket S3 que serve o build do Angular via CloudFront - precisa ser globalmente unico, ver ADR 0013"
+  type        = string
+}
+
+variable "frontend_github_repo" {
+  description = "Repo do GitHub do frontend Angular autorizado a assumir a role de deploy via OIDC, formato owner/repo"
+  type        = string
+}

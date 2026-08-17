@@ -84,7 +84,7 @@ resource "aws_instance" "portfolio" {
   user_data_replace_on_change = false
 
   metadata_options {
-    http_tokens = "required"
+    http_tokens   = "required"
     http_endpoint = "enabled"
     # Nenhum processo containerizado hoje precisa do IMDS (o unico consumidor
     # de credenciais AWS e o backup.sh, que roda no host via systemd, nao em

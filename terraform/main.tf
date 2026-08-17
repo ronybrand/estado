@@ -17,6 +17,23 @@ module "portfolio" {
   instance_profile_name = module.estado_backup.instance_profile_name
 }
 
+# Frontend Angular estatico (S3 + CloudFront) na frente do mesmo backend
+# EC2/Caddy - ver ADR 0013.
+module "estado_frontend" {
+  source = "./modules/frontend-static"
+
+  bucket_name       = var.frontend_bucket_name
+  api_origin_domain = "${module.portfolio.public_ip}.sslip.io"
+}
+
+module "estado_frontend_deploy" {
+  source = "./modules/github-oidc-deploy"
+
+  github_repo                 = var.frontend_github_repo
+  frontend_bucket_arn         = module.estado_frontend.bucket_arn
+  cloudfront_distribution_arn = "arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:distribution/${module.estado_frontend.distribution_id}"
+}
+
 # Pra adicionar um novo app de portfolio depois:
 #   module "outroapp_backup" {
 #     source      = "./modules/app-backup"

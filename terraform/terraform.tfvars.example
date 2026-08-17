@@ -1,3 +1,11 @@
 # Copiar para terraform.tfvars (gitignored - nunca commitar o IP real) e
 # preencher com o IP real do administrador, no formato x.x.x.x/32.
 admin_cidr = "0.0.0.0/32"
+
+# Nome de bucket S3 globalmente unico pro frontend estatico (ver ADR 0013) -
+# sugestao: "estado-frontend-<sufixo aleatorio>", igual ao bucket de backup.
+frontend_bucket_name = "estado-frontend-<sufixo>"
+
+# Repo do GitHub do frontend Angular, formato owner/repo - autorizado a
+# assumir a role de deploy via OIDC.
+frontend_github_repo = "<owner>/angular_estado"
