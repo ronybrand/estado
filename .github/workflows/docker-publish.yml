@@ -9,7 +9,17 @@ on:
 
 jobs:
   build-and-push:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    # workflow_run inclui PRs de fora (inclusive forks), ja que o CI roda em
+    # pull_request - so builda/publica se o CI que passou foi disparado por um
+    # push (codigo ja mergeado em master), nunca pelo head de um PR nao
+    # confiavel. Sem isso, um PR malicioso poderia fazer o build usar seu
+    # proprio head_sha e publicar imagem sua em ghcr.io com o GITHUB_TOKEN
+    # (packages: write) deste job.
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
     permissions:
       contents: read
