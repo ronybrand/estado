@@ -1,6 +1,7 @@
 # Case study: migrando pra Java 25 / Spring Boot 4.1 e colocando no ar na AWS
 
-**Live**: https://54.94.231.248.sslip.io/ · **ADRs**: [`docs/adr/`](docs/adr/)
+**Live**: https://d3bqbg07tehy1h.cloudfront.net/ (frontend) · API em
+https://54.94.231.248.sslip.io/estado · **ADRs**: [`docs/adr/`](docs/adr/)
 
 Uma API CRUD de unidades federativas do Brasil, parada desde 2018 em Java 8 e Spring Boot
 2.0.5.RELEASE, atualizada pra Java 25 e Spring Boot 4.1, e colocada no ar na AWS a partir de uma
@@ -111,6 +112,7 @@ o que foi descartado, e por quê.
 | [0010](docs/adr/0010-encriptar-volume-raiz-ebs.md) | Criptografar volume EBS raiz | Registrar como risco aceito |
 | [0011](docs/adr/0011-terraform-import-sem-terragrunt.md) | Terraform via import, state local | Recriar do zero, backend S3 desde o início, Terragrunt |
 | [0012](docs/adr/0012-grafana-cloud-alloy-observabilidade.md) | Grafana Cloud + Alloy, push direto | Datadog, CloudWatch Agent + SNS, Grafana lendo do CloudWatch, Prometheus self-hosted |
+| [0013](docs/adr/0013-frontend-s3-cloudfront.md) | Frontend em S3 + CloudFront, saindo do Spring Boot | Manter servindo pelo Spring Boot, S3 website hosting público, domínio próprio desde já |
 
 ## Postura de confiabilidade: o que está coberto, o que é risco em aberto
 
@@ -158,6 +160,10 @@ revisor achar primeiro.
 - ⚠️ **Falha de zona de disponibilidade inteira**: `t3.small` único, zona de disponibilidade única,
   sem load balancer. Um setup multi-AZ custaria mais por mês do que a instância inteira custa hoje
   — não se justifica nessa escala, deixado de fora por escolha, não por descuido.
+- ✅ **Credencial de deploy do frontend vazando ou sendo mal-usada**: sem access key estática na
+  conta — a role assumida pelo GitHub Actions via OIDC só é confiável a partir do branch `master` do
+  repo do front, e só tem permissão pra sincronizar aquele bucket específico e invalidar aquela
+  distribution. Ver [ADR 0013](docs/adr/0013-frontend-s3-cloudfront.md).
 
 ## De clicado pra revisável: terraformando a infra existente
 
@@ -215,3 +221,37 @@ Um dashboard único (`estado — visão geral`) consolida os sinais que antes s�
 vez no Explore: latência P95, taxa de erro 5xx, CPU, disco e conexões ativas do pool Hikari — com as
 anotações de deploy/rollback já aparecendo como marcador vertical em cada painel de série temporal,
 sem configuração extra.
+
+## De monólito a desacoplado: frontend em CDN próprio
+
+Até aqui o build do Angular vivia commitado em `src/main/resources/static/` e viajava dentro da
+mesma imagem Docker do backend — todo release do front exigia rebuild/republish do jar. Movido pra
+S3 + CloudFront ([ADR 0013](docs/adr/0013-frontend-s3-cloudfront.md)): bucket privado (Origin Access
+Control, sem website hosting público) atrás de uma distribution que também roteia `/api/*` pro mesmo
+backend EC2/Caddy de sempre — preserva a suposição de mesma-origem que `environment.prod.ts` já fazia
+(`apiUrl: '/api'`), sem reescrever a app nem introduzir CORS cross-origin de verdade. Deploy próprio
+via GitHub Actions, autenticado por OIDC (sem access key estática na conta), restrito ao branch
+`master` do repo do front.
+
+**Bug real, achado antes de qualquer usuário perceber**: a primeira versão da distribution usava a
+policy gerenciada `AllViewer` no comportamento `/api/*`, que encaminha todos os headers do viewer —
+inclusive `Host`. O Caddy do backend roteia por virtualhost no domínio `sslip.io`
+([ADR 0003](docs/adr/0003-sslip-io-vs-dominio-proprio.md)); recebendo `Host: xxxx.cloudfront.net` em
+vez do domínio esperado, o proxy simplesmente não reconheceria o site. Trocado pra
+`AllViewerExceptHostHeader` — o CloudFront sobrescreve o `Host` pro domínio do origin antes de
+enviar, mantendo o Caddyfile intocado. Confirmado direto na API do CloudFront (`aws cloudfront
+get-distribution`), não só pelo comportamento HTTP — e reconferido com `terraform plan` mostrando
+`No changes` contra a infra real depois do fix.
+
+Fallback de rota do Angular Router (client-side, sem SSR) resolvido com uma CloudFront Function em
+`viewer-request`, não com `custom_error_response`: esse bloco é global pra distribution inteira, então
+também interceptaria 403/404 legítimos vindos do origin `/api/*` (um endpoint inexistente, ou o
+Spring Security barrando algo) e os disfarçaria como `200` com HTML no lugar do JSON de erro real. A
+function fica amarrada só ao `default_cache_behavior` (origin S3), então nunca roda pra chamadas de
+API.
+
+Duas escolhas conscientes ficam registradas como trade-off, não como lacuna: versionamento habilitado
+no bucket (o deploy faz `s3 sync --delete`, e sem isso um build quebrado apaga os objetos anteriores
+sem volta — expira versões antigas em 30 dias pra não acumular custo), e **sem** access logging no
+bucket/CloudFront por enquanto — dado o escopo atual (portfolio pessoal, sem dado sensível de usuário
+no front estático), o custo de manter outro bucket de logs não paga o benefício ainda.

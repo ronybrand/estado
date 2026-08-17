@@ -3,10 +3,12 @@ Projeto CRUD de unidades federativas do Brasil (estados).
 
 O Projeto Estado trata-se de um sistema sob arquitetura Java 25/Spring Boot 4, configuração de dependência em Maven e banco de dados PostgreSQL para disponibilização de um serviço HTTP. O front-end (Angular, repo `angular_estado` separado) é servido estático via S3 + CloudFront, com a API acessível em `/api/*` sob o mesmo domínio (ver ADR 0013).
 
-**No ar**: https://54.94.231.248.sslip.io/ — deploy próprio na AWS (EC2 + Docker + Caddy), com CI/CD,
-backup automático e recuperação de falhas. Infra provisionada via Terraform (importada da conta real,
-não escrita do zero — ver [`terraform/`](terraform/)). A história completa da migração e do deploy,
-incluindo os bugs encontrados em produção e as decisões de arquitetura, está em
+**No ar**: https://d3bqbg07tehy1h.cloudfront.net/ (frontend, S3 + CloudFront) · API em
+https://54.94.231.248.sslip.io/estado (acessível também via `/api/estado` sob o mesmo domínio do
+CloudFront) — deploy próprio na AWS (EC2 + Docker + Caddy pro backend, S3 + CloudFront pro frontend),
+com CI/CD, backup automático e recuperação de falhas. Infra provisionada via Terraform (importada da
+conta real, não escrita do zero — ver [`terraform/`](terraform/)). A história completa da migração e
+do deploy, incluindo os bugs encontrados em produção e as decisões de arquitetura, está em
 [`CASE_STUDY.md`](CASE_STUDY.md) e em [`docs/adr/`](docs/adr/).
 
 ## Funcionalidades:
@@ -57,9 +59,11 @@ Após importar, aparecerão os seguintes testes, favor rodá-los na ordem da ima
 ![Executar testes](https://github.com/ronybrand/estado/blob/feature/estado/sequencia%20de%20execu%C3%A7%C3%A3o%20de%20teste%20no%20postman.png)
 
 # 3 - Navegador - Local
-http://localhost:8080/ (interface Angular)
-
 A API fica em http://localhost:8080/estado
+
+A interface Angular não roda mais embutida neste jar (ver ADR 0013) — está no repo separado
+[`angular_estado`](https://github.com/ronybrand/angular_estado), rodada localmente com `npm start`
+(`http://localhost:4200/`, com proxy pra `/api` -> este backend).
 
 # 4 - Docker
 Também dá pra buildar e rodar via container, sem instalar Maven/JDK localmente:
@@ -71,4 +75,5 @@ A imagem publicada em produção fica em `ghcr.io/ronybrand/estado` (publicada a
 cada push na `master`, ver [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml)).
 
 # 5 - Produção
-https://54.94.231.248.sslip.io/ — detalhes do deploy em [`CASE_STUDY.md`](CASE_STUDY.md).
+https://d3bqbg07tehy1h.cloudfront.net/ (frontend) — API em https://54.94.231.248.sslip.io/estado ou
+via `/api/estado` no mesmo domínio do CloudFront. Detalhes do deploy em [`CASE_STUDY.md`](CASE_STUDY.md).
