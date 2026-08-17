@@ -66,8 +66,12 @@ resource "aws_s3_bucket_lifecycle_configuration" "frontend" {
 
 # Bucket dedicado aos access logs do CloudFront (ver ADR 0013: era um
 # trade-off consciente de escopo, nao um esquecimento - habilitado agora que
-# o custo/complexidade de manter e baixo). ACL de escrita para o log
-# delivery do CloudFront e concedida via bucket policy, nao ACL legada.
+# o custo/complexidade de manter e baixo). O logging_config classico do
+# CloudFront (distinto do "Standard Logging v2" mais novo, que usa outro
+# mecanismo) so entrega logs via ACL - exige "log-delivery-write" no bucket,
+# nao aceita bucket policy no lugar disso. Por isso ownership_controls
+# BucketOwnerPreferred (nao BucketOwnerEnforced, que desabilita ACL por
+# completo) + a ACL canned abaixo, em vez do padrao do resto do modulo.
 resource "aws_s3_bucket" "frontend_logs" {
   bucket = "${var.bucket_name}-logs"
 
@@ -84,6 +88,24 @@ resource "aws_s3_bucket_public_access_block" "frontend_logs" {
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_ownership_controls" "frontend_logs" {
+  bucket = aws_s3_bucket.frontend_logs.id
+
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
+resource "aws_s3_bucket_acl" "frontend_logs" {
+  bucket = aws_s3_bucket.frontend_logs.id
+  acl    = "log-delivery-write"
+
+  depends_on = [
+    aws_s3_bucket_ownership_controls.frontend_logs,
+    aws_s3_bucket_public_access_block.frontend_logs,
+  ]
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "frontend_logs" {
@@ -109,31 +131,6 @@ resource "aws_s3_bucket_lifecycle_configuration" "frontend_logs" {
       days = 90
     }
   }
-}
-
-data "aws_iam_policy_document" "frontend_logs_bucket_policy" {
-  statement {
-    sid       = "AllowCloudFrontLogDelivery"
-    effect    = "Allow"
-    actions   = ["s3:PutObject"]
-    resources = ["${aws_s3_bucket.frontend_logs.arn}/*"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["delivery.logs.amazonaws.com"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "s3:x-amz-acl"
-      values   = ["bucket-owner-full-control"]
-    }
-  }
-}
-
-resource "aws_s3_bucket_policy" "frontend_logs" {
-  bucket = aws_s3_bucket.frontend_logs.id
-  policy = data.aws_iam_policy_document.frontend_logs_bucket_policy.json
 }
 
 # Cabecalhos de seguranca amarrados so ao default_cache_behavior (origin

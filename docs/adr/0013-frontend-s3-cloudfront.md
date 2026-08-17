@@ -57,6 +57,14 @@ distribution).
   adicionando `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`,
   `X-Frame-Options: DENY` e uma CSP restrita a `'self'` (a app não carrega
   script/estilo/fonte de CDN externo).
+- Os access logs ficam só no bucket S3, sem integração com o Grafana Cloud
+  (Loki/Alloy) que já existe pro resto da observability do projeto - decisão
+  consciente, não lacuna. Não é caso pra Prometheus (log de texto entregue em
+  lote pelo CloudFront a cada poucos minutos, não é métrica pull-based); o
+  caminho natural seria Alloy lendo do S3 e enviando pra Loki. Adiado porque o
+  valor de logar acesso a assets estáticos de baixíssimo tráfego não paga o
+  custo de mais um componente rodando + ingestão no Grafana Cloud. Registrado
+  aqui como próximo passo, não como esquecimento.
 
 ## Alternativas consideradas
 - **Manter servindo pelo Spring Boot**: mais simples (zero infra nova), mas

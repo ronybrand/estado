@@ -259,6 +259,12 @@ valer a pena adiar. Junto entrou uma response headers policy (HSTS, `X-Content-T
 `X-Frame-Options: DENY`, CSP restrita a `'self'`) amarrada só ao behavior do S3, sem tocar nas
 respostas da API.
 
+Os logs ficam só no bucket S3 por enquanto — sem integração com o Grafana Cloud (Loki/Alloy) que já
+cobre o resto da observability do projeto. Registrado como próximo passo consciente, não lacuna: não é
+caso pra Prometheus (é log de texto entregue em lote, não métrica pull-based), o caminho natural seria
+Alloy lendo do S3 e enviando pra Loki, mas o valor de logar acesso a assets estáticos de tráfego baixo
+não paga o custo de mais um componente rodando ainda.
+
 **Bug real, achado no próprio deploy.yml**: o workflow foi commitado vazio por engano (erro de cópia
 entre worktrees) — o GitHub rejeitava o arquivo inteiro ("workflow file issue") em vez de simplesmente
 falhar um job, e isso só apareceu depois do push. Corrigido no commit seguinte, mas o problema de fundo
