@@ -26,16 +26,34 @@ distribution).
   `/api/*` - preserva a suposição de mesma-origem que `environment.prod.ts`
   já faz (`apiUrl: '/api'`), sem precisar reescrever a app nem lidar com
   cookies/CORS cross-origin de verdade.
-- `custom_error_response` 403/404 → `/index.html` (200): obrigatório porque
-  o Angular Router faz roteamento client-side: sem isso, refresh numa rota
-  como `/estado/editar/5` quebra (S3 responde 403 pra um path que não é um
-  objeto real).
+- Fallback do Angular Router via CloudFront Function (`viewer-request`,
+  associada só ao `default_cache_behavior`): reescreve pra `/index.html`
+  qualquer request sem extensão de arquivo, antes de chegar no S3. Sem isso,
+  refresh numa rota como `/estado/editar/5` quebra (S3 responde 403 pra um
+  path que não é um objeto real). A alternativa óbvia seria
+  `custom_error_response` na distribution, mas esse bloco é global - também
+  interceptaria 403/404 legítimos vindos do origin `/api/*` (ex: Spring
+  Security barrando um endpoint, ou um recurso inexistente) e os disfarçaria
+  como 200 com HTML no lugar do JSON de erro real. A function, por estar
+  amarrada só ao behavior do S3, nunca roda pra `/api/*`.
 - Deploy do front via GitHub Actions com OIDC (sem access key estática na
   conta) - a role só pode ser assumida a partir do branch `master` do repo
   do Angular, com permissão só pra sincronizar aquele bucket e invalidar
   aquela distribution.
 - `src/main/resources/static/` deixa de ser usado - o backend volta a ser só
   API.
+- Versionamento habilitado no bucket S3, com expiração de versões antigas
+  após 30 dias: o deploy faz `aws s3 sync --delete`, então sem isso um build
+  quebrado sobrescreve/apaga os objetos anteriores sem volta - a versão
+  anterior fica restaurável (`aws s3api copy-object` pro version-id certo)
+  em vez de depender de rebuildar um commit antigo do zero.
+- Sem access logging no bucket/CloudFront por enquanto: dado o escopo atual
+  (portfolio pessoal, sem dado sensível de usuário trafegando pelo front
+  estático), o custo/complexidade de manter outro bucket de logs e uma
+  política de retenção não paga o benefício ainda. Fica registrado aqui como
+  trade-off consciente, não descuido - se algum dia isso virar produto com
+  usuários reais ou precisar de auditoria de acesso, é só habilitar
+  `logging_config` na distribution (aponta pra um bucket S3 dedicado).
 
 ## Alternativas consideradas
 - **Manter servindo pelo Spring Boot**: mais simples (zero infra nova), mas

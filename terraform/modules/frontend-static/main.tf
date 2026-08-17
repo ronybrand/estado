@@ -35,6 +35,35 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "frontend" {
   }
 }
 
+# O deploy.yml faz "aws s3 sync --delete", entao sem versionamento um build
+# quebrado sobrescreve/apaga os objetos anteriores sem volta - com isso
+# habilitado da pra restaurar a versao anterior de um objeto (ex: via
+# "aws s3api copy-object" apontando pro version-id certo) em vez de precisar
+# rebuildar um commit antigo. O lifecycle expira versoes antigas apos 30 dias
+# pra nao acumular custo de storage indefinidamente.
+resource "aws_s3_bucket_versioning" "frontend" {
+  bucket = aws_s3_bucket.frontend.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "frontend" {
+  bucket = aws_s3_bucket.frontend.id
+
+  rule {
+    id     = "expire-noncurrent-versions"
+    status = "Enabled"
+
+    noncurrent_version_expiration {
+      noncurrent_days = 30
+    }
+  }
+
+  depends_on = [aws_s3_bucket_versioning.frontend]
+}
+
 resource "aws_cloudfront_origin_access_control" "frontend" {
   name                              = "estado-frontend-oac"
   origin_access_control_origin_type = "s3"
@@ -58,6 +87,29 @@ data "aws_cloudfront_origin_request_policy" "all_viewer" {
   # sobrescreve o Host pro dominio do origin (api_origin_domain) antes de
   # enviar - mantem Caddy funcionando sem mudar o Caddyfile.
   name = "Managed-AllViewerExceptHostHeader"
+}
+
+# SPA client-side routing (Angular Router) via CloudFront Function em vez de
+# custom_error_response: este ultimo e por distribution, nao por cache
+# behavior, entao tambem interceptaria 403/404 legitimos vindos do origin
+# api-backend (ex: Spring Security ou um recurso inexistente) e os
+# disfarcaria como 200 com o index.html. A function so e associada ao
+# default_cache_behavior (origin s3-frontend), entao nunca roda pra /api/*.
+resource "aws_cloudfront_function" "spa_fallback" {
+  name    = "estado-frontend-spa-fallback"
+  runtime = "cloudfront-js-2.0"
+  publish = true
+  comment = "Reescreve rotas sem extensao de arquivo para /index.html (Angular Router)"
+  code    = <<-EOT
+    function handler(event) {
+      var request = event.request;
+      var uri = request.uri;
+      if (!uri.includes('.')) {
+        request.uri = '/index.html';
+      }
+      return request;
+    }
+  EOT
 }
 
 resource "aws_cloudfront_distribution" "frontend" {
@@ -94,6 +146,11 @@ resource "aws_cloudfront_distribution" "frontend" {
     viewer_protocol_policy = "redirect-to-https"
     cache_policy_id        = data.aws_cloudfront_cache_policy.caching_optimized.id
     compress               = true
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.spa_fallback.arn
+    }
   }
 
   ordered_cache_behavior {
@@ -104,21 +161,6 @@ resource "aws_cloudfront_distribution" "frontend" {
     viewer_protocol_policy   = "https-only"
     cache_policy_id          = data.aws_cloudfront_cache_policy.caching_disabled.id
     origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer.id
-  }
-
-  # SPA client-side routing (Angular Router): S3 responde 403 (bucket
-  # privado) pra qualquer path que nao seja um objeto real - devolve
-  # index.html com 200 pra o Angular resolver a rota no navegador.
-  custom_error_response {
-    error_code         = 403
-    response_code      = 200
-    response_page_path = "/index.html"
-  }
-
-  custom_error_response {
-    error_code         = 404
-    response_code      = 200
-    response_page_path = "/index.html"
   }
 
   restrictions {
