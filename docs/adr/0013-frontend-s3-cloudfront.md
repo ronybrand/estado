@@ -47,13 +47,16 @@ distribution).
   quebrado sobrescreve/apaga os objetos anteriores sem volta - a versão
   anterior fica restaurável (`aws s3api copy-object` pro version-id certo)
   em vez de depender de rebuildar um commit antigo do zero.
-- Sem access logging no bucket/CloudFront por enquanto: dado o escopo atual
-  (portfolio pessoal, sem dado sensível de usuário trafegando pelo front
-  estático), o custo/complexidade de manter outro bucket de logs e uma
-  política de retenção não paga o benefício ainda. Fica registrado aqui como
-  trade-off consciente, não descuido - se algum dia isso virar produto com
-  usuários reais ou precisar de auditoria de acesso, é só habilitar
-  `logging_config` na distribution (aponta pra um bucket S3 dedicado).
+- Access logging do CloudFront habilitado, gravando em bucket S3 dedicado
+  (`<bucket>-logs`, privado, SSE, expira objetos após 90 dias). Era um
+  trade-off consciente ficar sem isso no início (portfolio pessoal, sem dado
+  sensível trafegando), mas o custo/complexidade de manter é baixo o
+  suficiente pra não valer a pena adiar.
+- Response headers policy do CloudFront (amarrada só ao `default_cache_behavior`,
+  mesmo raciocínio da function de SPA fallback - não mexe nas respostas da API)
+  adicionando `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`,
+  `X-Frame-Options: DENY` e uma CSP restrita a `'self'` (a app não carrega
+  script/estilo/fonte de CDN externo).
 
 ## Alternativas consideradas
 - **Manter servindo pelo Spring Boot**: mais simples (zero infra nova), mas

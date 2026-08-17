@@ -250,11 +250,14 @@ Spring Security barrando algo) e os disfarçaria como `200` com HTML no lugar do
 function fica amarrada só ao `default_cache_behavior` (origin S3), então nunca roda pra chamadas de
 API.
 
-Duas escolhas conscientes ficam registradas como trade-off, não como lacuna: versionamento habilitado
-no bucket (o deploy faz `s3 sync --delete`, e sem isso um build quebrado apaga os objetos anteriores
-sem volta — expira versões antigas em 30 dias pra não acumular custo), e **sem** access logging no
-bucket/CloudFront por enquanto — dado o escopo atual (portfolio pessoal, sem dado sensível de usuário
-no front estático), o custo de manter outro bucket de logs não paga o benefício ainda.
+Duas escolhas conscientes ficam registradas como trade-off: versionamento habilitado no bucket (o
+deploy faz `s3 sync --delete`, e sem isso um build quebrado apaga os objetos anteriores sem volta —
+expira versões antigas em 30 dias pra não acumular custo), e access logging do CloudFront num bucket
+S3 dedicado (expira em 90 dias) — inicialmente adiado por escopo (portfolio pessoal, sem dado sensível
+de usuário no front estático), depois habilitado por ter custo/complexidade baixo o suficiente pra não
+valer a pena adiar. Junto entrou uma response headers policy (HSTS, `X-Content-Type-Options`,
+`X-Frame-Options: DENY`, CSP restrita a `'self'`) amarrada só ao behavior do S3, sem tocar nas
+respostas da API.
 
 **Bug real, achado no próprio deploy.yml**: o workflow foi commitado vazio por engano (erro de cópia
 entre worktrees) — o GitHub rejeitava o arquivo inteiro ("workflow file issue") em vez de simplesmente

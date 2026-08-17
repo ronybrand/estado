@@ -64,6 +64,116 @@ resource "aws_s3_bucket_lifecycle_configuration" "frontend" {
   depends_on = [aws_s3_bucket_versioning.frontend]
 }
 
+# Bucket dedicado aos access logs do CloudFront (ver ADR 0013: era um
+# trade-off consciente de escopo, nao um esquecimento - habilitado agora que
+# o custo/complexidade de manter e baixo). ACL de escrita para o log
+# delivery do CloudFront e concedida via bucket policy, nao ACL legada.
+resource "aws_s3_bucket" "frontend_logs" {
+  bucket = "${var.bucket_name}-logs"
+
+  tags = {
+    Name = "estado-frontend-logs"
+    App  = "estado"
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "frontend_logs" {
+  bucket = aws_s3_bucket.frontend_logs.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "frontend_logs" {
+  bucket = aws_s3_bucket.frontend_logs.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "frontend_logs" {
+  bucket = aws_s3_bucket.frontend_logs.id
+
+  rule {
+    id     = "expire-old-logs"
+    status = "Enabled"
+
+    filter {}
+
+    expiration {
+      days = 90
+    }
+  }
+}
+
+data "aws_iam_policy_document" "frontend_logs_bucket_policy" {
+  statement {
+    sid       = "AllowCloudFrontLogDelivery"
+    effect    = "Allow"
+    actions   = ["s3:PutObject"]
+    resources = ["${aws_s3_bucket.frontend_logs.arn}/*"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["delivery.logs.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "s3:x-amz-acl"
+      values   = ["bucket-owner-full-control"]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "frontend_logs" {
+  bucket = aws_s3_bucket.frontend_logs.id
+  policy = data.aws_iam_policy_document.frontend_logs_bucket_policy.json
+}
+
+# Cabecalhos de seguranca amarrados so ao default_cache_behavior (origin
+# s3-frontend) - mesmo raciocinio da CloudFront Function acima, pra nao
+# reescrever headers de resposta da API (Spring ja controla os seus). CSP
+# restrita ao self, dado que o app nao carrega script/estilo/fonte de CDN
+# externo.
+resource "aws_cloudfront_response_headers_policy" "frontend" {
+  name    = "estado-frontend-security-headers"
+  comment = "Cabecalhos de seguranca basicos para o front Angular"
+
+  security_headers_config {
+    content_type_options {
+      override = true
+    }
+
+    frame_options {
+      frame_option = "DENY"
+      override     = true
+    }
+
+    referrer_policy {
+      referrer_policy = "strict-origin-when-cross-origin"
+      override        = true
+    }
+
+    strict_transport_security {
+      access_control_max_age_sec = 63072000
+      include_subdomains         = true
+      preload                    = true
+      override                   = true
+    }
+
+    content_security_policy {
+      content_security_policy = "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'"
+      override                = true
+    }
+  }
+}
+
 resource "aws_cloudfront_origin_access_control" "frontend" {
   name                              = "estado-frontend-oac"
   origin_access_control_origin_type = "s3"
@@ -140,12 +250,13 @@ resource "aws_cloudfront_distribution" "frontend" {
   }
 
   default_cache_behavior {
-    allowed_methods        = ["GET", "HEAD"]
-    cached_methods         = ["GET", "HEAD"]
-    target_origin_id       = "s3-frontend"
-    viewer_protocol_policy = "redirect-to-https"
-    cache_policy_id        = data.aws_cloudfront_cache_policy.caching_optimized.id
-    compress               = true
+    allowed_methods            = ["GET", "HEAD"]
+    cached_methods             = ["GET", "HEAD"]
+    target_origin_id           = "s3-frontend"
+    viewer_protocol_policy     = "redirect-to-https"
+    cache_policy_id            = data.aws_cloudfront_cache_policy.caching_optimized.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.frontend.id
+    compress                   = true
 
     function_association {
       event_type   = "viewer-request"
@@ -161,6 +272,11 @@ resource "aws_cloudfront_distribution" "frontend" {
     viewer_protocol_policy   = "https-only"
     cache_policy_id          = data.aws_cloudfront_cache_policy.caching_disabled.id
     origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer.id
+  }
+
+  logging_config {
+    bucket = aws_s3_bucket.frontend_logs.bucket_domain_name
+    prefix = "cloudfront/"
   }
 
   restrictions {
