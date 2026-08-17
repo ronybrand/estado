@@ -310,6 +310,24 @@ data "aws_iam_policy_document" "frontend_bucket_policy" {
       values   = [aws_cloudfront_distribution.frontend.arn]
     }
   }
+
+  statement {
+    sid       = "DenyInsecureTransport"
+    effect    = "Deny"
+    actions   = ["s3:*"]
+    resources = [aws_s3_bucket.frontend.arn, "${aws_s3_bucket.frontend.arn}/*"]
+
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
+    }
+  }
 }
 
 resource "aws_s3_bucket_policy" "frontend" {

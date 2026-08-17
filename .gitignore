@@ -16,3 +16,9 @@ buildNumber.properties
 # Segredo real nunca vai pro repo (POSTGRES_PASSWORD, tokens do Grafana Cloud
 # etc.) - so o .env.example, template sem valor real, fica versionado.
 .env
+
+# Conteudo das skills baixado pelo Claude Code a partir do skills-lock.json
+# (hash pinado por skill) - regeneravel, nao precisa ficar versionado, igual
+# node_modules pro package-lock.json. O skills-lock.json em si fica versionado.
+.claude/skills/
+.claude/settings.local.json
