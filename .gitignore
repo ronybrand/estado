@@ -22,3 +22,11 @@ buildNumber.properties
 # node_modules pro package-lock.json. O skills-lock.json em si fica versionado.
 .claude/skills/
 .claude/settings.local.json
+
+# Mesmo espelho de skills baixadas, de outra ferramenta de agente - tambem
+# regeneravel, sem lockfile proprio pra preservar.
+.agents/
+
+# Config de IDE local (VSCode) - preferencia por maquina, sem valor
+# compartilhado num projeto sem outros colaboradores.
+.vscode/
