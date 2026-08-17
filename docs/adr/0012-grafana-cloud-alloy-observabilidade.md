@@ -85,6 +85,22 @@ sum(count_over_time({job="integrations/systemd-journal", unit="estado-backup.ser
   não ligou no horário sem o `Persistent=true` conseguir recuperar) com uma query só.
 - **Avaliação**: a cada 30-60min é suficiente — não é uma condição que muda rápido.
 
+**Especificação do dashboard** (`estado — visão geral`, Grafana Cloud → Dashboards): consolidado num
+painel só o que antes só dava pra ver um sinal de cada vez no Explore. Queries por painel, pra
+reconstruir se o dashboard for perdido — nenhuma delas provisionada via código, mesmo raciocínio de
+não trazer o provider Terraform do Grafana só pra isso:
+
+| Painel | Query | Fonte |
+|---|---|---|
+| Latência P95 | `histogram_quantile(0.95, sum(rate(http_server_requests_seconds_bucket{application="estado"}[5m])) by (le))` | Prometheus |
+| Taxa de erro 5xx | `sum(rate(http_server_requests_seconds_count{application="estado", outcome="SERVER_ERROR"}[5m]))` | Prometheus |
+| CPU | `100 - (avg(rate(node_cpu_seconds_total{instance="estado-portfolio", mode="idle"}[5m])) * 100)` | Prometheus |
+| Disco | `100 - (node_filesystem_avail_bytes{instance="estado-portfolio"} / node_filesystem_size_bytes{instance="estado-portfolio"} * 100)` | Prometheus |
+| Pool Hikari ativo | `hikaricp_connections_active{application="estado"}` | Prometheus |
+
+As anotações de deploy/rollback (abaixo) aparecem automaticamente como marcador vertical em todo
+painel de série temporal, sem configuração extra por painel.
+
 **Anotação de deploy/rollback**: `deploy.sh`/`rollback.sh` mandam uma anotação pra API do Grafana
 (`POST /api/annotations`) depois de um swap bem-sucedido, marcando exatamente quando uma versão nova
 subiu — pra correlacionar visualmente com mudança de latência/erro no dashboard sem cruzar manualmente
