@@ -15,6 +15,7 @@
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
 		<version>4.1.0</version>
+		<relativePath/>
 	</parent>
 
 	<properties>
@@ -44,8 +45,27 @@
 			<artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- Agente do Byte Buddy para o inline-mock-maker do Mockito no Java 21+ -
+		     sem isso, o Mockito se auto-anexa dinamicamente e emite o aviso
+		     "Dynamic loading of agents will be disallowed by default in a future
+		     release" em todo mvn test. -->
+		<dependency>
+			<groupId>net.bytebuddy</groupId>
+			<artifactId>byte-buddy-agent</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webmvc-test</artifactId>
 			<scope>test</scope>
 		</dependency>
        <dependency>
@@ -69,6 +89,70 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<!-- No JDK 25, o javac so descobre annotation processors vindos
+					     do classpath puro se -processorpath for passado explicitamente
+					     (senao ele nao roda o Lombok e nao gera erro nenhum, so ignora
+					     silenciosamente as anotacoes) - forcar o processor path aqui
+					     evita depender de descoberta implicita via -cp. -->
+					<annotationProcessorPaths>
+						<path>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+							<version>${lombok.version}</version>
+						</path>
+						<!-- Gera META-INF/spring-configuration-metadata.json para o
+						     ApiProperty (@ConfigurationProperties("api")), habilitando
+						     autocomplete/validacao no application.yml pela IDE. -->
+						<path>
+							<groupId>org.springframework.boot</groupId>
+							<artifactId>spring-boot-configuration-processor</artifactId>
+							<version>${project.parent.version}</version>
+						</path>
+					</annotationProcessorPaths>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>copy-byte-buddy-agent</id>
+						<phase>process-test-resources</phase>
+						<goals>
+							<goal>copy</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>net.bytebuddy</groupId>
+									<artifactId>byte-buddy-agent</artifactId>
+									<destFileName>byte-buddy-agent.jar</destFileName>
+									<outputDirectory>${project.build.directory}</outputDirectory>
+								</artifactItem>
+							</artifactItems>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<argLine>-javaagent:${project.build.directory}/byte-buddy-agent.jar</argLine>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
