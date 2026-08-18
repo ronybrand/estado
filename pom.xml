@@ -22,8 +22,9 @@
 		<java.version>25</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<!-- Injetado via -Dgit.commit no build Docker (o .git nao vai pro contexto
-		     de build, ver .dockerignore) - CI passa o SHA real; vazio localmente. -->
-		<git.commit></git.commit>
+		     de build, ver .dockerignore) - CI passa o SHA real; "unknown" localmente
+		     (build-info falha se a propriedade for vazia/null). -->
+		<git.commit>unknown</git.commit>
 	</properties>
 
 	<dependencies>
