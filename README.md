@@ -61,6 +61,9 @@ Após importar, aparecerão os seguintes testes, favor rodá-los na ordem da ima
 # 3 - Navegador - Local
 A API fica em http://localhost:8080/estado
 
+Swagger UI (documentação interativa da API) fica em http://localhost:8080/swagger-ui.html — habilitado
+por padrão em dev, desligado explicitamente em produção (ver `deploy/estado/lib-swap.sh`).
+
 A interface Angular não roda mais embutida neste jar (ver ADR 0013) — está no repo separado
 [`angular_estado`](https://github.com/ronybrand/angular_estado), rodada localmente com `npm start`
 (`http://localhost:4200/`, com proxy pra `/api` -> este backend).

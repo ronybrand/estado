@@ -22,6 +22,8 @@ swap_to() {
         -e JDBC_DATABASE_USERNAME=estado \
         -e JDBC_DATABASE_PASSWORD="$POSTGRES_PASSWORD" \
         -e API_ORIGIN_PERMITIDA="$API_ORIGIN_PERMITIDA" \
+        -e SPRINGDOC_API_DOCS_ENABLED=false \
+        -e SPRINGDOC_SWAGGER_UI_ENABLED=false \
         "$image" >/dev/null
     docker network connect portfolio "$NEXT"
 

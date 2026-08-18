@@ -11,6 +11,13 @@ spring:
     open-in-view: false
 api:
   origin-permitida: ${API_ORIGIN_PERMITIDA:http://localhost:8000}
+springdoc:
+  # Habilitado por padrao (dev-friendly) - lib-swap.sh desliga explicitamente
+  # em producao via env var, pra nao expor o Swagger UI publicamente.
+  api-docs:
+    enabled: ${SPRINGDOC_API_DOCS_ENABLED:true}
+  swagger-ui:
+    enabled: ${SPRINGDOC_SWAGGER_UI_ENABLED:true}
 logging:
   pattern:
     console: "%d %-5level [%X{requestId}] %logger : %msg%n"

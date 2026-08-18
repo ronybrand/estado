@@ -48,6 +48,14 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
+		<!-- Swagger UI + OpenAPI - habilitado por padrao (dev-friendly), desligado
+		     explicitamente em producao via env var no lib-swap.sh, mesmo padrao
+		     ja usado pro CORS (API_ORIGIN_PERMITIDA) neste application.yml. -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>3.1.0</version>
+		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
