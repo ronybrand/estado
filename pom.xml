@@ -195,8 +195,33 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
-					<argLine>-javaagent:${project.build.directory}/byte-buddy-agent.jar</argLine>
+					<!-- jacocoArgLine vem do prepare-agent do JaCoCo abaixo - precisa
+					     vir junto porque o argLine explicito do byte-buddy-agent
+					     substituiria o que o JaCoCo injetaria automaticamente. -->
+					<argLine>@{jacocoArgLine} -javaagent:${project.build.directory}/byte-buddy-agent.jar</argLine>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.15</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+						<configuration>
+							<propertyName>jacocoArgLine</propertyName>
+						</configuration>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>test</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 			<!-- Testes *IT (ex: EstadoRepositoryIT, contra Postgres real via
 			     Testcontainers) rodam aqui, nao no Surefire - mantem "mvn test"
