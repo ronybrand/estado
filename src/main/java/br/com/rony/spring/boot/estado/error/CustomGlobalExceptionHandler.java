@@ -46,14 +46,6 @@ public class CustomGlobalExceptionHandler {
         return erro.getField() + ": " + erro.getDefaultMessage();
     }
 
-    // Mensagem autorada pelo codigo da app (ex: "Sigla ja cadastrada") -
-    // diferente de excecoes de infraestrutura, e seguro devolver ao cliente.
-    @ExceptionHandler(ExcecaoRegraNegocio.class)
-    public ResponseEntity<ErrorResponseDto> regraDeNegocioViolada(ExcecaoRegraNegocio ex) {
-        log.warn("Requisicao invalida ({}): {}", ex.getClass().getSimpleName(), ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(corpo(ex.getMessage()));
-    }
-
     // getMessage() aqui vem do driver JDBC/Hibernate e inclui SQL bruto e nome
     // de constraint (achado validando contra um Postgres real) - nunca vai pro
     // cliente, so pro log. Mesmo cuidado do handler catch-all de Exception.
@@ -65,8 +57,7 @@ public class CustomGlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(corpo(MENSAGEM_INTEGRIDADE_DADOS));
     }
 
-    // Busca por id que nao existe - recurso nao encontrado, tratamento
-    // separado de ExcecaoRegraNegocio (400) pois semanticamente e 404.
+    // Busca por id que nao existe - recurso nao encontrado, semanticamente e 404.
     @ExceptionHandler(EstadoNaoEncontradoException.class)
     public ResponseEntity<ErrorResponseDto> estadoNaoEncontrado(EstadoNaoEncontradoException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(corpo(ex.getMessage()));

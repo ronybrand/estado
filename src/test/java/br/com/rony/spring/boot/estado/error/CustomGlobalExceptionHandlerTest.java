@@ -76,21 +76,6 @@ public class CustomGlobalExceptionHandlerTest {
 	}
 
 	@Test
-	public void excecaoRegraNegocioRetorna400ComWarnEMensagemDeNegocio() {
-		// mensagem de ExcecaoRegraNegocio e autorada pelo codigo da app (ex:
-		// "Sigla ja cadastrada") - diferente de DataIntegrityViolationException,
-		// e seguro devolver ao cliente.
-		ExcecaoRegraNegocio ex = new ExcecaoRegraNegocio("sigla ja cadastrada");
-
-		ResponseEntity<ErrorResponseDto> resposta = handler.regraDeNegocioViolada(ex);
-
-		assertEquals(HttpStatus.BAD_REQUEST, resposta.getStatusCode());
-		assertEquals("sigla ja cadastrada", resposta.getBody().message());
-		assertEquals(1, logs.list.size());
-		assertEquals(Level.WARN, logs.list.get(0).getLevel());
-	}
-
-	@Test
 	public void dataIntegrityViolationRetorna409ComWarnENaoVazaMensagemDoDriver() {
 		// achado validando end-to-end contra um Postgres real: getMessage() de
 		// DataIntegrityViolationException inclui o SQL bruto e o nome da
