@@ -20,10 +20,10 @@ possível antes de aplicar, e sem forma de reverter uma alteração indesejada.
 
 ## Decisão
 Adotado Liquibase (`spring-boot-starter-liquibase`), com changesets SQL em
-`src/main/resources/db/changelog/`, mesmo padrão já usado no repo irmão
-`spring-order-api`. `hibernate.ddl-auto` passa de `update` pra `validate` -
-o Hibernate confere que o mapeamento da entidade bate com o schema aplicado
-no startup (falha cedo se divergir), mas não altera mais nada sozinho.
+`src/main/resources/db/changelog/`. `hibernate.ddl-auto` passa de `update`
+pra `validate` - o Hibernate confere que o mapeamento da entidade bate com o
+schema aplicado no startup (falha cedo se divergir), mas não altera mais nada
+sozinho.
 
 O desafio específico deste projeto: a tabela `estado` já existe em produção,
 criada historicamente pelo `ddl-auto:update`. Um changeset comum de
@@ -47,8 +47,9 @@ schema batia com o mapeamento nos dois casos.
   Descartado por ser justamente o anti-padrão mais citado sobre Hibernate em
   produção.
 - **Flyway em vez de Liquibase**: equivalente em maturidade pra esse caso de
-  uso simples. Liquibase escolhido só por consistência com o outro repo do
-  portfólio (`spring-order-api`), não por vantagem técnica específica aqui.
+  uso simples. Liquibase escolhido pelo formato SQL puro dos changesets
+  (`--liquibase formatted sql`), que fica mais proximo do estilo do resto do
+  projeto do que a convencao de nomenclatura de arquivo do Flyway.
 - **changelogSync manual documentado**: mais simples de ler no changeset (SQL
   puro, sem precondition), mas exige lembrar de rodar um comando na EC2 antes
   do primeiro deploy com Liquibase - risco real de esquecer e o deploy falhar
@@ -65,4 +66,4 @@ schema batia com o mapeamento nos dois casos.
   ambiente local do zero) quanto pro banco de produção já existente.
 - Negativo aceito: uma camada a mais de configuração (changelog XML + SQL)
   pra um projeto desse porte - justificado pelo ganho de rastreabilidade e
-  pela consistência com o padrão já estabelecido no repo irmão.
+  pela remoção do risco de alteração implícita de schema em produção.
