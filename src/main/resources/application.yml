@@ -23,8 +23,8 @@ management:
     web:
       exposure:
         # health ja era exposto por padrao (usado pelo lib-swap.sh no rolling
-        # swap) - prometheus adicionado, nao substitui.
-        include: health,prometheus
+        # swap) - prometheus e info adicionados, nao substituem.
+        include: health,prometheus,info
   prometheus:
     metrics:
       export:

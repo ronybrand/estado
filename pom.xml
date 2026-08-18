@@ -21,6 +21,9 @@
 	<properties>
 		<java.version>25</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<!-- Injetado via -Dgit.commit no build Docker (o .git nao vai pro contexto
+		     de build, ver .dockerignore) - CI passa o SHA real; vazio localmente. -->
+		<git.commit></git.commit>
 	</properties>
 
 	<dependencies>
@@ -97,6 +100,18 @@
 						</exclude>
 					</excludes>
 				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>build-info</goal>
+						</goals>
+						<configuration>
+							<additionalProperties>
+								<commit>${git.commit}</commit>
+							</additionalProperties>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
