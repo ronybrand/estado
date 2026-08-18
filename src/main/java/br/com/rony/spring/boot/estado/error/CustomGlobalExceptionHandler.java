@@ -13,6 +13,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import br.com.rony.spring.boot.estado.EstadoNaoEncontradoException;
 import lombok.extern.slf4j.Slf4j;
@@ -61,6 +62,15 @@ public class CustomGlobalExceptionHandler {
     @ExceptionHandler(EstadoNaoEncontradoException.class)
     public ResponseEntity<ErrorResponseDto> estadoNaoEncontrado(EstadoNaoEncontradoException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(corpo(ex.getMessage()));
+    }
+
+    // Sem rota/recurso estatico correspondente a URL pedida (ex: typo no path,
+    // ou Swagger UI desligado via SPRINGDOC_SWAGGER_UI_ENABLED=false) - sem
+    // este handler, cai no catch-all de Exception e vira 500 em vez de 404
+    // pra qualquer URL invalida (achado testando o Swagger desligado).
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponseDto> rotaNaoEncontrada(NoResourceFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(corpo("Recurso nao encontrado"));
     }
 
     // Catch-all: nada previsto chegou até aqui. Loga stack trace completo pra

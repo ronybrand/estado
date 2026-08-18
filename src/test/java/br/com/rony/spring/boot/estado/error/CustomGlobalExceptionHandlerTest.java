@@ -15,12 +15,14 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.core.MethodParameter;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -157,6 +159,20 @@ public class CustomGlobalExceptionHandlerTest {
 
 		assertEquals(HttpStatus.NOT_FOUND, resposta.getStatusCode());
 		assertEquals("Estado nao encontrado: id=999", resposta.getBody().message());
+		assertTrue(logs.list.isEmpty());
+	}
+
+	@Test
+	public void rotaInexistenteRetorna404SemLog() {
+		// achado testando o Swagger UI desligado (SPRINGDOC_SWAGGER_UI_ENABLED=false):
+		// sem handler dedicado, NoResourceFoundException caia no catch-all de
+		// Exception e virava 500 "Erro interno do servidor" pra qualquer URL sem
+		// rota correspondente - nao so Swagger, qualquer path/typo incorreto.
+		NoResourceFoundException ex = new NoResourceFoundException(HttpMethod.GET, "swagger-ui.html", null);
+
+		ResponseEntity<ErrorResponseDto> resposta = handler.rotaNaoEncontrada(ex);
+
+		assertEquals(HttpStatus.NOT_FOUND, resposta.getStatusCode());
 		assertTrue(logs.list.isEmpty());
 	}
 }
