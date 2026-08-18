@@ -113,6 +113,7 @@ o que foi descartado, e por quê.
 | [0011](docs/adr/0011-terraform-import-sem-terragrunt.md) | Terraform via import, state local | Recriar do zero, backend S3 desde o início, Terragrunt |
 | [0012](docs/adr/0012-grafana-cloud-alloy-observabilidade.md) | Grafana Cloud + Alloy, push direto | Datadog, CloudWatch Agent + SNS, Grafana lendo do CloudWatch, Prometheus self-hosted |
 | [0013](docs/adr/0013-frontend-s3-cloudfront.md) | Frontend em S3 + CloudFront, saindo do Spring Boot | Manter servindo pelo Spring Boot, S3 website hosting público, domínio próprio desde já |
+| [0014](docs/adr/0014-liquibase-em-vez-de-ddl-auto.md) | Liquibase, com precondition auto-guardada pra tabela já existente | Manter `ddl-auto:update`, `changelogSync` manual documentado |
 
 ## Postura de confiabilidade: o que está coberto, o que é risco em aberto
 
