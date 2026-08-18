@@ -1,4 +1,8 @@
 # Estado
+
+[![CI](https://github.com/ronybrand/estado/actions/workflows/ci.yml/badge.svg)](https://github.com/ronybrand/estado/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/ronybrand/estado/graph/badge.svg)](https://codecov.io/gh/ronybrand/estado)
+
 Projeto CRUD de unidades federativas do Brasil (estados).
 
 O Projeto Estado trata-se de um sistema sob arquitetura Java 25/Spring Boot 4, configuração de dependência em Maven e banco de dados PostgreSQL para disponibilização de um serviço HTTP. O front-end (Angular, repo `angular_estado` separado) é servido estático via S3 + CloudFront, com a API acessível em `/api/*` sob o mesmo domínio (ver ADR 0013).
@@ -10,6 +14,42 @@ com CI/CD, backup automático e recuperação de falhas. Infra provisionada via 
 conta real, não escrita do zero — ver [`terraform/`](terraform/)). A história completa da migração e
 do deploy, incluindo os bugs encontrados em produção e as decisões de arquitetura, está em
 [`CASE_STUDY.md`](CASE_STUDY.md) e em [`docs/adr/`](docs/adr/).
+
+## Arquitetura
+
+```mermaid
+flowchart LR
+    Browser["Navegador"]
+
+    subgraph CloudFront["CloudFront"]
+        direction LR
+        S3["S3\n(bundle Angular)"]
+        Caddy["Caddy\n(reverse proxy)"]
+    end
+
+    subgraph EC2["EC2 (Docker)"]
+        direction LR
+        App["estado-app\n(Spring Boot)"]
+        DB[("Postgres")]
+        Alloy["Grafana Alloy"]
+    end
+
+    Grafana["Grafana Cloud"]
+
+    Browser -- "/ (estático)" --> S3
+    Browser -- "/api/*" --> Caddy
+    Caddy --> App
+    App --> DB
+    Alloy -- "scrape /actuator/prometheus" --> App
+    Alloy -- métricas/logs --> Grafana
+```
+
+Um único EC2 roda os três containers Docker (app, Postgres, Alloy) via Compose +
+`deploy.sh`, com rolling swap sem downtime disparado por um timer systemd a cada
+5min, sempre que uma nova imagem chega no GHCR (ver [`deploy/`](deploy/) e
+`docs/adr/`). O frontend (repo
+[`angular_estado`](https://github.com/ronybrand/angular_estado) separado) é
+publicado independentemente em S3/CloudFront.
 
 ## Funcionalidades:
 - Cadastrar uma unidade federativa por vez com data e hora do registro;
