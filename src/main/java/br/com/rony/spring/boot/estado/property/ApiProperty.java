@@ -2,6 +2,11 @@ package br.com.rony.spring.boot.estado.property;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 @ConfigurationProperties("api")
 public class ApiProperty {
 
@@ -9,29 +14,11 @@ public class ApiProperty {
 
     private final Seguranca seguranca = new Seguranca();
 
-    public Seguranca getSeguranca() {
-        return seguranca;
-    }
-
-    public String getOriginPermitida() {
-        return originPermitida;
-    }
-
-    public void setOriginPermitida(String originPermitida) {
-        this.originPermitida = originPermitida;
-    }
-
+    @Getter
+    @Setter
     public static class Seguranca {
 
         private boolean enableHttps;
-
-        public boolean isEnableHttps() {
-            return enableHttps;
-        }
-
-        public void setEnableHttps(boolean enableHttps) {
-            this.enableHttps = enableHttps;
-        }
 
     }
 

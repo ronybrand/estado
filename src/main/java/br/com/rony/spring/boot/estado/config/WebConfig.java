@@ -8,16 +8,14 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import br.com.rony.spring.boot.estado.property.ApiProperty;
+import lombok.RequiredArgsConstructor;
 
 @Configuration
+@RequiredArgsConstructor
 @EnableConfigurationProperties(ApiProperty.class)
 public class WebConfig implements WebMvcConfigurer {
 
 	private final ApiProperty apiProperty;
-
-	public WebConfig(ApiProperty apiProperty) {
-		this.apiProperty = apiProperty;
-	}
 
 	@Override
 	public void addCorsMappings(CorsRegistry registry) {

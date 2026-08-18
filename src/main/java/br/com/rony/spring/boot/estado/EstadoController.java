@@ -1,8 +1,11 @@
-package br.com.rony.spring.boot.estado.controller;
+package br.com.rony.spring.boot.estado;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Positive;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,46 +17,40 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import br.com.rony.spring.boot.estado.domain.Estado;
-import br.com.rony.spring.boot.estado.service.EstadoService;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @Validated
+@RequiredArgsConstructor
 @RequestMapping( value = "/estado")
 public class EstadoController {
 	private final EstadoService service;
 
-	public EstadoController(EstadoService service) {
-		this.service = service;
-	}
-
-
 	@GetMapping
-	public List<Estado> getAll() {
-	      return service.listar();
+	public List<EstadoDTO> getAll() {
+		return service.listar().stream().map(EstadoDTO::from).collect(Collectors.toList());
 	}
 
 	@GetMapping("/{id}")
-	public Estado get(@Valid @PathVariable("id") Long idDomain) {
-		return service.getDomainById(idDomain);
+	public EstadoDTO get(@Positive @Max(Integer.MAX_VALUE) @PathVariable("id") Long idDomain) {
+		return EstadoDTO.from(service.getDomainById(idDomain));
     }
 
 	@PostMapping
-	public @ResponseBody ResponseEntity < String > salvar(@Valid @RequestBody Estado estado) {
-    	service.salvar(estado);
+	public ResponseEntity<EstadoDTO> salvar(@Valid @RequestBody EstadoRequestDTO estado) {
+    	Estado salvo = service.salvar(estado.toEntity());
 
-    	return ResponseEntity.status(HttpStatus.CREATED).build();
+    	return ResponseEntity.status(HttpStatus.CREATED).body(EstadoDTO.from(salvo));
     }
 
 	@PutMapping
-	public @ResponseBody ResponseEntity < String > atualizar(@Valid @RequestBody Estado estado) {
-    	service.atualizar(estado);
+	public ResponseEntity<EstadoDTO> atualizar(@Valid @RequestBody EstadoRequestDTO estado) {
+    	Estado atualizado = service.atualizar(estado.toEntity());
 
-    	return ResponseEntity.status(HttpStatus.OK).build();
+    	return ResponseEntity.status(HttpStatus.OK).body(EstadoDTO.from(atualizado));
     }
 
 	@DeleteMapping("/{id}")

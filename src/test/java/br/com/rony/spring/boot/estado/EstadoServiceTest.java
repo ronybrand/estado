@@ -1,11 +1,15 @@
-package br.com.rony.spring.boot.estado.service;
+package br.com.rony.spring.boot.estado;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,9 +18,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-
-import br.com.rony.spring.boot.estado.domain.Estado;
-import br.com.rony.spring.boot.estado.repository.EstadoRepository;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -47,7 +48,7 @@ public class EstadoServiceTest {
 	@Test
 	public void listar() {
 		List<Estado> lista = this.getList();
-		when(repository.listar()).thenReturn(lista);
+		when(repository.findAll()).thenReturn(lista);
 		List<Estado> retorno = service.listar();
 		assertEquals(lista.size(), retorno.size());
 	}
@@ -55,18 +56,17 @@ public class EstadoServiceTest {
 	@Test
 	public void salvar() {
 		Estado domain = this.getDomain(null, "Santa Catarina", "SC");
-		domain.setId(null);
-		when(repository.salvar(domain)).thenReturn(domain);
-		Estado retorno = service.salvar(domain);;
+		when(repository.save(domain)).thenReturn(domain);
+		Estado retorno = service.salvar(domain);
 		assertNotNull(retorno);
 	}
 
 	@Test
 	public void atualizar() {
 		Estado domain = this.getDomain(new Long(1), "Santa Catarina", "SC");
-		when(repository.getDomainById(domain.getId())).thenReturn(domain);
-		when(repository.atualizar(domain)).thenReturn(domain);
-		Estado retorno = service.atualizar(domain);;
+		when(repository.findById(domain.getId())).thenReturn(Optional.of(domain));
+		when(repository.save(domain)).thenReturn(domain);
+		Estado retorno = service.atualizar(domain);
 		assertNotNull(retorno);
 	}
 
@@ -74,8 +74,7 @@ public class EstadoServiceTest {
 	public void excluir() {
 		Long idDomain = new Long(1);
 		Estado domain = this.getDomain(idDomain, "Santa Catarina", "SC");
-		domain.setId(null);
-		when(repository.excluir(domain)).thenReturn(domain);
+		when(repository.findById(idDomain)).thenReturn(Optional.of(domain));
 		service.excluir(idDomain);
 		assertNotNull(domain);
 	}
@@ -84,9 +83,44 @@ public class EstadoServiceTest {
 	public void getDomainById() {
 		Long idDomain = new Long(1);
 		Estado domain = this.getDomain(idDomain, "Santa Catarina", "SC");
-		domain.setId(null);
-		when(repository.getDomainById(idDomain)).thenReturn(domain);
+		when(repository.findById(idDomain)).thenReturn(Optional.of(domain));
 		Estado retorno = service.getDomainById(idDomain);
 		assertEquals(domain, retorno);
+	}
+
+	@Test
+	public void getDomainByIdQuandoNaoExisteLancaEstadoNaoEncontrado() {
+		Long idDomain = new Long(999);
+		when(repository.findById(idDomain)).thenReturn(Optional.empty());
+
+		assertThrows(EstadoNaoEncontradoException.class, () -> service.getDomainById(idDomain));
+	}
+
+	@Test
+	public void atualizarQuandoIdNaoExisteLancaEstadoNaoEncontrado() {
+		Estado domain = this.getDomain(new Long(999), "Santa Catarina", "SC");
+		when(repository.findById(domain.getId())).thenReturn(Optional.empty());
+
+		assertThrows(EstadoNaoEncontradoException.class, () -> service.atualizar(domain));
+	}
+
+	@Test
+	public void excluirQuandoIdNaoExisteLancaEstadoNaoEncontrado() {
+		Long idDomain = new Long(999);
+		when(repository.findById(idDomain)).thenReturn(Optional.empty());
+
+		assertThrows(EstadoNaoEncontradoException.class, () -> service.excluir(idDomain));
+		verify(repository, never()).delete(org.mockito.ArgumentMatchers.any());
+	}
+
+	@Test
+	public void excluirQuandoIdExisteChamaRepositorioComEntidadeEncontrada() {
+		Long idDomain = new Long(1);
+		Estado domain = this.getDomain(idDomain, "Santa Catarina", "SC");
+		when(repository.findById(idDomain)).thenReturn(Optional.of(domain));
+
+		service.excluir(idDomain);
+
+		verify(repository).delete(domain);
 	}
 }
