@@ -39,9 +39,9 @@ public class EstadoServiceTest {
 
 	private List<Estado> getList(){
 		List<Estado> retorno = new ArrayList<Estado>();
-		retorno.add(this.getDomain(new Long(1), "Santa Catarina", "SC"));
-		retorno.add(this.getDomain(new Long(2), "Paraná", "PR"));
-		retorno.add(this.getDomain(new Long(3), "Rio Grande do Sul", "RS"));
+		retorno.add(this.getDomain(Long.valueOf(1), "Santa Catarina", "SC"));
+		retorno.add(this.getDomain(Long.valueOf(2), "Paraná", "PR"));
+		retorno.add(this.getDomain(Long.valueOf(3), "Rio Grande do Sul", "RS"));
 		return retorno;
 	}
 
@@ -63,7 +63,7 @@ public class EstadoServiceTest {
 
 	@Test
 	public void atualizar() {
-		Estado domain = this.getDomain(new Long(1), "Santa Catarina", "SC");
+		Estado domain = this.getDomain(Long.valueOf(1), "Santa Catarina", "SC");
 		when(repository.findById(domain.getId())).thenReturn(Optional.of(domain));
 		when(repository.save(domain)).thenReturn(domain);
 		Estado retorno = service.atualizar(domain);
@@ -72,7 +72,7 @@ public class EstadoServiceTest {
 
 	@Test
 	public void excluir() {
-		Long idDomain = new Long(1);
+		Long idDomain = Long.valueOf(1);
 		Estado domain = this.getDomain(idDomain, "Santa Catarina", "SC");
 		when(repository.findById(idDomain)).thenReturn(Optional.of(domain));
 		service.excluir(idDomain);
@@ -81,7 +81,7 @@ public class EstadoServiceTest {
 
 	@Test
 	public void getDomainById() {
-		Long idDomain = new Long(1);
+		Long idDomain = Long.valueOf(1);
 		Estado domain = this.getDomain(idDomain, "Santa Catarina", "SC");
 		when(repository.findById(idDomain)).thenReturn(Optional.of(domain));
 		Estado retorno = service.getDomainById(idDomain);
@@ -90,7 +90,7 @@ public class EstadoServiceTest {
 
 	@Test
 	public void getDomainByIdQuandoNaoExisteLancaEstadoNaoEncontrado() {
-		Long idDomain = new Long(999);
+		Long idDomain = Long.valueOf(999);
 		when(repository.findById(idDomain)).thenReturn(Optional.empty());
 
 		assertThrows(EstadoNaoEncontradoException.class, () -> service.getDomainById(idDomain));
@@ -98,7 +98,7 @@ public class EstadoServiceTest {
 
 	@Test
 	public void atualizarQuandoIdNaoExisteLancaEstadoNaoEncontrado() {
-		Estado domain = this.getDomain(new Long(999), "Santa Catarina", "SC");
+		Estado domain = this.getDomain(Long.valueOf(999), "Santa Catarina", "SC");
 		when(repository.findById(domain.getId())).thenReturn(Optional.empty());
 
 		assertThrows(EstadoNaoEncontradoException.class, () -> service.atualizar(domain));
@@ -106,7 +106,7 @@ public class EstadoServiceTest {
 
 	@Test
 	public void excluirQuandoIdNaoExisteLancaEstadoNaoEncontrado() {
-		Long idDomain = new Long(999);
+		Long idDomain = Long.valueOf(999);
 		when(repository.findById(idDomain)).thenReturn(Optional.empty());
 
 		assertThrows(EstadoNaoEncontradoException.class, () -> service.excluir(idDomain));
@@ -115,7 +115,7 @@ public class EstadoServiceTest {
 
 	@Test
 	public void excluirQuandoIdExisteChamaRepositorioComEntidadeEncontrada() {
-		Long idDomain = new Long(1);
+		Long idDomain = Long.valueOf(1);
 		Estado domain = this.getDomain(idDomain, "Santa Catarina", "SC");
 		when(repository.findById(idDomain)).thenReturn(Optional.of(domain));
 
