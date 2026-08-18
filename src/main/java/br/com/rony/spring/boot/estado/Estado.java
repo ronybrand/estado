@@ -1,6 +1,6 @@
 package br.com.rony.spring.boot.estado;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -43,10 +43,10 @@ public class Estado {
     private String sigla;
 
 	@Column(name = "ts_data_hora_cadastro", nullable = false)
-	private Date dataHoraCadastro;
+	private LocalDateTime dataHoraCadastro;
 
 	@Column(name = "ts_data_hora_ultima_atualizacao", nullable = true)
-	private Date dataHoraUltimaAtualizacao;
+	private LocalDateTime dataHoraUltimaAtualizacao;
 
 	// setter manual: a sigla e sempre normalizada para maiuscula - o Lombok
 	// @Setter da classe detecta este metodo ja declarado e nao gera outro.

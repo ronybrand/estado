@@ -1,6 +1,7 @@
 package br.com.rony.spring.boot.estado;
 
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -18,7 +19,7 @@ public class EstadoService {
     private final EstadoRepository repository;
 
     public Estado salvar(Estado domain) {
-    	domain.setDataHoraCadastro(new Date());
+    	domain.setDataHoraCadastro(LocalDateTime.now(ZoneOffset.UTC));
         Estado salvo = repository.save(domain);
         log.info("Estado criado: id={} sigla={}", salvo.getId(), salvo.getSigla());
         return salvo;
@@ -29,7 +30,7 @@ public class EstadoService {
     	Estado domainBD = this.getDomainById(domain.getId());
     	domainBD.setNome(domain.getNome());
     	domainBD.setSigla(domain.getSigla());
-    	domainBD.setDataHoraUltimaAtualizacao(new Date());
+    	domainBD.setDataHoraUltimaAtualizacao(LocalDateTime.now(ZoneOffset.UTC));
     	Estado atualizado = repository.save(domainBD);
     	log.info("Estado atualizado: id={} sigla={}", atualizado.getId(), atualizado.getSigla());
     	return atualizado;

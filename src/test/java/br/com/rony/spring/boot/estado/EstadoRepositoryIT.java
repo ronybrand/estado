@@ -3,7 +3,7 @@ package br.com.rony.spring.boot.estado;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +35,7 @@ class EstadoRepositoryIT {
         Estado estado = new Estado();
         estado.setNome(nome);
         estado.setSigla(sigla);
-        estado.setDataHoraCadastro(new Date());
+        estado.setDataHoraCadastro(LocalDateTime.now());
         return estado;
     }
 

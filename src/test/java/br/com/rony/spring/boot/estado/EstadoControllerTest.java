@@ -12,7 +12,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -36,7 +36,7 @@ public class EstadoControllerTest {
 		domain.setId(id);
 		domain.setNome(nome);
 		domain.setSigla(sigla);
-		domain.setDataHoraCadastro(new Date());
+		domain.setDataHoraCadastro(LocalDateTime.now());
 		return domain;
 	}
 
