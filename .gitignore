@@ -27,6 +27,7 @@ buildNumber.properties
 # regeneravel, sem lockfile proprio pra preservar.
 .agents/
 
-# Config de IDE local (VSCode) - preferencia por maquina, sem valor
-# compartilhado num projeto sem outros colaboradores.
+# Config de IDE local (VSCode/JetBrains) - preferencia por maquina, sem
+# valor compartilhado num projeto sem outros colaboradores.
 .vscode/
+.idea/
