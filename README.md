@@ -77,3 +77,6 @@ cada push na `master`, ver [`.github/workflows/docker-publish.yml`](.github/work
 # 5 - Produção
 https://d3bqbg07tehy1h.cloudfront.net/ (frontend) — API em https://54.94.231.248.sslip.io/estado ou
 via `/api/estado` no mesmo domínio do CloudFront. Detalhes do deploy em [`CASE_STUDY.md`](CASE_STUDY.md).
+
+O commit e a versão do build em execução ficam expostos em `/actuator/info`, útil pra confirmar que
+um deploy (ou rollback) aplicou o commit esperado sem precisar consultar o log do `deploy.sh`.

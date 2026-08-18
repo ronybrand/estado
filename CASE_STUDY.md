@@ -222,6 +222,12 @@ vez no Explore: latência P95, taxa de erro 5xx, CPU, disco e conexões ativas d
 anotações de deploy/rollback já aparecendo como marcador vertical em cada painel de série temporal,
 sem configuração extra.
 
+Faltava ainda uma lacuna pontual: o rollback do ADR 0008 sabe qual sha reverter (lido do label OCI da
+imagem), mas não havia como confirmar, batendo direto no processo rodando, que o deploy aplicou
+mesmo o commit esperado — só dava pra inferir pelo log do `deploy.sh` ou pelo timestamp do container.
+Fechado expondo commit e versão do build em `/actuator/info`, via `build-info` do Maven injetado com
+`-Dgit.commit` no build Docker (o `.git` não vai pro contexto de build, ver `.dockerignore`).
+
 ## De monólito a desacoplado: frontend em CDN próprio
 
 Até aqui o build do Angular vivia commitado em `src/main/resources/static/` e viajava dentro da
