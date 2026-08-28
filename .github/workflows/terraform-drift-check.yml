@@ -28,6 +28,11 @@ jobs:
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "~1.15"
+          # O wrapper padrao da action trata exit code 2 (drift real, via
+          # -detailed-exitcode) como sucesso, igual ao exit code 0 - sem
+          # desabilita-lo o job nunca falharia quando ha drift, contrariando
+          # o proprio proposito deste workflow.
+          terraform_wrapper: false
 
       - run: terraform init -input=false
 
