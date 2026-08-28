@@ -55,3 +55,31 @@ resource "aws_s3_bucket_lifecycle_configuration" "terraform_state" {
 
   depends_on = [aws_s3_bucket_versioning.terraform_state]
 }
+
+# Mesmo padrao de deny explicito ja usado em modules/frontend-static - aqui
+# ainda mais critico, por ser o bucket mais sensivel do projeto (guarda o
+# state, que pode conter atributos sensiveis dos recursos gerenciados).
+data "aws_iam_policy_document" "terraform_state_bucket_policy" {
+  statement {
+    sid       = "DenyInsecureTransport"
+    effect    = "Deny"
+    actions   = ["s3:*"]
+    resources = [aws_s3_bucket.terraform_state.arn, "${aws_s3_bucket.terraform_state.arn}/*"]
+
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "terraform_state" {
+  bucket = aws_s3_bucket.terraform_state.id
+  policy = data.aws_iam_policy_document.terraform_state_bucket_policy.json
+}
