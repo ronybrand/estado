@@ -22,6 +22,14 @@ jobs:
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
+          # ARN fixo de proposito (nao da pra derivar do output Terraform
+          # aqui - o workflow precisa das credenciais ANTES de rodar
+          # terraform init/plan, entao nao ha como ler o output primeiro).
+          # Precisa ficar em sincronia manual com o output
+          # "terraform_plan_role_arn" (terraform/outputs.tf) e com
+          # var.role_name (default "estado-terraform-plan" em
+          # modules/github-oidc-plan/variables.tf) - se qualquer um dos dois
+          # mudar, atualize esta linha tambem.
           role-to-assume: arn:aws:iam::875304087242:role/estado-terraform-plan
           aws-region: sa-east-1
 
