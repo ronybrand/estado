@@ -52,12 +52,14 @@ resource "aws_iam_role_policy_attachment" "read_only" {
 
 # Excecao de escrita: o locking nativo do S3 (use_lockfile) escreve um
 # lockfile temporario no bucket de state mesmo durante um "plan" - sem isso, o
-# job falharia tentando adquirir o lock.
+# job falharia tentando adquirir o lock. DeleteObject e necessario tambem -
+# sem ele, o Terraform adquire o lock mas nao consegue remove-lo ao final,
+# deixando um lockfile orfao que bloqueia toda execucao seguinte.
 data "aws_iam_policy_document" "state_bucket_access" {
   statement {
     sid       = "TerraformStateReadWrite"
     effect    = "Allow"
-    actions   = ["s3:GetObject", "s3:PutObject", "s3:ListBucket"]
+    actions   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:ListBucket"]
     resources = [var.state_bucket_arn, "${var.state_bucket_arn}/*"]
   }
 }
