@@ -1,7 +1,9 @@
 # Bucket S3 dedicado ao state remoto do Terraform - ver ADR 0015. Precisa ser
 # criado e aplicado ANTES do bloco `backend "s3"` em versions.tf (problema de
 # bootstrap classico: o bucket que guarda o state nao pode ele mesmo depender
-# desse state). Ordem de migracao documentada na ADR 0015.
+# desse state). Ordem de migracao: 1) aplicar este arquivo com state local
+# (backend default); 2) so entao adicionar/habilitar o bloco `backend "s3"`
+# em versions.tf e rodar `terraform init -migrate-state`.
 
 resource "aws_s3_bucket" "terraform_state" {
   bucket = "estado-terraform-state-${data.aws_caller_identity.current.account_id}"
