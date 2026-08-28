@@ -54,3 +54,7 @@ só.
   units systemd) continua fora, versionado em `deploy/` e aplicado manualmente por decisão do
   [ADR 0004](0004-deploy-pull-via-systemd-timer.md) — Terraform não gerencia esse lado, de
   propósito, não por lacuna.
+
+**Atualização:** a alternativa "backend remoto S3 desde o início", descartada acima como resolvendo
+um problema que não existia ainda, deixou de ser hipotética quando checagem automatizada de drift
+em CI virou um requisito real — ver [ADR 0015](0015-terraform-backend-s3-drift-check-ci.md).

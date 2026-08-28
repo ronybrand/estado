@@ -1,0 +1,37 @@
+name: Terraform Drift Check
+
+on:
+  schedule:
+    # Semanal, mesma cadencia do prune de imagens (ver ADR 0009) - ritmo
+    # proporcional de manutencao automatizada ja estabelecido neste projeto.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::875304087242:role/estado-terraform-plan
+          aws-region: sa-east-1
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.15"
+
+      - run: terraform init -input=false
+
+      # Exit code 2 (ha diferenca) falha o job de proposito - sinal de drift
+      # real pra investigar. Exit code 0 (sem mudanca) passa; exit code 1
+      # (erro) ja falha o job normalmente, sem precisar de tratamento extra.
+      - run: terraform plan -input=false -detailed-exitcode -no-color

@@ -24,3 +24,9 @@ variable "frontend_github_repo" {
   description = "Repo do GitHub do frontend Angular autorizado a assumir a role de deploy via OIDC, formato owner/repo"
   type        = string
 }
+
+variable "backend_github_repo" {
+  description = "Repo do GitHub deste projeto (backend + Terraform), autorizado a assumir a role read-only do drift-check via OIDC, formato owner/repo - ver ADR 0015"
+  type        = string
+  default     = "ronybrand/estado"
+}

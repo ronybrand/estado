@@ -25,3 +25,11 @@ output "frontend_cloudfront_distribution_id" {
 output "frontend_deploy_role_arn" {
   value = module.estado_frontend_deploy.role_arn
 }
+
+output "terraform_state_bucket" {
+  value = aws_s3_bucket.terraform_state.bucket
+}
+
+output "terraform_plan_role_arn" {
+  value = module.estado_terraform_plan.role_arn
+}
