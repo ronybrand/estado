@@ -126,9 +126,7 @@ public class EstadoControllerTest {
 
 	@Test
 	public void atualizarSemIdRetorna400EmVezDeNullPointerException() throws Exception {
-		// achado de code review: EstadoRequestDTO.id nao tinha @NotNull, e
-		// EstadoService.atualizar desembala domain.getId() (Long) num long -
-		// um PUT sem id passava da validacao e quebrava com NPE, virando 500.
+		// ver EstadoUpdateRequestDTO pro motivo.
 		mockMvc.perform(put("/estado")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("{\"nome\":\"Santa Catarina\",\"sigla\":\"SC\"}"))
@@ -138,14 +136,7 @@ public class EstadoControllerTest {
 
 	@Test
 	public void salvarComIdNoPayloadIgnoraOIdEnviado() throws Exception {
-		// achado de code review: EstadoRequestDTO era reusado por POST e PUT,
-		// entao um id enviado no create era copiado pra entidade e o
-		// SimpleJpaRepository.save() do Spring Data JPA roteava pra merge()
-		// em vez de persist(), sobrescrevendo silenciosamente uma linha
-		// existente. EstadoCreateRequestDTO nao tem campo id: o Jackson
-		// (fail-on-unknown-properties=false por padrao no Spring Boot) so
-		// ignora o campo, entao a entidade que chega no service sempre tem
-		// id nulo, seja qual for o id enviado no JSON.
+		// ver EstadoCreateRequestDTO pro motivo.
 		ArgumentCaptor<Estado> captor = ArgumentCaptor.forClass(Estado.class);
 		when(service.salvar(captor.capture())).thenReturn(this.getDomain(1L, "Santa Catarina", "SC"));
 
