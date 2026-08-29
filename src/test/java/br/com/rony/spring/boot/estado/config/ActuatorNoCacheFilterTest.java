@@ -1,7 +1,5 @@
 package br.com.rony.spring.boot.estado.config;
 
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -43,12 +41,7 @@ public class ActuatorNoCacheFilterTest {
 		verify(response).setHeader("Cache-Control", "no-store");
 	}
 
-	@Test
-	public void naoDefineCacheControlPraRotasQueNaoSaoDeActuator() throws ServletException, IOException {
-		when(request.getRequestURI()).thenReturn("/estado/");
-
-		filter.doFilter(request, response, chain);
-
-		verify(response, never()).setHeader(eq("Cache-Control"), eq("no-store"));
-	}
+	// O escopo por URL agora e responsabilidade do FilterRegistrationBean
+	// (ver WebConfigTest), nao mais do filtro - o servlet container nem
+	// invoca este filtro fora de /actuator/*.
 }
