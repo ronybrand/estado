@@ -1,6 +1,7 @@
 package br.com.rony.spring.boot.estado;
 
 import java.time.LocalDateTime;
+import java.util.Locale;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -56,6 +57,6 @@ public class Estado {
 	// setter manual: a sigla e sempre normalizada para maiuscula - o Lombok
 	// @Setter da classe detecta este metodo ja declarado e nao gera outro.
 	public void setSigla(String sigla) {
-		this.sigla = sigla == null ? null : sigla.toUpperCase();
+		this.sigla = sigla == null ? null : sigla.toUpperCase(Locale.ROOT);
 	}
 }
