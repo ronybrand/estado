@@ -18,3 +18,15 @@ variable "state_bucket_arn" {
   description = "ARN do bucket S3 do state remoto (terraform/state-backend.tf), pro qual a role precisa de leitura/escrita (o locking nativo do S3 escreve um lockfile mesmo durante um plan)"
   type        = string
 }
+
+variable "state_key" {
+  description = "Key do state remoto dentro do bucket (mesmo valor do bloco backend \"s3\" em versions.tf) - usada pra restringir a escrita da role ao lockfile nativo do S3 (key + \".tflock\"), sem dar PutObject/DeleteObject sobre o resto do bucket"
+  type        = string
+  default     = "estado/terraform.tfstate"
+}
+
+variable "workflow_filename" {
+  description = "Nome do arquivo do workflow autorizado a assumir esta role (em .github/workflows/), usado na condicao job_workflow_ref do trust policy - restringe o token OIDC a esse workflow especifico, nao a qualquer workflow do repo rodando em master"
+  type        = string
+  default     = "terraform-drift-check.yml"
+}
