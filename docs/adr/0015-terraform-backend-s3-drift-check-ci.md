@@ -57,3 +57,22 @@ precisar de integração extra tipo Slack pra um projeto de operador só.
 - Custo adicional: irrelevante — storage do state (poucas centenas de KB, mesmo com versionamento)
   e requests do lockfile nativo somam frações de centavo por mês; minutos de GitHub Actions bem
   dentro da faixa gratuita pra uma execução semanal de ~1-2 minutos.
+
+## Nota de atualização (2026-08-29)
+
+Red-team review desta ADR (issues #10 e #11, corrigidas na PR #12) apertou o que este documento
+descrevia como "permissão pontual de leitura/escrita só no bucket de state" e "trust policy
+restrita ao branch master": a escrita hoje é restrita ao path do lockfile nativo do S3
+(`s3:PutObject`/`s3:DeleteObject` só em `<state_key>.tflock`, não no bucket inteiro), e a trust
+policy ganhou uma condição `job_workflow_ref` adicional, restringindo o assume-role ao workflow
+`terraform-drift-check.yml` especificamente, não a qualquer workflow deste repo rodando em
+`master`. A extração da trust policy pra um module compartilhado com `github-oidc-deploy` (issue
+#9, PR #19) também é posterior a este texto.
+
+Também descoberto na primeira execução real do workflow: o `terraform apply` que aplica essas
+mudanças de IAM na AWS é manual (não há CD atrelado ao merge de uma PR) — por horas, o código já
+tinha a role restringida mas a policy viva na AWS ainda era a antiga, e o próprio drift-check
+detectou essa divergência na primeira vez que rodou de ponta a ponta. Decisão consciente de manter
+o apply manual (ver recomendação registrada na sessão que fez esse achado): automatizar apply em
+push/merge trocaria "esqueci de aplicar" por "um erro de código aplica sozinho em produção",
+desproporcional pra um projeto de operador único.
