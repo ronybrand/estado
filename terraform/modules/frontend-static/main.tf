@@ -16,23 +16,9 @@ resource "aws_s3_bucket" "frontend" {
   }
 }
 
-resource "aws_s3_bucket_public_access_block" "frontend" {
-  bucket = aws_s3_bucket.frontend.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "frontend" {
-  bucket = aws_s3_bucket.frontend.id
-
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
+module "frontend_hardening" {
+  source    = "../private-encrypted-bucket"
+  bucket_id = aws_s3_bucket.frontend.id
 }
 
 # O deploy.yml faz "aws s3 sync --delete", entao sem versionamento um build
@@ -81,13 +67,9 @@ resource "aws_s3_bucket" "frontend_logs" {
   }
 }
 
-resource "aws_s3_bucket_public_access_block" "frontend_logs" {
-  bucket = aws_s3_bucket.frontend_logs.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
+module "frontend_logs_hardening" {
+  source    = "../private-encrypted-bucket"
+  bucket_id = aws_s3_bucket.frontend_logs.id
 }
 
 resource "aws_s3_bucket_ownership_controls" "frontend_logs" {
@@ -104,18 +86,8 @@ resource "aws_s3_bucket_acl" "frontend_logs" {
 
   depends_on = [
     aws_s3_bucket_ownership_controls.frontend_logs,
-    aws_s3_bucket_public_access_block.frontend_logs,
+    module.frontend_logs_hardening,
   ]
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "frontend_logs" {
-  bucket = aws_s3_bucket.frontend_logs.id
-
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "frontend_logs" {
