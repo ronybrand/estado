@@ -1,5 +1,6 @@
 package br.com.rony.spring.boot.estado;
 
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
@@ -123,7 +125,55 @@ public class EstadoControllerTest {
 	}
 
 	@Test
+	public void atualizarSemIdRetorna400EmVezDeNullPointerException() throws Exception {
+		// achado de code review: EstadoRequestDTO.id nao tinha @NotNull, e
+		// EstadoService.atualizar desembala domain.getId() (Long) num long -
+		// um PUT sem id passava da validacao e quebrava com NPE, virando 500.
+		mockMvc.perform(put("/estado")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{\"nome\":\"Santa Catarina\",\"sigla\":\"SC\"}"))
+				.andExpect(status().isBadRequest());
+		verify(service, never()).atualizar(any(Estado.class));
+	}
+
+	@Test
+	public void salvarComIdNoPayloadIgnoraOIdEnviado() throws Exception {
+		// achado de code review: EstadoRequestDTO era reusado por POST e PUT,
+		// entao um id enviado no create era copiado pra entidade e o
+		// SimpleJpaRepository.save() do Spring Data JPA roteava pra merge()
+		// em vez de persist(), sobrescrevendo silenciosamente uma linha
+		// existente. EstadoCreateRequestDTO nao tem campo id: o Jackson
+		// (fail-on-unknown-properties=false por padrao no Spring Boot) so
+		// ignora o campo, entao a entidade que chega no service sempre tem
+		// id nulo, seja qual for o id enviado no JSON.
+		ArgumentCaptor<Estado> captor = ArgumentCaptor.forClass(Estado.class);
+		when(service.salvar(captor.capture())).thenReturn(this.getDomain(1L, "Santa Catarina", "SC"));
+
+		mockMvc.perform(post("/estado")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{\"id\":999,\"nome\":\"Santa Catarina\",\"sigla\":\"SC\"}"))
+				.andExpect(status().isCreated());
+
+		assertNull(captor.getValue().getId());
+	}
+
+	@Test
 	public void excluirRetorna204() throws Exception {
 		mockMvc.perform(delete("/estado/1")).andExpect(status().isNoContent());
+	}
+
+	@Test
+	public void excluirComIdNegativoRetorna400() throws Exception {
+		// achado de code review: excluir() nao tinha @Positive/@Max, diferente
+		// do get() irmao - o mesmo input invalido respondia 404 no DELETE e
+		// 400 no GET, um contrato inconsistente entre endpoints do mesmo
+		// recurso.
+		mockMvc.perform(delete("/estado/-1")).andExpect(status().isBadRequest());
+		verify(service, never()).excluir(anyLong());
+	}
+
+	@Test
+	public void excluirComIdZeroRetorna400() throws Exception {
+		mockMvc.perform(delete("/estado/0")).andExpect(status().isBadRequest());
 	}
 }

@@ -27,19 +27,24 @@ import lombok.Setter;
         @UniqueConstraint(columnNames = "sigla", name = "uniqueSiglaConstraint")})
 public class Estado {
 
+    // Package-private: usadas tambem pelos DTOs de request, no mesmo pacote.
+    static final int NOME_MIN_LENGTH = 3;
+    static final int NOME_MAX_LENGTH = 100;
+    static final int SIGLA_LENGTH = 2;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", updatable = false, nullable = false)
     private Long id;
 
     @NotNull
-    @Size(min = 3, max = 100)
-    @Column(nullable = false, length = 100, unique = true)
+    @Size(min = NOME_MIN_LENGTH, max = NOME_MAX_LENGTH)
+    @Column(nullable = false, length = NOME_MAX_LENGTH, unique = true)
     private String nome;
 
     @NotNull
-    @Size(min = 2, max = 2)
-    @Column(nullable = false, length = 2, unique = true)
+    @Size(min = SIGLA_LENGTH, max = SIGLA_LENGTH)
+    @Column(nullable = false, length = SIGLA_LENGTH, unique = true)
     private String sigla;
 
 	@Column(name = "ts_data_hora_cadastro", nullable = false)

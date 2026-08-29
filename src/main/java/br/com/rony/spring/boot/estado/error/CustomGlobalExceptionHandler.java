@@ -32,7 +32,7 @@ public class CustomGlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(corpo(ex.getMessage()));
     }
 
-    // Falha de @Valid @RequestBody (bean validation em EstadoRequestDTO) -
+    // Falha de @Valid @RequestBody (bean validation nos DTOs de request) -
     // sem este handler dedicado, cai no ProblemDetail padrao do Spring, com
     // formato diferente de todo o resto da API.
     @ExceptionHandler(MethodArgumentNotValidException.class)
