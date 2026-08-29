@@ -15,3 +15,15 @@ comentário novo, procure se a mesma explicação já foi escrita em outro
 arquivo do mesmo diff — se sim, mantenha só na fonte mais autoritativa
 (normalmente o código de produção, não o teste) e deixe o outro lugar sem
 comentário ou com uma referência curta.
+
+Comentário não deve narrar o que o código já diz sozinho. Se dá pra
+remover o comentário e nada fica menos claro pra quem lê, ele não deveria
+existir — o teste é: o comentário some, e o código continua tão legível
+quanto antes? Se sim, é redundante.
+
+Antes de escrever um comentário pra explicar o que uma variável, método ou
+valor mágico representa, considere se um nome melhor (extrair um método
+com nome descritivo, nomear uma constante, renomear uma variável) resolve
+sem precisar de comentário nenhum — clean code: nome substitui comentário
+sempre que possível. Comentário é pra motivo (por quê), não pra descrição
+(o quê) — descrição vira nome.
