@@ -38,8 +38,10 @@ public class EstadoService {
 
 
     public void excluir(long idDomain) {
-    	Estado domainBD = this.getDomainById(idDomain);
-    	repository.delete(domainBD);
+    	if (!repository.existsById(idDomain)) {
+    		throw naoEncontrado(idDomain);
+    	}
+    	repository.deleteById(idDomain);
     	log.info("Estado excluido: id={}", idDomain);
     }
 
@@ -49,6 +51,10 @@ public class EstadoService {
 
     public Estado getDomainById(long idDomain) {
     	return repository.findById(idDomain)
-    			.orElseThrow(() -> new EstadoNaoEncontradoException("Estado nao encontrado: id=" + idDomain));
+    			.orElseThrow(() -> naoEncontrado(idDomain));
+    }
+
+    private EstadoNaoEncontradoException naoEncontrado(long idDomain) {
+    	return new EstadoNaoEncontradoException("Estado nao encontrado: id=" + idDomain);
     }
 }

@@ -73,10 +73,9 @@ public class EstadoServiceTest {
 	@Test
 	public void excluir() {
 		Long idDomain = Long.valueOf(1);
-		Estado domain = this.getDomain(idDomain, "Santa Catarina", "SC");
-		when(repository.findById(idDomain)).thenReturn(Optional.of(domain));
+		when(repository.existsById(idDomain)).thenReturn(true);
 		service.excluir(idDomain);
-		assertNotNull(domain);
+		verify(repository).deleteById(idDomain);
 	}
 
 	@Test
@@ -107,20 +106,23 @@ public class EstadoServiceTest {
 	@Test
 	public void excluirQuandoIdNaoExisteLancaEstadoNaoEncontrado() {
 		Long idDomain = Long.valueOf(999);
-		when(repository.findById(idDomain)).thenReturn(Optional.empty());
+		when(repository.existsById(idDomain)).thenReturn(false);
 
 		assertThrows(EstadoNaoEncontradoException.class, () -> service.excluir(idDomain));
-		verify(repository, never()).delete(org.mockito.ArgumentMatchers.any());
+		verify(repository, never()).deleteById(org.mockito.ArgumentMatchers.anyLong());
 	}
 
 	@Test
-	public void excluirQuandoIdExisteChamaRepositorioComEntidadeEncontrada() {
+	public void excluirQuandoIdExisteChamaDeleteByIdComOId() {
+		// achado de code review: excluir() buscava a linha inteira (findById)
+		// so pra confirmar existencia antes do delete - existsById +
+		// deleteById evita o SELECT de colunas nunca lidas.
 		Long idDomain = Long.valueOf(1);
-		Estado domain = this.getDomain(idDomain, "Santa Catarina", "SC");
-		when(repository.findById(idDomain)).thenReturn(Optional.of(domain));
+		when(repository.existsById(idDomain)).thenReturn(true);
 
 		service.excluir(idDomain);
 
-		verify(repository).delete(domain);
+		verify(repository).deleteById(idDomain);
+		verify(repository, never()).findById(org.mockito.ArgumentMatchers.anyLong());
 	}
 }

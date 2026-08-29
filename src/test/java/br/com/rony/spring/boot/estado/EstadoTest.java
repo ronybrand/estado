@@ -4,15 +4,44 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import java.util.Locale;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class EstadoTest {
+
+	private Locale localePadraoOriginal;
+
+	@BeforeEach
+	public void guardaLocalePadrao() {
+		localePadraoOriginal = Locale.getDefault();
+	}
+
+	@AfterEach
+	public void restauraLocalePadrao() {
+		Locale.setDefault(localePadraoOriginal);
+	}
 
 	@Test
 	public void setSiglaComValorConvertePraMaiuscula() {
 		Estado estado = new Estado();
 		estado.setSigla("sc");
 		assertEquals("SC", estado.getSigla());
+	}
+
+	@Test
+	public void setSiglaConverteParaMaiusculaIndependenteDoLocalePadrao() {
+		// achado de code review: toUpperCase() sem Locale usa o locale padrao
+		// da JVM - em turco/azeri, "pi".toUpperCase() vira "Pİ" (I pontuado)
+		// em vez de "PI", quebrando a sigla de um estado como Piaui.
+		Locale.setDefault(Locale.forLanguageTag("tr-TR"));
+
+		Estado estado = new Estado();
+		estado.setSigla("pi");
+
+		assertEquals("PI", estado.getSigla());
 	}
 
 	@Test
