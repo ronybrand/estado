@@ -17,6 +17,13 @@ jobs:
     defaults:
       run:
         working-directory: terraform
+    env:
+      # As 3 variaveis obrigatorias sem default em terraform/variables.tf -
+      # sem elas "terraform plan" falha antes de tocar a AWS. admin_cidr e
+      # sensivel (IP do operador) por isso vai como secret, nao repo var.
+      TF_VAR_admin_cidr: ${{ secrets.ADMIN_CIDR }}
+      TF_VAR_frontend_bucket_name: ${{ vars.FRONTEND_BUCKET_NAME }}
+      TF_VAR_frontend_github_repo: ${{ vars.FRONTEND_GITHUB_REPO }}
     steps:
       - uses: actions/checkout@v7
 
