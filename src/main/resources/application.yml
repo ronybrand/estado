@@ -10,7 +10,6 @@ spring:
       # validate so confere que o mapeamento da entidade bate com o schema
       # aplicado, sem tentar alterar nada (ver ADR 0014).
       ddl-auto: validate
-    show-sql: true
     open-in-view: false
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.xml
