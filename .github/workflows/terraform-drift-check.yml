@@ -27,20 +27,17 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
-          # ARN fixo de proposito (nao da pra derivar do output Terraform
-          # aqui - o workflow precisa das credenciais ANTES de rodar
-          # terraform init/plan, entao nao ha como ler o output primeiro).
-          # Precisa ficar em sincronia manual com o output
-          # "terraform_plan_role_arn" (terraform/outputs.tf) e com
-          # var.role_name (default "estado-terraform-plan" em
-          # modules/github-oidc-plan/variables.tf) - se qualquer um dos dois
-          # mudar, atualize esta linha tambem.
-          role-to-assume: arn:aws:iam::875304087242:role/estado-terraform-plan
+          # Fonte da verdade e o output "terraform_plan_role_arn"
+          # (terraform/outputs.tf), gravado como repository variable apos
+          # cada apply que mude a role - nao da pra ler o output aqui
+          # diretamente porque o workflow precisa das credenciais ANTES de
+          # rodar terraform init/plan (problema de bootstrap).
+          role-to-assume: ${{ vars.TERRAFORM_PLAN_ROLE_ARN }}
           aws-region: sa-east-1
 
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: "~1.15"
           # O wrapper padrao da action trata exit code 2 (drift real, via
