@@ -16,6 +16,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import br.com.rony.spring.boot.estado.EstadoNaoEncontradoException;
+import br.com.rony.spring.boot.estado.config.RequestIdFilter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -84,6 +85,6 @@ public class CustomGlobalExceptionHandler {
     }
 
     private ErrorResponseDto corpo(String mensagem) {
-        return new ErrorResponseDto(mensagem, MDC.get("requestId"));
+        return new ErrorResponseDto(mensagem, MDC.get(RequestIdFilter.MDC_KEY));
     }
 }

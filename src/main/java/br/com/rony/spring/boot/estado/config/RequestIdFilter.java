@@ -20,7 +20,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class RequestIdFilter extends OncePerRequestFilter implements Ordered {
 
 	static final String HEADER = "X-Request-Id";
-	static final String MDC_KEY = "requestId";
+	// public: unica fonte de verdade da chave MDC, tambem lida por
+	// CustomGlobalExceptionHandler (pacote error) pra ecoar o requestId no
+	// corpo de erro.
+	public static final String MDC_KEY = "requestId";
 
 	@Override
 	public int getOrder() {

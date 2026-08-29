@@ -32,6 +32,7 @@ import ch.qos.logback.core.read.ListAppender;
 import jakarta.validation.ConstraintViolationException;
 
 import br.com.rony.spring.boot.estado.EstadoNaoEncontradoException;
+import br.com.rony.spring.boot.estado.config.RequestIdFilter;
 
 public class CustomGlobalExceptionHandlerTest {
 
@@ -141,7 +142,7 @@ public class CustomGlobalExceptionHandlerTest {
 
 	@Test
 	public void corpoDeErroInclueRequestIdDoMdcQuandoPresente() {
-		MDC.put("requestId", "abc-123");
+		MDC.put(RequestIdFilter.MDC_KEY, "abc-123");
 		ConstraintViolationException ex = new ConstraintViolationException("invalido", null);
 
 		ResponseEntity<ErrorResponseDto> resposta = handler.requisicaoInvalida(ex);
