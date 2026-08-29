@@ -18,35 +18,19 @@ resource "aws_iam_openid_connect_provider" "github" {
   ]
 }
 
-data "aws_iam_policy_document" "assume_role_github" {
-  statement {
-    effect  = "Allow"
-    actions = ["sts:AssumeRoleWithWebIdentity"]
+# Trust policy compartilhada com modules/github-oidc-plan - ver issue #9.
+# Sem workflow_filename: restringe so por repo/branch (via sub), evitando que
+# um PR de fork ou outro branch consiga publicar no S3.
+module "trust_policy" {
+  source = "../github-oidc-trust-policy"
 
-    principals {
-      type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.github.arn]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:aud"
-      values   = ["sts.amazonaws.com"]
-    }
-
-    # Restringe a role a rodar so a partir do branch master do repo do front
-    # - evita que um PR de fork ou outro branch consiga publicar no S3.
-    condition {
-      test     = "StringLike"
-      variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repo}:ref:refs/heads/master"]
-    }
-  }
+  oidc_provider_arn = aws_iam_openid_connect_provider.github.arn
+  github_repo       = var.github_repo
 }
 
 resource "aws_iam_role" "deploy" {
   name               = var.role_name
-  assume_role_policy = data.aws_iam_policy_document.assume_role_github.json
+  assume_role_policy = module.trust_policy.json
 }
 
 data "aws_iam_policy_document" "deploy_permissions" {
