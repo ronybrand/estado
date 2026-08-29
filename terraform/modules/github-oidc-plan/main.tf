@@ -8,45 +8,22 @@
 # ja criado em modules/github-oidc-deploy (var.oidc_provider_arn) - nao cria
 # um provider novo.
 
-data "aws_iam_policy_document" "assume_role_github" {
-  statement {
-    effect  = "Allow"
-    actions = ["sts:AssumeRoleWithWebIdentity"]
+# Trust policy compartilhada com modules/github-oidc-deploy - ver issue #9.
+module "trust_policy" {
+  source = "../github-oidc-trust-policy"
 
-    principals {
-      type        = "Federated"
-      identifiers = [var.oidc_provider_arn]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "token.actions.githubusercontent.com:aud"
-      values   = ["sts.amazonaws.com"]
-    }
-
-    # Restringe a role a rodar so a partir do branch master deste repo - evita
-    # que um PR de fork ou outro branch consiga assumir a role.
-    condition {
-      test     = "StringLike"
-      variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repo}:ref:refs/heads/master"]
-    }
-
-    # Restringe ao workflow especifico de drift-check - sem isso, qualquer
-    # outro workflow deste repo rodando em master que ganhe "id-token: write"
-    # (hoje nenhum tem, mas nada impede que passe a ter) tambem conseguiria
-    # assumir esta role.
-    condition {
-      test     = "StringLike"
-      variable = "token.actions.githubusercontent.com:job_workflow_ref"
-      values   = ["${var.github_repo}/.github/workflows/${var.workflow_filename}@refs/heads/master"]
-    }
-  }
+  oidc_provider_arn = var.oidc_provider_arn
+  github_repo       = var.github_repo
+  # Restringe tambem ao workflow especifico de drift-check - sem isso,
+  # qualquer outro workflow deste repo rodando em master que ganhe
+  # "id-token: write" (hoje nenhum tem, mas nada impede que passe a ter)
+  # tambem conseguiria assumir esta role.
+  workflow_filename = var.workflow_filename
 }
 
 resource "aws_iam_role" "plan" {
   name               = var.role_name
-  assume_role_policy = data.aws_iam_policy_document.assume_role_github.json
+  assume_role_policy = module.trust_policy.json
 }
 
 # Politica gerenciada da AWS, nao uma politica customizada granular: "terraform
