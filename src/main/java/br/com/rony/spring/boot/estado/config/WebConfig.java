@@ -1,6 +1,7 @@
 package br.com.rony.spring.boot.estado.config;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.filter.UrlHandlerFilter;
@@ -30,5 +31,16 @@ public class WebConfig implements WebMvcConfigurer {
 	@Bean
 	public UrlHandlerFilter trailingSlashFilter() {
 		return UrlHandlerFilter.trailingSlashHandler("/**").wrapRequest().build();
+	}
+
+	// Escopo declarativo via URL pattern: o servlet container so invoca este
+	// filtro pra /actuator/*, em vez do filtro checar o prefixo em runtime a
+	// cada requisicao da aplicacao (achado de code review).
+	@Bean
+	public FilterRegistrationBean<ActuatorNoCacheFilter> actuatorNoCacheFilter() {
+		FilterRegistrationBean<ActuatorNoCacheFilter> registration = new FilterRegistrationBean<>(
+				new ActuatorNoCacheFilter());
+		registration.addUrlPatterns("/actuator/*");
+		return registration;
 	}
 }
