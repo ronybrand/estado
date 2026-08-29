@@ -46,11 +46,17 @@ public class CustomGlobalExceptionHandlerTest {
 		logs = new ListAppender<>();
 		logs.start();
 		logger.addAppender(logs);
+		// Sem isso, o evento tambem propaga pro appender de console do root
+		// logger - os asserts continuam passando, mas o ERROR/WARN esperado
+		// aparece no output do Maven parecendo uma falha real, nao um teste
+		// exercitando o catch-all de proposito.
+		logger.setAdditive(false);
 	}
 
 	@AfterEach
 	public void limpaLogsEMdc() {
 		logger.detachAppender(logs);
+		logger.setAdditive(true);
 		MDC.clear();
 	}
 
@@ -110,6 +116,27 @@ public class CustomGlobalExceptionHandlerTest {
 		assertEquals(Level.ERROR, logs.list.get(0).getLevel());
 		assertNotNull(logs.list.get(0).getThrowableProxy());
 		assertEquals(RuntimeException.class.getName(), logs.list.get(0).getThrowableProxy().getClassName());
+	}
+
+	@Test
+	public void erroInesperadoNaoPropagaLogParaOAppenderRaiz() {
+		// O ListAppender do @BeforeEach captura o evento pra assert, mas por
+		// padrao o Logback tambem propaga pro appender de console do root
+		// logger - fazendo o ERROR esperado deste teste aparecer no output do
+		// Maven/CI como se fosse uma falha real. Um appender de teste anexado
+		// ao root prova que essa propagacao foi desligada.
+		Logger root = (Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+		ListAppender<ILoggingEvent> rootLogs = new ListAppender<>();
+		rootLogs.start();
+		root.addAppender(rootLogs);
+
+		try {
+			handler.erroInesperado(new RuntimeException("detalhe interno sensivel de implementacao"));
+
+			assertTrue(rootLogs.list.isEmpty());
+		} finally {
+			root.detachAppender(rootLogs);
+		}
 	}
 
 	@Test
