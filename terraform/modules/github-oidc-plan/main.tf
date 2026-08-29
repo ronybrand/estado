@@ -2,10 +2,11 @@
 # access key estatica na conta - o workflow assume esta role via OIDC, com
 # token de vida curta emitido pelo proprio GitHub. Ver ADR 0015.
 #
-# So-leitura: nenhuma acao de mutacao e permitida fora do bucket de state (que
-# precisa de escrita pro lockfile nativo do S3). Reusa o provider OIDC ja
-# criado em modules/github-oidc-deploy (var.oidc_provider_arn) - nao cria um
-# provider novo.
+# So-leitura: a unica acao de mutacao permitida e PutObject/DeleteObject no
+# lockfile nativo do S3, dentro do bucket de state - nao ha escrita sobre o
+# terraform.tfstate em si nem sobre o resto do bucket. Reusa o provider OIDC
+# ja criado em modules/github-oidc-deploy (var.oidc_provider_arn) - nao cria
+# um provider novo.
 
 data "aws_iam_policy_document" "assume_role_github" {
   statement {
@@ -30,6 +31,16 @@ data "aws_iam_policy_document" "assume_role_github" {
       variable = "token.actions.githubusercontent.com:sub"
       values   = ["repo:${var.github_repo}:ref:refs/heads/master"]
     }
+
+    # Restringe ao workflow especifico de drift-check - sem isso, qualquer
+    # outro workflow deste repo rodando em master que ganhe "id-token: write"
+    # (hoje nenhum tem, mas nada impede que passe a ter) tambem conseguiria
+    # assumir esta role.
+    condition {
+      test     = "StringLike"
+      variable = "token.actions.githubusercontent.com:job_workflow_ref"
+      values   = ["${var.github_repo}/.github/workflows/${var.workflow_filename}@refs/heads/master"]
+    }
   }
 }
 
@@ -50,17 +61,30 @@ resource "aws_iam_role_policy_attachment" "read_only" {
   policy_arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
 }
 
-# Excecao de escrita: o locking nativo do S3 (use_lockfile) escreve um
-# lockfile temporario no bucket de state mesmo durante um "plan" - sem isso, o
-# job falharia tentando adquirir o lock. DeleteObject e necessario tambem -
-# sem ele, o Terraform adquire o lock mas nao consegue remove-lo ao final,
-# deixando um lockfile orfao que bloqueia toda execucao seguinte.
+# "terraform plan" precisa ler o state inteiro e listar o bucket, mas nao
+# precisa escrever nele - a unica escrita legitima de uma role de plan e o
+# lockfile nativo do S3 (use_lockfile), tratado na statement seguinte.
 data "aws_iam_policy_document" "state_bucket_access" {
   statement {
-    sid       = "TerraformStateReadWrite"
+    sid       = "TerraformStateRead"
     effect    = "Allow"
-    actions   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:ListBucket"]
+    actions   = ["s3:GetObject", "s3:ListBucket"]
     resources = [var.state_bucket_arn, "${var.state_bucket_arn}/*"]
+  }
+
+  # Excecao de escrita, restrita ao lockfile: o locking nativo do S3
+  # (use_lockfile) escreve um lockfile temporario (key + ".tflock") mesmo
+  # durante um "plan" - sem isso, o job falharia tentando adquirir o lock.
+  # DeleteObject e necessario tambem - sem ele, o Terraform adquire o lock
+  # mas nao consegue remove-lo ao final, deixando um lockfile orfao que
+  # bloqueia toda execucao seguinte. Restrito ao path do lockfile (nao ao
+  # bucket inteiro) pra essa role nao conseguir sobrescrever/apagar o
+  # terraform.tfstate em si.
+  statement {
+    sid       = "TerraformStateLockfileWrite"
+    effect    = "Allow"
+    actions   = ["s3:PutObject", "s3:DeleteObject"]
+    resources = ["${var.state_bucket_arn}/${var.state_key}.tflock"]
   }
 }
 
