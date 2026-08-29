@@ -40,14 +40,14 @@ public class EstadoController {
     }
 
 	@PostMapping
-	public ResponseEntity<EstadoDTO> salvar(@Valid @RequestBody EstadoRequestDTO estado) {
+	public ResponseEntity<EstadoDTO> salvar(@Valid @RequestBody EstadoCreateRequestDTO estado) {
     	Estado salvo = service.salvar(estado.toEntity());
 
     	return ResponseEntity.status(HttpStatus.CREATED).body(EstadoDTO.from(salvo));
     }
 
 	@PutMapping
-	public ResponseEntity<EstadoDTO> atualizar(@Valid @RequestBody EstadoRequestDTO estado) {
+	public ResponseEntity<EstadoDTO> atualizar(@Valid @RequestBody EstadoUpdateRequestDTO estado) {
     	Estado atualizado = service.atualizar(estado.toEntity());
 
     	return ResponseEntity.status(HttpStatus.OK).body(EstadoDTO.from(atualizado));
@@ -55,7 +55,7 @@ public class EstadoController {
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-    public void excluir(@PathVariable("id") Long id) {
+    public void excluir(@Positive @Max(Integer.MAX_VALUE) @PathVariable("id") Long id) {
     	service.excluir(id);
     }
 }
