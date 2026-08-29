@@ -34,6 +34,15 @@ module "estado_frontend_deploy" {
   cloudfront_distribution_arn = "arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:distribution/${module.estado_frontend.distribution_id}"
 }
 
+# Role read-only pro workflow de drift-check do Terraform no CI - ver ADR 0015.
+module "estado_terraform_plan" {
+  source = "./modules/github-oidc-plan"
+
+  github_repo       = var.backend_github_repo
+  oidc_provider_arn = module.estado_frontend_deploy.oidc_provider_arn
+  state_bucket_arn  = aws_s3_bucket.terraform_state.arn
+}
+
 # Pra adicionar um novo app de portfolio depois:
 #   module "outroapp_backup" {
 #     source      = "./modules/app-backup"
