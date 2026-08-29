@@ -30,7 +30,6 @@ import org.slf4j.MDC;
 public class RequestIdFilterTest {
 
 	private static final String HEADER = "X-Request-Id";
-	private static final String MDC_KEY = "requestId";
 
 	private final RequestIdFilter filter = new RequestIdFilter();
 
@@ -48,14 +47,14 @@ public class RequestIdFilterTest {
 		when(request.getHeader(HEADER)).thenReturn(null);
 		AtomicReference<String> mdcDuranteCadeia = new AtomicReference<>();
 		doAnswer(invocation -> {
-			mdcDuranteCadeia.set(MDC.get(MDC_KEY));
+			mdcDuranteCadeia.set(MDC.get(RequestIdFilter.MDC_KEY));
 			return null;
 		}).when(chain).doFilter(request, response);
 
 		filter.doFilter(request, response, chain);
 
 		assertNotNull(mdcDuranteCadeia.get());
-		assertNull(MDC.get(MDC_KEY));
+		assertNull(MDC.get(RequestIdFilter.MDC_KEY));
 	}
 
 	@Test
