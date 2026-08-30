@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -166,5 +167,25 @@ public class EstadoControllerTest {
 	@Test
 	public void excluirComIdZeroRetorna400() throws Exception {
 		mockMvc.perform(delete("/estado/0")).andExpect(status().isBadRequest());
+	}
+
+	@Test
+	public void getComOrigemPermitidaEcoaOAccessControlAllowOrigin() throws Exception {
+		when(service.getDomainById(1L)).thenReturn(this.getDomain(1L, "Santa Catarina", "SC"));
+
+		mockMvc.perform(get("/estado/1").header("Origin", "http://localhost:8000"))
+				.andExpect(status().isOk())
+				.andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:8000"));
+	}
+
+	@Test
+	public void getComOrigemNaoPermitidaRetorna403() throws Exception {
+		// achado ao investigar o deploy do react-state: WebConfig.originPermitida
+		// virou lista pra suportar mais de uma origem (ver ApiProperty) - este
+		// teste prova que uma origem fora da lista continua sendo rejeitada,
+		// nao so que a permitida funciona.
+		mockMvc.perform(get("/estado/1").header("Origin", "https://origem-nao-permitida.example.com"))
+				.andExpect(status().isForbidden());
+		verify(service, never()).getDomainById(anyLong());
 	}
 }

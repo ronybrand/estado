@@ -21,7 +21,7 @@ public class WebConfig implements WebMvcConfigurer {
 	@Override
 	public void addCorsMappings(CorsRegistry registry) {
 		registry.addMapping("/estado/**")
-				.allowedOrigins(apiProperty.getOriginPermitida())
+				.allowedOrigins(apiProperty.getOriginPermitida().toArray(new String[0]))
 				.allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
 				.allowedHeaders("Authorization", "Content-Type", "Accept")
 				.allowCredentials(true)

@@ -14,6 +14,7 @@ spring:
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.xml
 api:
+  # Aceita multiplas origens separadas por virgula (ex: "https://a,https://b").
   origin-permitida: ${API_ORIGIN_PERMITIDA:http://localhost:8000}
 springdoc:
   # Habilitado por padrao (dev-friendly) - lib-swap.sh desliga explicitamente
