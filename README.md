@@ -51,6 +51,44 @@ Um único EC2 roda os três containers Docker (app, Postgres, Alloy) via Compose
 [`angular_estado`](https://github.com/ronybrand/angular_estado) separado) é
 publicado independentemente em S3/CloudFront.
 
+## Estrutura do projeto
+
+```
+src/main/java/br/com/rony/spring/boot/estado/
+├── Estado.java                    # entidade JPA
+├── EstadoController.java          # endpoints REST
+├── EstadoService.java             # regra de negócio
+├── EstadoRepository.java          # Spring Data JPA
+├── Estado{Create,Update}RequestDTO.java  # payloads de entrada, um por operação
+├── EstadoDTO.java                 # payload de saída
+├── EstadoNaoEncontradoException.java
+├── config/       # CORS, filtros de servlet (RequestIdFilter, ActuatorNoCacheFilter), UrlHandlerFilter
+├── error/        # CustomGlobalExceptionHandler + ErrorResponseDto
+└── property/     # ApiProperty (@ConfigurationProperties)
+```
+
+Package-by-feature (pacote por funcionalidade), não package-by-layer: entidade,
+controller, service, repository e DTOs da feature `estado` vivem juntos no
+pacote raiz, em vez de espalhados em pacotes `controller/`, `service/`,
+`repository/` etc. Com uma única feature no projeto, o pacote raiz concentra
+tudo dela; `config/`, `error/` e `property/` ficam à parte por serem
+transversais, não parte da feature em si.
+
+Os DTOs de request são um por operação (`Create` vs `Update`) em vez de um DTO
+único reaproveitado — ver comentário em `EstadoUpdateRequestDTO`/`EstadoCreateRequestDTO`
+pro motivo (cada um corrige um bug real de payload incompleto).
+
+Convenção de comentários (o que vale explicar com comentário vs. o que deve
+virar nome) está documentada em [`CLAUDE.md`](CLAUDE.md), não repetida aqui.
+
+### Outros diretórios de topo
+
+| Pasta | O que tem | Documentação |
+|---|---|---|
+| [`deploy/`](deploy/) | Docker Compose, scripts de deploy/rollback/backup e units systemd — o que roda *dentro* da EC2, fora do jar | [`deploy/README.md`](deploy/README.md) |
+| [`terraform/`](terraform/) | Módulos (`portfolio-instance`, `app-backup`, `frontend-static`, `github-oidc-*`, `private-encrypted-bucket`) — recursos AWS trazidos via `import`, não recriados do zero | [`docs/adr/`](docs/adr/) |
+| [`.github/workflows/`](.github/workflows/) | `ci.yml` (build+test), `codeql.yml` (SAST semanal), `docker-publish.yml` (build+push no GHCR após CI passar em `master`), `terraform-drift-check.yml` (plan semanal), `dependabot-auto-merge.yml` (merge automático de bump não-major) | comentários inline em cada workflow |
+
 ## Funcionalidades:
 - Cadastrar uma unidade federativa por vez com data e hora do registro;
 - Apresentar a lista das unidades federativas;
