@@ -67,11 +67,12 @@ src/main/java/br/com/rony/spring/boot/estado/
 └── property/     # ApiProperty (@ConfigurationProperties)
 ```
 
-Pacote raiz plano (entidade, controller, service, repository e DTOs juntos, sem
-camadas tipo `domain`/`application`/`infra`) por escolha, não por descuido — é
-um CRUD de uma entidade só, e separar em camadas aqui só adicionaria indireção
-sem ganho real. `config/`, `error/` e `property/` existem à parte porque são
-transversais, não parte do fluxo CRUD em si.
+Package-by-feature (pacote por funcionalidade), não package-by-layer: entidade,
+controller, service, repository e DTOs da feature `estado` vivem juntos no
+pacote raiz, em vez de espalhados em pacotes `controller/`, `service/`,
+`repository/` etc. Com uma única feature no projeto, o pacote raiz concentra
+tudo dela; `config/`, `error/` e `property/` ficam à parte por serem
+transversais, não parte da feature em si.
 
 Os DTOs de request são um por operação (`Create` vs `Update`) em vez de um DTO
 único reaproveitado — ver comentário em `EstadoUpdateRequestDTO`/`EstadoCreateRequestDTO`
