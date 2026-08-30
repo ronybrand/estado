@@ -9,14 +9,14 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-java@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6
         with:
           distribution: temurin
           java-version: "25"
           cache: maven
       - run: mvn -B verify
-      - uses: codecov/codecov-action@v7
+      - uses: codecov/codecov-action@a99c28d3f0da835de33ff2feb2e15691c7b9641f # v7
         with:
           files: target/site/jacoco/jacoco.xml
           fail_ci_if_error: false

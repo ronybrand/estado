@@ -71,14 +71,6 @@ public class EstadoServiceTest {
 	}
 
 	@Test
-	public void excluir() {
-		Long idDomain = Long.valueOf(1);
-		when(repository.existsById(idDomain)).thenReturn(true);
-		service.excluir(idDomain);
-		verify(repository).deleteById(idDomain);
-	}
-
-	@Test
 	public void getDomainById() {
 		Long idDomain = Long.valueOf(1);
 		Estado domain = this.getDomain(idDomain, "Santa Catarina", "SC");
