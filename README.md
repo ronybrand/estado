@@ -51,6 +51,35 @@ Um único EC2 roda os três containers Docker (app, Postgres, Alloy) via Compose
 [`angular_estado`](https://github.com/ronybrand/angular_estado) separado) é
 publicado independentemente em S3/CloudFront.
 
+## Estrutura do projeto
+
+```
+src/main/java/br/com/rony/spring/boot/estado/
+├── Estado.java                    # entidade JPA
+├── EstadoController.java          # endpoints REST
+├── EstadoService.java             # regra de negócio
+├── EstadoRepository.java          # Spring Data JPA
+├── Estado{Create,Update}RequestDTO.java  # payloads de entrada, um por operação
+├── EstadoDTO.java                 # payload de saída
+├── EstadoNaoEncontradoException.java
+├── config/       # CORS, filtros de servlet (RequestIdFilter, ActuatorNoCacheFilter), UrlHandlerFilter
+├── error/        # CustomGlobalExceptionHandler + ErrorResponseDto
+└── property/     # ApiProperty (@ConfigurationProperties)
+```
+
+Pacote raiz plano (entidade, controller, service, repository e DTOs juntos, sem
+camadas tipo `domain`/`application`/`infra`) por escolha, não por descuido — é
+um CRUD de uma entidade só, e separar em camadas aqui só adicionaria indireção
+sem ganho real. `config/`, `error/` e `property/` existem à parte porque são
+transversais, não parte do fluxo CRUD em si.
+
+Os DTOs de request são um por operação (`Create` vs `Update`) em vez de um DTO
+único reaproveitado — ver comentário em `EstadoUpdateRequestDTO`/`EstadoCreateRequestDTO`
+pro motivo (cada um corrige um bug real de payload incompleto).
+
+Convenção de comentários (o que vale explicar com comentário vs. o que deve
+virar nome) está documentada em [`CLAUDE.md`](CLAUDE.md), não repetida aqui.
+
 ## Funcionalidades:
 - Cadastrar uma unidade federativa por vez com data e hora do registro;
 - Apresentar a lista das unidades federativas;
