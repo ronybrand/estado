@@ -81,6 +81,14 @@ pro motivo (cada um corrige um bug real de payload incompleto).
 Convenção de comentários (o que vale explicar com comentário vs. o que deve
 virar nome) está documentada em [`CLAUDE.md`](CLAUDE.md), não repetida aqui.
 
+### Outros diretórios de topo
+
+| Pasta | O que tem | Documentação |
+|---|---|---|
+| [`deploy/`](deploy/) | Docker Compose, scripts de deploy/rollback/backup e units systemd — o que roda *dentro* da EC2, fora do jar | [`deploy/README.md`](deploy/README.md) |
+| [`terraform/`](terraform/) | Módulos (`portfolio-instance`, `app-backup`, `frontend-static`, `github-oidc-*`, `private-encrypted-bucket`) — recursos AWS trazidos via `import`, não recriados do zero | [`docs/adr/`](docs/adr/) |
+| [`.github/workflows/`](.github/workflows/) | `ci.yml` (build+test), `codeql.yml` (SAST semanal), `docker-publish.yml` (build+push no GHCR após CI passar em `master`), `terraform-drift-check.yml` (plan semanal), `dependabot-auto-merge.yml` (merge automático de bump não-major) | comentários inline em cada workflow |
+
 ## Funcionalidades:
 - Cadastrar uma unidade federativa por vez com data e hora do registro;
 - Apresentar a lista das unidades federativas;
