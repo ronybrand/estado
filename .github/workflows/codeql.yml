@@ -13,15 +13,15 @@ jobs:
     permissions:
       security-events: write
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-java@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6
         with:
           distribution: temurin
           java-version: "25"
           cache: maven
-      - uses: github/codeql-action/init@v4.37.8
+      - uses: github/codeql-action/init@37f2634a92ba38a0926ef79a0748ac8ae7d95ab2 # v4.37.8
         with:
           languages: java-kotlin
           build-mode: manual
       - run: mvn -B -DskipTests compile
-      - uses: github/codeql-action/analyze@v4.37.8
+      - uses: github/codeql-action/analyze@37f2634a92ba38a0926ef79a0748ac8ae7d95ab2 # v4.37.8
