@@ -48,7 +48,12 @@ public class SecurityConfig {
                 // isso, o Security bloquearia o preflight OPTIONS antes do CORS do
                 // MVC sequer rodar.
                 .cors(Customizer.withDefaults())
-                .csrf(AbstractHttpConfigurer::disable)
+                // CSRF nao se aplica aqui: autenticacao e via header Authorization
+                // (Bearer token), nunca cookie/sessao - o browser nao anexa esse
+                // header automaticamente entre sites, que e o vetor que CSRF
+                // explora. Pratica padrao da propria doc do Spring Security pra
+                // APIs stateless (ver ADR 0017).
+                .csrf(AbstractHttpConfigurer::disable) // lgtm[java/spring-disabled-csrf-protection]
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
