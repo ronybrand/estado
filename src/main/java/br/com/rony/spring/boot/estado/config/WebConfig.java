@@ -21,9 +21,21 @@ public class WebConfig implements WebMvcConfigurer {
 
 	@Override
 	public void addCorsMappings(CorsRegistry registry) {
+		// /auth/** precisa do mesmo CORS que /estado/**: hoje os frontends
+		// conhecidos (Angular/CloudFront, React/Vercel) chamam a API via
+		// rewrite same-origin, mas sem este mapping um cliente que bata
+		// direto na API (ex: VITE_API_URL apontando pro backend) teria
+		// /auth/login bloqueado pelo browser mesmo com a origem na allowlist.
 		registry.addMapping("/estado/**")
 				.allowedOrigins(apiProperty.getOriginPermitida().toArray(new String[0]))
 				.allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+				.allowedHeaders("Authorization", "Content-Type", "Accept")
+				.allowCredentials(true)
+				.maxAge(3600);
+
+		registry.addMapping("/auth/**")
+				.allowedOrigins(apiProperty.getOriginPermitida().toArray(new String[0]))
+				.allowedMethods("POST", "OPTIONS")
 				.allowedHeaders("Authorization", "Content-Type", "Accept")
 				.allowCredentials(true)
 				.maxAge(3600);
