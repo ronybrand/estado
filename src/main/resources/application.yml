@@ -21,6 +21,17 @@ rate-limit:
   # ADR 0016). Default generoso o bastante pra nao incomodar uso normal.
   capacidade: ${RATE_LIMIT_CAPACIDADE:60}
   janela-segundos: ${RATE_LIMIT_JANELA_SEGUNDOS:60}
+admin:
+  # Usuario admin unico, sem tabela de usuarios (ADR 0017). O hash da senha
+  # nao tem default - falha rapido no boot em vez de rodar com credencial
+  # adivinhavel.
+  username: ${ADMIN_USERNAME:admin}
+  password-hash: ${ADMIN_PASSWORD_HASH}
+jwt:
+  # Segredo HMAC pra assinar/validar o token - sem default, mesmo motivo do
+  # admin acima.
+  secret: ${JWT_SECRET}
+  expiration-minutes: ${JWT_EXPIRATION_MINUTES:60}
 springdoc:
   # Habilitado por padrao (dev-friendly) - lib-swap.sh desliga explicitamente
   # em producao via env var, pra nao expor o Swagger UI publicamente.

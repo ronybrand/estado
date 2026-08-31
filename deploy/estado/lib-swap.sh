@@ -7,8 +7,9 @@
 # em vez de "docker exec ... wget localhost" — assim tambem valida que a
 # rede/DNS do Compose estao ok, nao so que o processo subiu.
 #
-# Requer no ambiente: CURRENT, NEXT, POSTGRES_PASSWORD, API_ORIGIN_PERMITIDA
-# (via .env, carregado com "set -a" pelo chamador).
+# Requer no ambiente: CURRENT, NEXT, POSTGRES_PASSWORD, API_ORIGIN_PERMITIDA,
+# ADMIN_PASSWORD_HASH, JWT_SECRET (via .env, carregado com "set -a" pelo
+# chamador).
 
 swap_to() {
     local image="$1"
@@ -22,6 +23,9 @@ swap_to() {
         -e JDBC_DATABASE_USERNAME=estado \
         -e JDBC_DATABASE_PASSWORD="$POSTGRES_PASSWORD" \
         -e API_ORIGIN_PERMITIDA="$API_ORIGIN_PERMITIDA" \
+        -e ADMIN_USERNAME="${ADMIN_USERNAME:-admin}" \
+        -e ADMIN_PASSWORD_HASH="$ADMIN_PASSWORD_HASH" \
+        -e JWT_SECRET="$JWT_SECRET" \
         -e SPRINGDOC_API_DOCS_ENABLED=false \
         -e SPRINGDOC_SWAGGER_UI_ENABLED=false \
         "$image" >/dev/null

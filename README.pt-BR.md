@@ -99,8 +99,10 @@ virar nome) está documentada em [`CLAUDE.md`](CLAUDE.md), não repetida aqui.
 - Consultar a unidade da federação pelo seu Id;
 - Excluir uma unidade da federação passando seu Id.
 Observações: Não é permitido inserir/alterar um nome de estado que já exista ou mesmo para sigla.
-A API não tem autenticação (ver ADR 0016), então tem rate limit por IP (padrão 60 req/min, `429`
-quando excedido) como defesa básica contra abuso.
+Endpoints de mutação (criar/alterar/excluir) exigem um JWT obtido via `POST /auth/login` —
+usuário admin único, sem tabela de usuários (ver ADR 0017); `GET` continua público. Todos os
+endpoints também têm rate limit por IP (padrão 60 req/min, `429` quando excedido, ver ADR 0016)
+como defesa básica contra abuso.
 
 # 1 - Compilar com Maven e executar local com java -jar
 

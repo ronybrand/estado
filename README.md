@@ -99,9 +99,10 @@ become a name) is documented in [`CLAUDE.md`](CLAUDE.md), not repeated here.
 - Allow updating a federative unit's full name and abbreviation, with updated date/time;
 - Look up a federative unit by its Id;
 - Delete a federative unit by its Id.
-Notes: You may not insert/update a state name (or abbreviation) that already exists. The API has
-no authentication (see ADR 0016), so it's rate-limited per IP (default 60 req/min, `429` when
-exceeded) as a baseline defense against abuse.
+Notes: You may not insert/update a state name (or abbreviation) that already exists. Mutating
+endpoints (create/update/delete) require a JWT obtained via `POST /auth/login` — single admin
+user, no user table (see ADR 0017); `GET` stays public. All endpoints are also rate-limited per
+IP (default 60 req/min, `429` when exceeded, see ADR 0016) as a baseline defense against abuse.
 
 # 1 - Build with Maven and run locally with java -jar
 
