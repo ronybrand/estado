@@ -16,6 +16,11 @@ spring:
 api:
   # Aceita multiplas origens separadas por virgula (ex: "https://a,https://b").
   origin-permitida: ${API_ORIGIN_PERMITIDA:http://localhost:8000}
+rate-limit:
+  # Requisicoes permitidas por IP a cada janela-segundos (token bucket, ver
+  # ADR 0016). Default generoso o bastante pra nao incomodar uso normal.
+  capacidade: ${RATE_LIMIT_CAPACIDADE:60}
+  janela-segundos: ${RATE_LIMIT_JANELA_SEGUNDOS:60}
 springdoc:
   # Habilitado por padrao (dev-friendly) - lib-swap.sh desliga explicitamente
   # em producao via env var, pra nao expor o Swagger UI publicamente.
@@ -30,6 +35,12 @@ logging:
     org.springframework: info
 server:
   port: 8080 #set your port
+  # Sem isso, request.getRemoteAddr() (usado pelo RateLimitFilter, ADR 0016)
+  # sempre resolve pro IP do Caddy, nao do cliente real - o proxy injeta
+  # X-Forwarded-For, mas o Spring so o usa se explicitamente habilitado.
+  # Seguro aqui porque a app so e alcancavel via Caddy (porta nunca publicada
+  # pro host, ver ADR 0012).
+  forward-headers-strategy: framework
 management:
   endpoints:
     web:
