@@ -1,6 +1,7 @@
 # Estado
 
 [![CI](https://github.com/ronybrand/estado/actions/workflows/ci.yml/badge.svg)](https://github.com/ronybrand/estado/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/ronybrand/estado/actions/workflows/codeql.yml/badge.svg)](https://github.com/ronybrand/estado/actions/workflows/codeql.yml)
 [![codecov](https://codecov.io/gh/ronybrand/estado/graph/badge.svg)](https://codecov.io/gh/ronybrand/estado)
 
 Projeto CRUD de unidades federativas do Brasil (estados).
