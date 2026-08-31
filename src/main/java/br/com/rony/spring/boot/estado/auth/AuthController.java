@@ -26,7 +26,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public LoginResponseDto login(@Valid @RequestBody LoginRequestDto request) {
-        boolean credenciaisValidas = adminProperty.getUsername().equals(request.username())
+        boolean credenciaisValidas = request.username().equals(adminProperty.getUsername())
                 && passwordEncoder.matches(request.password(), adminProperty.getPasswordHash());
 
         if (!credenciaisValidas) {

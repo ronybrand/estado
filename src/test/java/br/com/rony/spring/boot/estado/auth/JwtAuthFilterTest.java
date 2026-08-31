@@ -23,6 +23,7 @@ import org.mockito.quality.Strictness;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.security.WeakKeyException;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -79,6 +80,21 @@ public class JwtAuthFilterTest {
     public void tokenInvalidoSeguesSemPopularContexto() throws ServletException, IOException {
         when(request.getHeader(HEADER)).thenReturn("Bearer token-invalido");
         when(jwtService.validateAndGetSubject("token-invalido")).thenThrow(new JwtException("invalido"));
+
+        filter.doFilter(request, response, chain);
+
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+        verify(chain).doFilter(request, response);
+    }
+
+    // WeakKeyException (segredo HMAC curto demais) e subtipo de JwtException
+    // (io.jsonwebtoken.security: WeakKeyException -> InvalidKeyException ->
+    // KeyException -> SecurityException -> JwtException), entao ja cai no
+    // catch existente - misconfiguracao de JWT_SECRET nao deve virar 500.
+    @Test
+    public void segredoFracoNaValidacaoSeguesSemPopularContextoENaoPropaga() throws ServletException, IOException {
+        when(request.getHeader(HEADER)).thenReturn("Bearer token-qualquer");
+        when(jwtService.validateAndGetSubject("token-qualquer")).thenThrow(new WeakKeyException("segredo fraco"));
 
         filter.doFilter(request, response, chain);
 
