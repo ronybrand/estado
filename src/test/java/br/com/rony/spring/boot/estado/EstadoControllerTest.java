@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -21,11 +22,26 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import br.com.rony.spring.boot.estado.auth.JwtService;
+import br.com.rony.spring.boot.estado.auth.SecurityConfig;
+
+// @Import(SecurityConfig.class): @WebMvcTest NAO carrega @Configuration comuns
+// por padrao (so Controller/ControllerAdvice/Filter/WebMvcConfigurer/etc) -
+// sem esse import, authorizeHttpRequests nunca roda neste slice e um teste
+// sem token passaria como se estivesse autenticado (achado testando
+// excluirSemAutenticacaoRetorna401, que falhava silenciosamente com 204 antes
+// deste import). @TestPropertySource supre admin.password-hash/jwt.secret,
+// que nao tem default em application.yml (ADR 0017) - sem isso, o bind de
+// @ConfigurationProperties que o SecurityConfig habilita falha o contexto.
 @WebMvcTest(EstadoController.class)
+@Import(SecurityConfig.class)
+@TestPropertySource(properties = {"admin.password-hash=teste", "jwt.secret=segredo-de-teste-com-32-bytes-ou-mais"})
 public class EstadoControllerTest {
 
 	@Autowired
@@ -33,6 +49,9 @@ public class EstadoControllerTest {
 
 	@MockitoBean
 	EstadoService service;
+
+	@MockitoBean
+	JwtService jwtService;
 
 	private Estado getDomain(Long id, String nome, String sigla) {
 		Estado domain = new Estado();
@@ -94,6 +113,7 @@ public class EstadoControllerTest {
 		when(service.salvar(any(Estado.class))).thenReturn(salvo);
 
 		mockMvc.perform(post("/estado")
+				.with(user("admin"))
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("{\"nome\":\"Santa Catarina\",\"sigla\":\"SC\"}"))
 				.andExpect(status().isCreated())
@@ -104,6 +124,7 @@ public class EstadoControllerTest {
 	@Test
 	public void salvarSemSiglaRetorna400ComFormatoDeErroDaApi() throws Exception {
 		mockMvc.perform(post("/estado")
+				.with(user("admin"))
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("{\"nome\":\"Santa Catarina\"}"))
 				.andExpect(status().isBadRequest())
@@ -118,6 +139,7 @@ public class EstadoControllerTest {
 		when(service.atualizar(any(Estado.class))).thenReturn(atualizado);
 
 		mockMvc.perform(put("/estado")
+				.with(user("admin"))
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("{\"id\":1,\"nome\":\"Santa Catarina\",\"sigla\":\"SC\"}"))
 				.andExpect(status().isOk())
@@ -129,6 +151,7 @@ public class EstadoControllerTest {
 	public void atualizarSemIdRetorna400EmVezDeNullPointerException() throws Exception {
 		// ver EstadoUpdateRequestDTO pro motivo.
 		mockMvc.perform(put("/estado")
+				.with(user("admin"))
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("{\"nome\":\"Santa Catarina\",\"sigla\":\"SC\"}"))
 				.andExpect(status().isBadRequest());
@@ -142,6 +165,7 @@ public class EstadoControllerTest {
 		when(service.salvar(captor.capture())).thenReturn(this.getDomain(1L, "Santa Catarina", "SC"));
 
 		mockMvc.perform(post("/estado")
+				.with(user("admin"))
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("{\"id\":999,\"nome\":\"Santa Catarina\",\"sigla\":\"SC\"}"))
 				.andExpect(status().isCreated());
@@ -151,7 +175,7 @@ public class EstadoControllerTest {
 
 	@Test
 	public void excluirRetorna204() throws Exception {
-		mockMvc.perform(delete("/estado/1")).andExpect(status().isNoContent());
+		mockMvc.perform(delete("/estado/1").with(user("admin"))).andExpect(status().isNoContent());
 	}
 
 	@Test
@@ -160,13 +184,19 @@ public class EstadoControllerTest {
 		// do get() irmao - o mesmo input invalido respondia 404 no DELETE e
 		// 400 no GET, um contrato inconsistente entre endpoints do mesmo
 		// recurso.
-		mockMvc.perform(delete("/estado/-1")).andExpect(status().isBadRequest());
+		mockMvc.perform(delete("/estado/-1").with(user("admin"))).andExpect(status().isBadRequest());
 		verify(service, never()).excluir(anyLong());
 	}
 
 	@Test
 	public void excluirComIdZeroRetorna400() throws Exception {
-		mockMvc.perform(delete("/estado/0")).andExpect(status().isBadRequest());
+		mockMvc.perform(delete("/estado/0").with(user("admin"))).andExpect(status().isBadRequest());
+	}
+
+	@Test
+	public void excluirSemAutenticacaoRetorna401() throws Exception {
+		mockMvc.perform(delete("/estado/1")).andExpect(status().isUnauthorized());
+		verify(service, never()).excluir(anyLong());
 	}
 
 	@Test

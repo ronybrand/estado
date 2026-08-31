@@ -16,6 +16,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import br.com.rony.spring.boot.estado.EstadoNaoEncontradoException;
+import br.com.rony.spring.boot.estado.auth.InvalidCredentialsException;
 import br.com.rony.spring.boot.estado.config.RequestIdFilter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -63,6 +64,14 @@ public class CustomGlobalExceptionHandler {
     @ExceptionHandler(EstadoNaoEncontradoException.class)
     public ResponseEntity<ErrorResponseDto> estadoNaoEncontrado(EstadoNaoEncontradoException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(corpo(ex.getMessage()));
+    }
+
+    // Login com usuario/senha invalidos (ADR 0017) - nao confundir com o 401
+    // de token ausente/invalido em rota protegida, tratado pelo
+    // AuthenticationEntryPoint do SecurityConfig (roda fora deste handler).
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ErrorResponseDto> credenciaisInvalidas(InvalidCredentialsException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(corpo(ex.getMessage()));
     }
 
     // Sem rota/recurso estatico correspondente a URL pedida (ex: typo no path,
