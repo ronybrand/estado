@@ -16,12 +16,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 
 @ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)
-public class EstadoServiceTest {
+class EstadoServiceTest {
 
 	@InjectMocks
 	EstadoService service;
@@ -46,7 +43,7 @@ public class EstadoServiceTest {
 	}
 
 	@Test
-	public void listar() {
+	void listar() {
 		List<Estado> lista = this.getList();
 		when(repository.findAll()).thenReturn(lista);
 		List<Estado> retorno = service.listar();
@@ -54,7 +51,7 @@ public class EstadoServiceTest {
 	}
 
 	@Test
-	public void salvar() {
+	void salvar() {
 		Estado domain = this.getDomain(null, "Santa Catarina", "SC");
 		when(repository.save(domain)).thenReturn(domain);
 		Estado retorno = service.salvar(domain);
@@ -62,7 +59,7 @@ public class EstadoServiceTest {
 	}
 
 	@Test
-	public void atualizar() {
+	void atualizar() {
 		Estado domain = this.getDomain(Long.valueOf(1), "Santa Catarina", "SC");
 		when(repository.findById(domain.getId())).thenReturn(Optional.of(domain));
 		when(repository.save(domain)).thenReturn(domain);
@@ -71,7 +68,7 @@ public class EstadoServiceTest {
 	}
 
 	@Test
-	public void getDomainById() {
+	void getDomainById() {
 		Long idDomain = Long.valueOf(1);
 		Estado domain = this.getDomain(idDomain, "Santa Catarina", "SC");
 		when(repository.findById(idDomain)).thenReturn(Optional.of(domain));
@@ -80,7 +77,7 @@ public class EstadoServiceTest {
 	}
 
 	@Test
-	public void getDomainByIdQuandoNaoExisteLancaEstadoNaoEncontrado() {
+	void getDomainByIdQuandoNaoExisteLancaEstadoNaoEncontrado() {
 		Long idDomain = Long.valueOf(999);
 		when(repository.findById(idDomain)).thenReturn(Optional.empty());
 
@@ -88,7 +85,7 @@ public class EstadoServiceTest {
 	}
 
 	@Test
-	public void atualizarQuandoIdNaoExisteLancaEstadoNaoEncontrado() {
+	void atualizarQuandoIdNaoExisteLancaEstadoNaoEncontrado() {
 		Estado domain = this.getDomain(Long.valueOf(999), "Santa Catarina", "SC");
 		when(repository.findById(domain.getId())).thenReturn(Optional.empty());
 
@@ -96,7 +93,7 @@ public class EstadoServiceTest {
 	}
 
 	@Test
-	public void excluirQuandoIdNaoExisteLancaEstadoNaoEncontrado() {
+	void excluirQuandoIdNaoExisteLancaEstadoNaoEncontrado() {
 		Long idDomain = Long.valueOf(999);
 		when(repository.existsById(idDomain)).thenReturn(false);
 
@@ -105,7 +102,7 @@ public class EstadoServiceTest {
 	}
 
 	@Test
-	public void excluirQuandoIdExisteChamaDeleteByIdComOId() {
+	void excluirQuandoIdExisteChamaDeleteByIdComOId() {
 		// achado de code review: excluir() buscava a linha inteira (findById)
 		// so pra confirmar existencia antes do delete - existsById +
 		// deleteById evita o SELECT de colunas nunca lidas.
