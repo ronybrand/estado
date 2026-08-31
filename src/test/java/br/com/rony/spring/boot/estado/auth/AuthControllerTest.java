@@ -1,5 +1,7 @@
 package br.com.rony.spring.boot.estado.auth;
 
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -64,6 +66,19 @@ public class AuthControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"username\":\"outro\",\"password\":\"qualquer\"}"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    // Usuario errado nao pode ser rejeitado antes de invocar o BCrypt: um
+    // short-circuit no username criaria um timing side-channel que revela o
+    // username valido pela diferenca de latencia entre as duas respostas 401.
+    @Test
+    public void loginComUsuarioErradoAindaAssimInvocaBcryptParaEvitarTimingSideChannel() throws Exception {
+        mockMvc.perform(post("/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"outro\",\"password\":\"qualquer\"}"))
+                .andExpect(status().isUnauthorized());
+
+        verify(passwordEncoder).matches(anyString(), anyString());
     }
 
     @Test

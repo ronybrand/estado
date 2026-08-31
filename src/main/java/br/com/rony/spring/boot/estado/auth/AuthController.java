@@ -26,10 +26,16 @@ public class AuthController {
 
     @PostMapping("/login")
     public LoginResponseDto login(@Valid @RequestBody LoginRequestDto request) {
-        boolean credenciaisValidas = request.username().equals(adminProperty.getUsername())
-                && passwordEncoder.matches(request.password(), adminProperty.getPasswordHash());
+        // request.username() nunca e nulo (@NotBlank), entao comparar a partir
+        // dele evita NPE se admin.username ficar vazio. Nao usar && aqui:
+        // precisa chamar o BCrypt mesmo com username errado, senao a resposta
+        // de "username errado" fica sensivelmente mais rapida que a de "senha
+        // errada", um timing side-channel que revela o username valido por
+        // diferenca de latencia.
+        boolean usernameValido = request.username().equals(adminProperty.getUsername());
+        boolean senhaValida = passwordEncoder.matches(request.password(), adminProperty.getPasswordHash());
 
-        if (!credenciaisValidas) {
+        if (!usernameValido || !senhaValida) {
             throw new InvalidCredentialsException("Usuario ou senha invalidos");
         }
 
