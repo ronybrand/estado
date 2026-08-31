@@ -20,8 +20,10 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import br.com.rony.spring.boot.estado.config.RequestIdFilter;
 import br.com.rony.spring.boot.estado.error.ErrorResponseDto;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.MDC;
 
 // Autenticacao JWT stateless, usuario admin unico - sem UserDetailsService,
 // sem form login, sem sessao (ADR 0017). So POST/PUT/DELETE em /estado/**
@@ -78,7 +80,7 @@ public class SecurityConfig {
         return (request, response, authException) -> {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-            ErrorResponseDto corpo = new ErrorResponseDto("Nao autenticado", null);
+            ErrorResponseDto corpo = new ErrorResponseDto("Nao autenticado", MDC.get(RequestIdFilter.MDC_KEY));
             response.getWriter().write(objectMapper.writeValueAsString(corpo));
         };
     }

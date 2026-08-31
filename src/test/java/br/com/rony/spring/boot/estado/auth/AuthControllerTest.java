@@ -1,7 +1,10 @@
 package br.com.rony.spring.boot.estado.auth;
 
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -66,11 +69,41 @@ public class AuthControllerTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    // Usuario errado nao pode ser rejeitado antes de invocar o BCrypt: um
+    // short-circuit no username criaria um timing side-channel que revela o
+    // username valido pela diferenca de latencia entre as duas respostas 401.
+    @Test
+    public void loginComUsuarioErradoAindaAssimInvocaBcryptParaEvitarTimingSideChannel() throws Exception {
+        mockMvc.perform(post("/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"outro\",\"password\":\"qualquer\"}"))
+                .andExpect(status().isUnauthorized());
+
+        verify(passwordEncoder).matches(anyString(), anyString());
+    }
+
     @Test
     public void loginComCamposEmBrancoRetorna400() throws Exception {
         mockMvc.perform(post("/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"username\":\"\",\"password\":\"\"}"))
                 .andExpect(status().isBadRequest());
+    }
+
+    // WebConfig.addCorsMappings so cobria /estado/**: um cliente cross-origin
+    // de verdade (ex: VITE_API_URL apontando direto pro backend, sem passar
+    // pelo rewrite same-origin da Vercel) nunca conseguia ler a resposta de
+    // /auth/login, mesmo com a origem na allowlist.
+    @Test
+    public void loginComOrigemPermitidaEcoaOAccessControlAllowOrigin() throws Exception {
+        when(passwordEncoder.matches("senha-correta", "hash-de-teste")).thenReturn(true);
+        when(jwtService.issueToken("admin")).thenReturn("token-emitido");
+
+        mockMvc.perform(post("/auth/login")
+                .header("Origin", "http://localhost:8000")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"admin\",\"password\":\"senha-correta\"}"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:8000"));
     }
 }
