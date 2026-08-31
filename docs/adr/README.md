@@ -19,3 +19,4 @@ consequências (incluindo as que ficaram conscientemente sem mitigação).
 - [0013 — Frontend Angular em S3 + CloudFront, saindo do Spring Boot](0013-frontend-s3-cloudfront.md)
 - [0014 — Liquibase em vez de hibernate.ddl-auto:update](0014-liquibase-em-vez-de-ddl-auto.md)
 - [0015 — Backend S3 pro Terraform + drift-check semanal via GitHub Actions](0015-terraform-backend-s3-drift-check-ci.md)
+- [0016 — Rate limiting por IP, em memória, sem autenticação](0016-rate-limiting-por-ip.md)

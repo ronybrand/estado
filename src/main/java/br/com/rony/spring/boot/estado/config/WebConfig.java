@@ -9,11 +9,12 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import br.com.rony.spring.boot.estado.property.ApiProperty;
+import br.com.rony.spring.boot.estado.property.RateLimitProperty;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
 @RequiredArgsConstructor
-@EnableConfigurationProperties(ApiProperty.class)
+@EnableConfigurationProperties({ApiProperty.class, RateLimitProperty.class})
 public class WebConfig implements WebMvcConfigurer {
 
 	private final ApiProperty apiProperty;
