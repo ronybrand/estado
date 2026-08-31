@@ -1,0 +1,15 @@
+# Coverage gate, blocking PRs. 90% target (with 2% slack against small
+# fluctuations) and 80% for each PR's new code, so trivial diffs don't get
+# blocked.
+coverage:
+  status:
+    project:
+      default:
+        target: 90%
+        threshold: 2%
+    patch:
+      default:
+        target: 80%
+
+comment:
+  layout: 'reach, diff, flags, files'
