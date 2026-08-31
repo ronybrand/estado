@@ -27,3 +27,13 @@ com nome descritivo, nomear uma constante, renomear uma variável) resolve
 sem precisar de comentário nenhum — clean code: nome substitui comentário
 sempre que possível. Comentário é pra motivo (por quê), não pra descrição
 (o quê) — descrição vira nome.
+
+## Cobertura
+
+`codecov.yml` define gate de 90% (projeto) / 80% (patch), com `codecov/patch`
+obrigatório na branch protection do `master`. `codecov/project` não posta
+status check no PR apesar do YAML efetivo em codecov.io bater exatamente com
+o do repo e da baseline de cobertura existir (confirmado via API do
+Codecov) — não adicione `codecov/project` como obrigatório até isso ser
+investigado e confirmado funcionando de verdade, senão todo PR trava sem
+nenhum check chegando pra liberar o merge.
