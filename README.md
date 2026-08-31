@@ -1,30 +1,33 @@
 # Estado
 
+🇧🇷 [Ler em português](README.pt-BR.md)
+
 [![CI](https://github.com/ronybrand/estado/actions/workflows/ci.yml/badge.svg)](https://github.com/ronybrand/estado/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/ronybrand/estado/actions/workflows/codeql.yml/badge.svg)](https://github.com/ronybrand/estado/actions/workflows/codeql.yml)
 [![codecov](https://codecov.io/gh/ronybrand/estado/graph/badge.svg)](https://codecov.io/gh/ronybrand/estado)
 
-Projeto CRUD de unidades federativas do Brasil (estados).
+CRUD project for Brazilian federative units (states).
 
-O Projeto Estado trata-se de um sistema sob arquitetura Java 25/Spring Boot 4, configuração de dependência em Maven e banco de dados PostgreSQL para disponibilização de um serviço HTTP. O front-end (Angular, repo `angular_estado` separado) é servido estático via S3 + CloudFront, com a API acessível em `/api/*` sob o mesmo domínio (ver ADR 0013).
+The Estado project is a system built on Java 25/Spring Boot 4, with Maven for dependency management and PostgreSQL as the database, exposing an HTTP service. The frontend (Angular, separate `angular_estado` repo) is served as a static bundle via S3 + CloudFront, with the API reachable at `/api/*` under the same domain (see ADR 0013).
 
-**No ar**: https://d3bqbg07tehy1h.cloudfront.net/ (frontend, S3 + CloudFront) · API em
-https://54.94.231.248.sslip.io/estado (acessível também via `/api/estado` sob o mesmo domínio do
-CloudFront) — deploy próprio na AWS (EC2 + Docker + Caddy pro backend, S3 + CloudFront pro frontend),
-com CI/CD, backup automático e recuperação de falhas. Infra provisionada via Terraform (importada da
-conta real, não escrita do zero — ver [`terraform/`](terraform/)). A história completa da migração e
-do deploy, incluindo os bugs encontrados em produção e as decisões de arquitetura, está em
-[`CASE_STUDY.md`](CASE_STUDY.md) e em [`docs/adr/`](docs/adr/).
+**Live**: https://d3bqbg07tehy1h.cloudfront.net/ (frontend, S3 + CloudFront) · API at
+https://54.94.231.248.sslip.io/estado (also reachable via `/api/estado` under the same
+CloudFront domain) — self-managed AWS deployment (EC2 + Docker + Caddy for the backend, S3 +
+CloudFront for the frontend), with CI/CD, automated backups and failure recovery.
+Infrastructure is provisioned via Terraform (imported from the real account, not written from
+scratch — see [`terraform/`](terraform/)). The full story of the migration and deployment,
+including the bugs found in production and the architecture decisions, is in
+[`CASE_STUDY.md`](CASE_STUDY.md) and in [`docs/adr/`](docs/adr/).
 
-## Arquitetura
+## Architecture
 
 ```mermaid
 flowchart LR
-    Browser["Navegador"]
+    Browser["Browser"]
 
     subgraph CloudFront["CloudFront"]
         direction LR
-        S3["S3\n(bundle Angular)"]
+        S3["S3\n(Angular bundle)"]
         Caddy["Caddy\n(reverse proxy)"]
     end
 
@@ -37,128 +40,128 @@ flowchart LR
 
     Grafana["Grafana Cloud"]
 
-    Browser -- "/ (estático)" --> S3
+    Browser -- "/ (static)" --> S3
     Browser -- "/api/*" --> Caddy
     Caddy --> App
     App --> DB
     Alloy -- "scrape /actuator/prometheus" --> App
-    Alloy -- métricas/logs --> Grafana
+    Alloy -- metrics/logs --> Grafana
 ```
 
-Um único EC2 roda os três containers Docker (app, Postgres, Alloy) via Compose +
-`deploy.sh`, com rolling swap sem downtime disparado por um timer systemd a cada
-5min, sempre que uma nova imagem chega no GHCR (ver [`deploy/`](deploy/) e
-`docs/adr/`). O frontend (repo
-[`angular_estado`](https://github.com/ronybrand/angular_estado) separado) é
-publicado independentemente em S3/CloudFront.
+A single EC2 instance runs the three Docker containers (app, Postgres, Alloy) via
+Compose + `deploy.sh`, with a zero-downtime rolling swap triggered by a systemd
+timer every 5min, whenever a new image lands in GHCR (see [`deploy/`](deploy/) and
+`docs/adr/`). The frontend (separate
+[`angular_estado`](https://github.com/ronybrand/angular_estado) repo) is
+published independently to S3/CloudFront.
 
-## Estrutura do projeto
+## Project structure
 
 ```
 src/main/java/br/com/rony/spring/boot/estado/
-├── Estado.java                    # entidade JPA
-├── EstadoController.java          # endpoints REST
-├── EstadoService.java             # regra de negócio
+├── Estado.java                    # JPA entity
+├── EstadoController.java          # REST endpoints
+├── EstadoService.java             # business logic
 ├── EstadoRepository.java          # Spring Data JPA
-├── Estado{Create,Update}RequestDTO.java  # payloads de entrada, um por operação
-├── EstadoDTO.java                 # payload de saída
+├── Estado{Create,Update}RequestDTO.java  # input payloads, one per operation
+├── EstadoDTO.java                 # output payload
 ├── EstadoNaoEncontradoException.java
-├── config/       # CORS, filtros de servlet (RequestIdFilter, ActuatorNoCacheFilter), UrlHandlerFilter
+├── config/       # CORS, servlet filters (RequestIdFilter, ActuatorNoCacheFilter), UrlHandlerFilter
 ├── error/        # CustomGlobalExceptionHandler + ErrorResponseDto
 └── property/     # ApiProperty (@ConfigurationProperties)
 ```
 
-Package-by-feature (pacote por funcionalidade), não package-by-layer: entidade,
-controller, service, repository e DTOs da feature `estado` vivem juntos no
-pacote raiz, em vez de espalhados em pacotes `controller/`, `service/`,
-`repository/` etc. Com uma única feature no projeto, o pacote raiz concentra
-tudo dela; `config/`, `error/` e `property/` ficam à parte por serem
-transversais, não parte da feature em si.
+Package-by-feature, not package-by-layer: the `estado` feature's entity,
+controller, service, repository and DTOs live together in the root package,
+instead of spread across `controller/`, `service/`, `repository/` packages
+etc. With a single feature in the project, the root package holds all of it;
+`config/`, `error/` and `property/` are kept separate since they're
+cross-cutting, not part of the feature itself.
 
-Os DTOs de request são um por operação (`Create` vs `Update`) em vez de um DTO
-único reaproveitado — ver comentário em `EstadoUpdateRequestDTO`/`EstadoCreateRequestDTO`
-pro motivo (cada um corrige um bug real de payload incompleto).
+Request DTOs are one per operation (`Create` vs `Update`) instead of a single
+reused DTO — see the comment on `EstadoUpdateRequestDTO`/`EstadoCreateRequestDTO`
+for why (each one fixes a real incomplete-payload bug).
 
-Convenção de comentários (o que vale explicar com comentário vs. o que deve
-virar nome) está documentada em [`CLAUDE.md`](CLAUDE.md), não repetida aqui.
+The comment convention (what's worth explaining with a comment vs. what should
+become a name) is documented in [`CLAUDE.md`](CLAUDE.md), not repeated here.
 
-### Outros diretórios de topo
+### Other top-level directories
 
-| Pasta | O que tem | Documentação |
+| Folder | What's in it | Docs |
 |---|---|---|
-| [`deploy/`](deploy/) | Docker Compose, scripts de deploy/rollback/backup e units systemd — o que roda *dentro* da EC2, fora do jar | [`deploy/README.md`](deploy/README.md) |
-| [`terraform/`](terraform/) | Módulos (`portfolio-instance`, `app-backup`, `frontend-static`, `github-oidc-*`, `private-encrypted-bucket`) — recursos AWS trazidos via `import`, não recriados do zero | [`docs/adr/`](docs/adr/) |
-| [`.github/workflows/`](.github/workflows/) | `ci.yml` (build+test), `codeql.yml` (SAST semanal), `docker-publish.yml` (build+push no GHCR após CI passar em `master`), `terraform-drift-check.yml` (plan semanal), `dependabot-auto-merge.yml` (merge automático de bump não-major) | comentários inline em cada workflow |
+| [`deploy/`](deploy/) | Docker Compose, deploy/rollback/backup scripts and systemd units — what runs *inside* the EC2 instance, outside the jar | [`deploy/README.md`](deploy/README.md) |
+| [`terraform/`](terraform/) | Modules (`portfolio-instance`, `app-backup`, `frontend-static`, `github-oidc-*`, `private-encrypted-bucket`) — AWS resources brought in via `import`, not recreated from scratch | [`docs/adr/`](docs/adr/) |
+| [`.github/workflows/`](.github/workflows/) | `ci.yml` (build+test), `codeql.yml` (weekly SAST), `docker-publish.yml` (build+push to GHCR after CI passes on `master`), `terraform-drift-check.yml` (weekly plan), `dependabot-auto-merge.yml` (auto-merge for non-major bumps) | inline comments in each workflow |
 
-## Funcionalidades:
-- Cadastrar uma unidade federativa por vez com data e hora do registro;
-- Apresentar a lista das unidades federativas;
-- Permitir alterar o nome completo e sigla das unidades federativas com data e hora atualizadas;
-- Consultar a unidade da federação pelo seu Id;
-- Excluir uma unidade da federação passando seu Id.
-Observações: Não é permitido inserir/alterar um nome de estado que já exista ou mesmo para sigla.
+## Features
+- Register a federative unit one at a time, with registration date/time;
+- Display the list of federative units;
+- Allow updating a federative unit's full name and abbreviation, with updated date/time;
+- Look up a federative unit by its Id;
+- Delete a federative unit by its Id.
+Notes: You may not insert/update a state name (or abbreviation) that already exists.
 
-# 1 - Compilar com Maven e executar local com java -jar
+# 1 - Build with Maven and run locally with java -jar
 
-Observação: os passos abaixo foram montandos para Windows.
+Note: the steps below were put together for Windows.
 
-## 1.1 Pre-requisistos
-Para construir e rodar a aplicação você precisa de:
-- [JDK 25](https://www.azul.com/downloads/?version=java-25-lts) ou outra distribuição OpenJDK 25
+## 1.1 Prerequisites
+To build and run the application you need:
+- [JDK 25](https://www.azul.com/downloads/?version=java-25-lts) or another OpenJDK 25 distribution
 - [Maven 3.6.3+](https://maven.apache.org)
-- Um PostgreSQL acessível (local ou remoto)
+- An accessible PostgreSQL instance (local or remote)
 
-## 1.2 Passo a passo
-1.2.1 - [Baixar o projeto](https://github.com/ronybrand/estado/archive/master.zip)
+## 1.2 Step by step
+1.2.1 - [Download the project](https://github.com/ronybrand/estado/archive/master.zip)
 
-1.2.2 - Descompacte o zip, entre no diretório descompactado
+1.2.2 - Unzip it, enter the unzipped directory
 
-1.2.3 - Configure as credenciais do banco via variáveis de ambiente (não há mais credenciais fixas no `application.yml`):
+1.2.3 - Configure the database credentials via environment variables (there are no longer fixed credentials in `application.yml`):
 ```
 set JDBC_DATABASE_URL=jdbc:postgresql://localhost:5432/estado
-set JDBC_DATABASE_USERNAME=<usuario>
-set JDBC_DATABASE_PASSWORD=<senha>
+set JDBC_DATABASE_USERNAME=<user>
+set JDBC_DATABASE_PASSWORD=<password>
 ```
 
-1.2.4 - Rodar
-- Para rodar usando a porta padrão do projeto (8080), execue o comando abaixo:
+1.2.4 - Run
+- To run on the project's default port (8080), run the command below:
 ```
 mvn spring-boot:run
 ```
 
 # 2 - Postman
-Para usar o projeto Estado pelo postman siga os seguintes passos:
+To use the Estado project through Postman, follow these steps:
 - [Postman](https://www.postman.com/downloads/)
 
-Importar coleção de testes (contido no item 1.2.1 - <dir_projeto>/src/test/postman):
-![Importar o projeto no postman](https://github.com/ronybrand/numero_por_extenso/blob/feature/numero_por_extenso/importar_projeto_postman.png)
+Import the test collection (included in step 1.2.1 - <project_dir>/src/test/postman):
+![Import the project into Postman](https://github.com/ronybrand/numero_por_extenso/blob/feature/numero_por_extenso/importar_projeto_postman.png)
 
-Após importar, aparecerão os seguintes testes, favor rodá-los na ordem da imagem:
+After importing, the following tests will appear — please run them in the order shown in the image:
 
-![Executar testes](https://github.com/ronybrand/estado/blob/feature/estado/sequencia%20de%20execu%C3%A7%C3%A3o%20de%20teste%20no%20postman.png)
+![Run tests](https://github.com/ronybrand/estado/blob/feature/estado/sequencia%20de%20execu%C3%A7%C3%A3o%20de%20teste%20no%20postman.png)
 
-# 3 - Navegador - Local
-A API fica em http://localhost:8080/estado
+# 3 - Browser - Local
+The API is at http://localhost:8080/estado
 
-Swagger UI (documentação interativa da API) fica em http://localhost:8080/swagger-ui.html — habilitado
-por padrão em dev, desligado explicitamente em produção (ver `deploy/estado/lib-swap.sh`).
+Swagger UI (interactive API docs) is at http://localhost:8080/swagger-ui.html — enabled by
+default in dev, explicitly disabled in production (see `deploy/estado/lib-swap.sh`).
 
-A interface Angular não roda mais embutida neste jar (ver ADR 0013) — está no repo separado
-[`angular_estado`](https://github.com/ronybrand/angular_estado), rodada localmente com `npm start`
-(`http://localhost:4200/`, com proxy pra `/api` -> este backend).
+The Angular UI is no longer embedded in this jar (see ADR 0013) — it lives in the separate
+[`angular_estado`](https://github.com/ronybrand/angular_estado) repo, run locally with
+`npm start` (`http://localhost:4200/`, proxying `/api` to this backend).
 
 # 4 - Docker
-Também dá pra buildar e rodar via container, sem instalar Maven/JDK localmente:
+You can also build and run it via container, without installing Maven/JDK locally:
 ```
 docker build -t estado .
 docker run -p 8080:8080 -e JDBC_DATABASE_URL=... -e JDBC_DATABASE_USERNAME=... -e JDBC_DATABASE_PASSWORD=... estado
 ```
-A imagem publicada em produção fica em `ghcr.io/ronybrand/estado` (publicada automaticamente a
-cada push na `master`, ver [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml)).
+The image published to production lives at `ghcr.io/ronybrand/estado` (published automatically
+on every push to `master`, see [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml)).
 
-# 5 - Produção
-https://d3bqbg07tehy1h.cloudfront.net/ (frontend) — API em https://54.94.231.248.sslip.io/estado ou
-via `/api/estado` no mesmo domínio do CloudFront. Detalhes do deploy em [`CASE_STUDY.md`](CASE_STUDY.md).
+# 5 - Production
+https://d3bqbg07tehy1h.cloudfront.net/ (frontend) — API at https://54.94.231.248.sslip.io/estado or
+via `/api/estado` under the same CloudFront domain. Deployment details in [`CASE_STUDY.md`](CASE_STUDY.md).
 
-O commit e a versão do build em execução ficam expostos em `/actuator/info`, útil pra confirmar que
-um deploy (ou rollback) aplicou o commit esperado sem precisar consultar o log do `deploy.sh`.
+The running build's commit and version are exposed at `/actuator/info`, handy for confirming that
+a deploy (or rollback) applied the expected commit without having to check the `deploy.sh` log.
