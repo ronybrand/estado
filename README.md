@@ -8,7 +8,7 @@
 
 CRUD project for Brazilian federative units (states).
 
-The Estado project is a system built on Java 25/Spring Boot 4, with Maven for dependency management and PostgreSQL as the database, exposing an HTTP service. The frontend (Angular, separate `angular_estado` repo) is served as a static bundle via S3 + CloudFront, with the API reachable at `/api/*` under the same domain (see ADR 0013).
+The Estado project is a system built on Java 25/Spring Boot 4, with Maven for dependency management and PostgreSQL as the database, exposing an HTTP service. The frontend (Angular, separate [`angular_estado`](https://github.com/ronybrand/angular_estado) repo) is served as a static bundle via S3 + CloudFront, with the API reachable at `/api/*` under the same domain (see ADR 0013). A second, alternate frontend for the same API exists in React: [`react_state`](https://github.com/ronybrand/react_state).
 
 **Live**: https://d3bqbg07tehy1h.cloudfront.net/ (frontend, S3 + CloudFront) · API at
 https://54.94.231.248.sslip.io/estado (also reachable via `/api/estado` under the same
