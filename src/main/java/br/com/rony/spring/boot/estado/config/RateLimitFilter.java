@@ -2,8 +2,6 @@ package br.com.rony.spring.boot.estado.config;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -18,6 +16,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 import br.com.rony.spring.boot.estado.error.ErrorResponseDto;
 import br.com.rony.spring.boot.estado.property.RateLimitProperty;
@@ -46,10 +46,18 @@ public class RateLimitFilter extends OncePerRequestFilter implements Ordered {
 	// mesma escolha de auto-suficiencia do RequestIdFilter, sem dependencia
 	// externa alem do necessario.
 	private final ObjectMapper objectMapper = new ObjectMapper();
-	private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
+	// Expira apos 2 janelas sem atividade do IP - tempo suficiente pra nao
+	// reiniciar o limite de um cliente ainda ativo, mas garante que IPs que
+	// pararam de mandar trafego (a maioria, num scraper ou scanner de passagem)
+	// sejam removidos em vez de ficar pra sempre no cache (vazamento de
+	// memoria de um Map sem eviction).
+	private final Cache<String, Bucket> buckets;
 
 	public RateLimitFilter(RateLimitProperty rateLimitProperty) {
 		this.rateLimitProperty = rateLimitProperty;
+		this.buckets = Caffeine.newBuilder()
+				.expireAfterAccess(Duration.ofSeconds(rateLimitProperty.getJanelaSegundos() * 2L))
+				.build();
 	}
 
 	@Override
@@ -64,7 +72,7 @@ public class RateLimitFilter extends OncePerRequestFilter implements Ordered {
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
 		String ip = request.getRemoteAddr();
-		Bucket bucket = buckets.computeIfAbsent(ip, chave -> novoBucket());
+		Bucket bucket = buckets.get(ip, chave -> novoBucket());
 
 		if (bucket.tryConsume(1)) {
 			filterChain.doFilter(request, response);
