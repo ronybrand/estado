@@ -8,7 +8,7 @@
 
 Projeto CRUD de unidades federativas do Brasil (estados).
 
-O Projeto Estado trata-se de um sistema sob arquitetura Java 25/Spring Boot 4, configuração de dependência em Maven e banco de dados PostgreSQL para disponibilização de um serviço HTTP. O front-end (Angular, repo `angular_estado` separado) é servido estático via S3 + CloudFront, com a API acessível em `/api/*` sob o mesmo domínio (ver ADR 0013).
+O Projeto Estado trata-se de um sistema sob arquitetura Java 25/Spring Boot 4, configuração de dependência em Maven e banco de dados PostgreSQL para disponibilização de um serviço HTTP. O front-end (Angular, repo [`angular_estado`](https://github.com/ronybrand/angular_estado) separado) é servido estático via S3 + CloudFront, com a API acessível em `/api/*` sob o mesmo domínio (ver ADR 0013). Existe um segundo front-end alternativo pra mesma API, em React: [`react_state`](https://github.com/ronybrand/react_state).
 
 **No ar**: https://d3bqbg07tehy1h.cloudfront.net/ (frontend, S3 + CloudFront) · API em
 https://54.94.231.248.sslip.io/estado (acessível também via `/api/estado` sob o mesmo domínio do
@@ -128,18 +128,7 @@ set JDBC_DATABASE_PASSWORD=<senha>
 mvn spring-boot:run
 ```
 
-# 2 - Postman
-Para usar o projeto Estado pelo postman siga os seguintes passos:
-- [Postman](https://www.postman.com/downloads/)
-
-Importar coleção de testes (contido no item 1.2.1 - <dir_projeto>/src/test/postman):
-![Importar o projeto no postman](https://github.com/ronybrand/numero_por_extenso/blob/feature/numero_por_extenso/importar_projeto_postman.png)
-
-Após importar, aparecerão os seguintes testes, favor rodá-los na ordem da imagem:
-
-![Executar testes](https://github.com/ronybrand/estado/blob/feature/estado/sequencia%20de%20execu%C3%A7%C3%A3o%20de%20teste%20no%20postman.png)
-
-# 3 - Navegador - Local
+# 2 - Navegador - Local
 A API fica em http://localhost:8080/estado
 
 Swagger UI (documentação interativa da API) fica em http://localhost:8080/swagger-ui.html — habilitado
@@ -149,7 +138,7 @@ A interface Angular não roda mais embutida neste jar (ver ADR 0013) — está n
 [`angular_estado`](https://github.com/ronybrand/angular_estado), rodada localmente com `npm start`
 (`http://localhost:4200/`, com proxy pra `/api` -> este backend).
 
-# 4 - Docker
+# 3 - Docker
 Também dá pra buildar e rodar via container, sem instalar Maven/JDK localmente:
 ```
 docker build -t estado .
@@ -158,7 +147,7 @@ docker run -p 8080:8080 -e JDBC_DATABASE_URL=... -e JDBC_DATABASE_USERNAME=... -
 A imagem publicada em produção fica em `ghcr.io/ronybrand/estado` (publicada automaticamente a
 cada push na `master`, ver [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml)).
 
-# 5 - Produção
+# 4 - Produção
 https://d3bqbg07tehy1h.cloudfront.net/ (frontend) — API em https://54.94.231.248.sslip.io/estado ou
 via `/api/estado` no mesmo domínio do CloudFront. Detalhes do deploy em [`CASE_STUDY.md`](CASE_STUDY.md).
 

@@ -8,7 +8,7 @@
 
 CRUD project for Brazilian federative units (states).
 
-The Estado project is a system built on Java 25/Spring Boot 4, with Maven for dependency management and PostgreSQL as the database, exposing an HTTP service. The frontend (Angular, separate `angular_estado` repo) is served as a static bundle via S3 + CloudFront, with the API reachable at `/api/*` under the same domain (see ADR 0013).
+The Estado project is a system built on Java 25/Spring Boot 4, with Maven for dependency management and PostgreSQL as the database, exposing an HTTP service. The frontend (Angular, separate [`angular_estado`](https://github.com/ronybrand/angular_estado) repo) is served as a static bundle via S3 + CloudFront, with the API reachable at `/api/*` under the same domain (see ADR 0013). A second, alternate frontend for the same API exists in React: [`react_state`](https://github.com/ronybrand/react_state).
 
 **Live**: https://d3bqbg07tehy1h.cloudfront.net/ (frontend, S3 + CloudFront) · API at
 https://54.94.231.248.sslip.io/estado (also reachable via `/api/estado` under the same
@@ -129,18 +129,7 @@ set JDBC_DATABASE_PASSWORD=<password>
 mvn spring-boot:run
 ```
 
-# 2 - Postman
-To use the Estado project through Postman, follow these steps:
-- [Postman](https://www.postman.com/downloads/)
-
-Import the test collection (included in step 1.2.1 - <project_dir>/src/test/postman):
-![Import the project into Postman](https://github.com/ronybrand/numero_por_extenso/blob/feature/numero_por_extenso/importar_projeto_postman.png)
-
-After importing, the following tests will appear — please run them in the order shown in the image:
-
-![Run tests](https://github.com/ronybrand/estado/blob/feature/estado/sequencia%20de%20execu%C3%A7%C3%A3o%20de%20teste%20no%20postman.png)
-
-# 3 - Browser - Local
+# 2 - Browser - Local
 The API is at http://localhost:8080/estado
 
 Swagger UI (interactive API docs) is at http://localhost:8080/swagger-ui.html — enabled by
@@ -150,7 +139,7 @@ The Angular UI is no longer embedded in this jar (see ADR 0013) — it lives in 
 [`angular_estado`](https://github.com/ronybrand/angular_estado) repo, run locally with
 `npm start` (`http://localhost:4200/`, proxying `/api` to this backend).
 
-# 4 - Docker
+# 3 - Docker
 You can also build and run it via container, without installing Maven/JDK locally:
 ```
 docker build -t estado .
@@ -159,7 +148,7 @@ docker run -p 8080:8080 -e JDBC_DATABASE_URL=... -e JDBC_DATABASE_USERNAME=... -
 The image published to production lives at `ghcr.io/ronybrand/estado` (published automatically
 on every push to `master`, see [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml)).
 
-# 5 - Production
+# 4 - Production
 https://d3bqbg07tehy1h.cloudfront.net/ (frontend) — API at https://54.94.231.248.sslip.io/estado or
 via `/api/estado` under the same CloudFront domain. Deployment details in [`CASE_STUDY.md`](CASE_STUDY.md).
 

@@ -4,7 +4,7 @@
 Aceito
 
 ## Contexto
-O build do Angular (`angular_estado`) vinha sendo commitado manualmente em
+O build do Angular ([`angular_estado`](https://github.com/ronybrand/angular_estado)) vinha sendo commitado manualmente em
 `src/main/resources/static/` e servido pelo próprio Spring Boot, junto na
 mesma imagem Docker do backend. Isso acopla o deploy do front ao do back (um
 release do Angular exige rebuild/republish do backend) e não usa CDN - todo
