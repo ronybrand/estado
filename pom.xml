@@ -69,6 +69,13 @@
 			<artifactId>bucket4j-core</artifactId>
 			<version>8.10.1</version>
 		</dependency>
+		<!-- Cache com expiracao para os buckets do rate limiter - sem isso, o mapa
+		     de IPs cresceria indefinidamente (vazamento de memoria), ja que nunca
+		     ha eviction de um ConcurrentHashMap puro. -->
+		<dependency>
+			<groupId>com.github.ben-manes.caffeine</groupId>
+			<artifactId>caffeine</artifactId>
+		</dependency>
 		<!-- Autenticacao JWT self-issued, usuario admin unico (ADR 0017). -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

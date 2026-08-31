@@ -45,10 +45,12 @@ public class EstadoService {
     	log.info("Estado excluido: id={}", idDomain);
     }
 
+    @Transactional(readOnly = true)
     public List<Estado> listar() {
     	return repository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public Estado getDomainById(long idDomain) {
     	return repository.findById(idDomain)
     			.orElseThrow(() -> naoEncontrado(idDomain));
