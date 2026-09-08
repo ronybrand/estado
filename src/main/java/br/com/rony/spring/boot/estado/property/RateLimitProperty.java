@@ -17,4 +17,11 @@ public class RateLimitProperty {
 
     private int janelaSegundos = 60;
 
+    // Login e' alvo natural de tentativa de credenciais. Este limite separado
+    // nao divide o bucket generico da API e pode ser mais restritivo sem
+    // afetar o uso normal dos demais endpoints.
+    private int loginCapacidade = 5;
+
+    private int loginJanelaSegundos = 60;
+
 }
