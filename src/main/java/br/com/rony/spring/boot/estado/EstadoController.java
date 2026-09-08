@@ -7,6 +7,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Positive;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -32,6 +34,17 @@ public class EstadoController {
 	@GetMapping
 	public List<EstadoDTO> getAll() {
 		return service.listar().stream().map(EstadoDTO::from).collect(Collectors.toList());
+	}
+
+	// Sem validacao manual de page/size de proposito: o PageableHandlerMethodArgumentResolver
+	// do Spring Data ja trata os dois como dica, nao input critico - um valor nao numerico ou
+	// fora dos limites e clampado silenciosamente pro default/max (ver pagination.max-size em
+	// application.yml), nunca lanca excecao. sort e diferente e ja tem tratamento dedicado: um
+	// campo inexistente so estoura na execucao da query (PropertyReferenceException), mapeado
+	// pra 400 em CustomGlobalExceptionHandler.
+	@GetMapping("/paginado")
+	public Page<EstadoDTO> getPaginado(Pageable pageable) {
+		return service.listarPaginado(pageable).map(EstadoDTO::from);
 	}
 
 	@GetMapping("/{id}")

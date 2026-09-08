@@ -11,6 +11,9 @@ import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.core.PropertyReferenceException;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -63,5 +66,15 @@ class EstadoRepositoryIT {
 
         assertThatThrownBy(() -> repository.saveAndFlush(novoEstado("Santa Catarina", "RS")))
                 .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void sortPorCampoInexistenteLancaPropertyReferenceException() {
+        // Sort/campo invalido nao e validado pelo PageableHandlerMethodArgumentResolver
+        // (so page/size) - so estoura quando o Hibernate resolve a propriedade contra
+        // o metamodel de Estado, na execucao real da query. CustomGlobalExceptionHandler
+        // mapeia essa excecao pra 400 (ver CustomGlobalExceptionHandlerTest).
+        assertThatThrownBy(() -> repository.findAll(PageRequest.of(0, 10, Sort.by("campoInexistente"))))
+                .isInstanceOf(PropertyReferenceException.class);
     }
 }

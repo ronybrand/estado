@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.core.MethodParameter;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -81,6 +82,23 @@ public class CustomGlobalExceptionHandlerTest {
 
 		assertEquals(HttpStatus.BAD_REQUEST, resposta.getStatusCode());
 		assertEquals("tipo invalido pro parametro id", resposta.getBody().message());
+		assertTrue(logs.list.isEmpty());
+	}
+
+	@Test
+	public void propertyReferenceExceptionRetorna400ComMensagemESemLog() {
+		// sort=campoInexistente nao e validado pelo PageableHandlerMethodArgumentResolver
+		// (so page/size) - so estoura quando o Hibernate resolve a propriedade contra o
+		// metamodel da entidade, na execucao real da query (achado via EstadoRepositoryIT
+		// contra Postgres real: PropertyReferenceException, nao capturada antes disto,
+		// caia no catch-all de Exception e virava 500 pra um input de cliente invalido).
+		PropertyReferenceException ex = mock(PropertyReferenceException.class);
+		when(ex.getMessage()).thenReturn("No property 'campoInexistente' found for type 'Estado'");
+
+		ResponseEntity<ErrorResponseDto> resposta = handler.requisicaoInvalida(ex);
+
+		assertEquals(HttpStatus.BAD_REQUEST, resposta.getStatusCode());
+		assertEquals("No property 'campoInexistente' found for type 'Estado'", resposta.getBody().message());
 		assertTrue(logs.list.isEmpty());
 	}
 

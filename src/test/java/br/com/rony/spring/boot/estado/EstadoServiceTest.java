@@ -16,6 +16,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @ExtendWith(MockitoExtension.class)
 class EstadoServiceTest {
@@ -48,6 +51,18 @@ class EstadoServiceTest {
 		when(repository.findAll()).thenReturn(lista);
 		List<Estado> retorno = service.listar();
 		assertEquals(lista.size(), retorno.size());
+	}
+
+	@Test
+	void listarPaginado() {
+		List<Estado> lista = this.getList();
+		Pageable pageable = PageRequest.of(0, 10);
+		when(repository.findAll(pageable)).thenReturn(new PageImpl<>(lista, pageable, lista.size()));
+
+		var retorno = service.listarPaginado(pageable);
+
+		assertEquals(lista.size(), retorno.getTotalElements());
+		assertEquals(lista.size(), retorno.getContent().size());
 	}
 
 	@Test

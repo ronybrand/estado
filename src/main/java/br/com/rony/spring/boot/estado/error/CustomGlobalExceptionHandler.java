@@ -6,6 +6,7 @@ import jakarta.validation.ConstraintViolationException;
 
 import org.slf4j.MDC;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -28,8 +29,13 @@ public class CustomGlobalExceptionHandler {
     private static final String MENSAGEM_INTEGRIDADE_DADOS = "Dado duplicado ou restricao de integridade violada";
 
     // Erro esperado de input do cliente - tráfego normal, logar em WARN aqui
-    // vira só ruído em produção real.
-    @ExceptionHandler({ConstraintViolationException.class, MethodArgumentTypeMismatchException.class})
+    // vira só ruído em produção real. PropertyReferenceException cobre
+    // ?sort=campo-inexistente: o Pageable nativo do Spring Data so valida
+    // page/size (clampa em vez de rejeitar, ver WebConfig); um nome de
+    // propriedade invalido em sort so estoura quando o Hibernate resolve
+    // contra o metamodel da entidade, na execucao real da query.
+    @ExceptionHandler({ConstraintViolationException.class, MethodArgumentTypeMismatchException.class,
+            PropertyReferenceException.class})
     public ResponseEntity<ErrorResponseDto> requisicaoInvalida(Exception ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(corpo(ex.getMessage()));
     }

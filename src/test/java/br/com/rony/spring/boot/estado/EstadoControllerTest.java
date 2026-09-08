@@ -1,5 +1,6 @@
 package br.com.rony.spring.boot.estado;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -23,6 +24,11 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.core.PropertyReferenceException;
+import org.springframework.data.core.TypeInformation;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -105,6 +111,50 @@ public class EstadoControllerTest {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$[0].id").value(1))
 				.andExpect(jsonPath("$[0].sigla").value("SC"));
+	}
+
+	@Test
+	public void getPaginadoRetornaPageDeEstadoDTO() throws Exception {
+		Pageable pageable = PageRequest.of(0, 10);
+		List<Estado> lista = List.of(this.getDomain(1L, "Santa Catarina", "SC"));
+		when(service.listarPaginado(any(Pageable.class))).thenReturn(new PageImpl<>(lista, pageable, lista.size()));
+
+		mockMvc.perform(get("/estado/paginado"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.content[0].id").value(1))
+				.andExpect(jsonPath("$.content[0].sigla").value("SC"))
+				.andExpect(jsonPath("$.page.totalElements").value(1));
+	}
+
+	@Test
+	public void getPaginadoComSizeAcimaDoLimiteClampaParaOMaximoConfigurado() throws Exception {
+		// app.pagination.max-size (application.yml) limita o tamanho de pagina
+		// no servidor independente do que o cliente pedir - o
+		// PageableHandlerMethodArgumentResolver do Spring Data clampa
+		// silenciosamente pro maximo, nao rejeita com 400.
+		Pageable pageable = PageRequest.of(0, 100);
+		ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+		when(service.listarPaginado(captor.capture())).thenReturn(new PageImpl<>(List.of(), pageable, 0));
+
+		mockMvc.perform(get("/estado/paginado").param("size", "500"))
+				.andExpect(status().isOk());
+
+		assertEquals(100, captor.getValue().getPageSize());
+	}
+
+	@Test
+	public void getPaginadoComSortInvalidoRetorna400() throws Exception {
+		// achado via EstadoRepositoryIT contra Postgres real: sort=campo-que-nao-existe
+		// nao e barrado pelo Pageable (so page/size sao validados ali) - so estoura
+		// quando o Hibernate resolve a propriedade, como PropertyReferenceException.
+		// Sem o handler dedicado (CustomGlobalExceptionHandler), isso cai no catch-all
+		// e vira 500 pra um input de cliente invalido.
+		when(service.listarPaginado(any(Pageable.class)))
+				.thenThrow(new PropertyReferenceException("campoInexistente",
+						TypeInformation.of(Estado.class), List.of()));
+
+		mockMvc.perform(get("/estado/paginado").param("sort", "campoInexistente,asc"))
+				.andExpect(status().isBadRequest());
 	}
 
 	@Test
