@@ -1,4 +1,16 @@
 54.94.231.248.sslip.io {
+	# /actuator/** nunca deveria ser alcançável de fora — o Alloy já faz scrape
+	# de /actuator/prometheus via rede Docker interna (estado-app:8080 direto,
+	# ver deploy/alloy/config.alloy) e o rolling swap consulta /actuator/health
+	# via curl interno (lib-swap.sh); nenhum consumidor real passa pelo Caddy.
+	# Bloqueado antes do handle_path /api/* de propósito — sem isso,
+	# /api/actuator/prometheus escaparia deste bloco e chegaria ao backend
+	# mesmo assim. 404 em vez de 403 pra não confirmar que a rota existe.
+	@actuator path /actuator* /api/actuator*
+	handle @actuator {
+		respond 404
+	}
+
 	# Front Angular chama a API com prefixo /api (environment.prod.ts), esperando
 	# que o proxy remova o prefixo antes do backend — mesmo comportamento do
 	# proxy.config.js em desenvolvimento local. Sem isso: 404 em todo o front
