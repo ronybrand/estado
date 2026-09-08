@@ -25,7 +25,8 @@ import org.springframework.test.web.servlet.MockMvc;
 @WebMvcTest(AuthController.class)
 @Import(SecurityConfig.class)
 @TestPropertySource(properties = {"admin.username=admin", "admin.password-hash=hash-de-teste",
-        "jwt.secret=segredo-de-teste-com-pelo-menos-32-bytes", "jwt.expiration-minutes=60"})
+        "jwt.secret=segredo-de-teste-com-pelo-menos-32-bytes", "jwt.expiration-minutes=60",
+        "rate-limit.login-capacidade=100"})
 public class AuthControllerTest {
 
     @Autowired
