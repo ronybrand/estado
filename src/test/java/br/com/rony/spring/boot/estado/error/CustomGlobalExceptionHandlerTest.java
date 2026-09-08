@@ -86,7 +86,7 @@ public class CustomGlobalExceptionHandlerTest {
 	}
 
 	@Test
-	public void propertyReferenceExceptionRetorna400ComMensagemESemLog() {
+	public void propertyReferenceExceptionRetorna400SemVazarCampoESemLog() {
 		// sort=campoInexistente nao e validado pelo PageableHandlerMethodArgumentResolver
 		// (so page/size) - so estoura quando o Hibernate resolve a propriedade contra o
 		// metamodel da entidade, na execucao real da query (achado via EstadoRepositoryIT
@@ -95,10 +95,11 @@ public class CustomGlobalExceptionHandlerTest {
 		PropertyReferenceException ex = mock(PropertyReferenceException.class);
 		when(ex.getMessage()).thenReturn("No property 'campoInexistente' found for type 'Estado'");
 
-		ResponseEntity<ErrorResponseDto> resposta = handler.requisicaoInvalida(ex);
+		ResponseEntity<ErrorResponseDto> resposta = handler.sortInvalido(ex);
 
 		assertEquals(HttpStatus.BAD_REQUEST, resposta.getStatusCode());
-		assertEquals("No property 'campoInexistente' found for type 'Estado'", resposta.getBody().message());
+		assertEquals("Parametro de ordenacao invalido", resposta.getBody().message());
+		assertFalse(resposta.getBody().message().contains("campoInexistente"));
 		assertTrue(logs.list.isEmpty());
 	}
 

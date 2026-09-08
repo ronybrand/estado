@@ -27,17 +27,20 @@ public class CustomGlobalExceptionHandler {
 
     private static final String MENSAGEM_ERRO_INTERNO = "Erro interno do servidor";
     private static final String MENSAGEM_INTEGRIDADE_DADOS = "Dado duplicado ou restricao de integridade violada";
+    private static final String MENSAGEM_SORT_INVALIDO = "Parametro de ordenacao invalido";
 
-    // Erro esperado de input do cliente - tráfego normal, logar em WARN aqui
-    // vira só ruído em produção real. PropertyReferenceException cobre
-    // ?sort=campo-inexistente: o Pageable nativo do Spring Data so valida
-    // page/size (clampa em vez de rejeitar, ver WebConfig); um nome de
-    // propriedade invalido em sort so estoura quando o Hibernate resolve
-    // contra o metamodel da entidade, na execucao real da query.
-    @ExceptionHandler({ConstraintViolationException.class, MethodArgumentTypeMismatchException.class,
-            PropertyReferenceException.class})
+    // Erro esperado de input do cliente - trafego normal, logar em WARN aqui
+    // vira so ruido em producao real.
+    @ExceptionHandler({ConstraintViolationException.class, MethodArgumentTypeMismatchException.class})
     public ResponseEntity<ErrorResponseDto> requisicaoInvalida(Exception ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(corpo(ex.getMessage()));
+    }
+
+    // A mensagem do Spring Data inclui o nome da propriedade procurada e o
+    // tipo da entidade. Para sort invalido, isso revelaria detalhes do modelo.
+    @ExceptionHandler(PropertyReferenceException.class)
+    public ResponseEntity<ErrorResponseDto> sortInvalido(PropertyReferenceException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(corpo(MENSAGEM_SORT_INVALIDO));
     }
 
     // Falha de @Valid @RequestBody (bean validation nos DTOs de request) -

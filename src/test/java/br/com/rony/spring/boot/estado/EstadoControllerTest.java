@@ -144,7 +144,8 @@ public class EstadoControllerTest {
 						TypeInformation.of(Estado.class), List.of()));
 
 		mockMvc.perform(get("/estado/paginado").param("sort", "campoInexistente,asc"))
-				.andExpect(status().isBadRequest());
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value("Parametro de ordenacao invalido"));
 	}
 
 	@Test
