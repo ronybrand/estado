@@ -37,189 +37,189 @@ import br.com.rony.spring.boot.estado.config.RequestIdFilter;
 
 public class CustomGlobalExceptionHandlerTest {
 
-	private final CustomGlobalExceptionHandler handler = new CustomGlobalExceptionHandler();
+    private final CustomGlobalExceptionHandler handler = new CustomGlobalExceptionHandler();
 
-	private Logger logger;
-	private ListAppender<ILoggingEvent> logs;
+    private Logger logger;
+    private ListAppender<ILoggingEvent> logs;
 
-	@BeforeEach
-	public void capturaLogs() {
-		logger = (Logger) LoggerFactory.getLogger(CustomGlobalExceptionHandler.class);
-		logs = new ListAppender<>();
-		logs.start();
-		logger.addAppender(logs);
-		// Sem isso, o evento tambem propaga pro appender de console do root
-		// logger - os asserts continuam passando, mas o ERROR/WARN esperado
-		// aparece no output do Maven parecendo uma falha real, nao um teste
-		// exercitando o catch-all de proposito.
-		logger.setAdditive(false);
-	}
+    @BeforeEach
+    public void capturaLogs() {
+        logger = (Logger) LoggerFactory.getLogger(CustomGlobalExceptionHandler.class);
+        logs = new ListAppender<>();
+        logs.start();
+        logger.addAppender(logs);
+        // Sem isso, o evento tambem propaga pro appender de console do root
+        // logger - os asserts continuam passando, mas o ERROR/WARN esperado
+        // aparece no output do Maven parecendo uma falha real, nao um teste
+        // exercitando o catch-all de proposito.
+        logger.setAdditive(false);
+    }
 
-	@AfterEach
-	public void limpaLogsEMdc() {
-		logger.detachAppender(logs);
-		logger.setAdditive(true);
-		MDC.clear();
-	}
+    @AfterEach
+    public void limpaLogsEMdc() {
+        logger.detachAppender(logs);
+        logger.setAdditive(true);
+        MDC.clear();
+    }
 
-	@Test
-	public void constraintViolationRetorna400SemVazarMensagemESemLog() {
-		ConstraintViolationException ex = new ConstraintViolationException("sigla invalida", null);
+    @Test
+    public void constraintViolationRetorna400SemVazarMensagemESemLog() {
+        ConstraintViolationException ex = new ConstraintViolationException("sigla invalida", null);
 
-		ResponseEntity<ErrorResponseDto> resposta = handler.requisicaoInvalida(ex);
+        ResponseEntity<ErrorResponseDto> resposta = handler.requisicaoInvalida(ex);
 
-		assertEquals(HttpStatus.BAD_REQUEST, resposta.getStatusCode());
-		assertEquals("Parametro de requisicao invalido", resposta.getBody().message());
-		assertTrue(logs.list.isEmpty());
-	}
+        assertEquals(HttpStatus.BAD_REQUEST, resposta.getStatusCode());
+        assertEquals("Parametro de requisicao invalido", resposta.getBody().message());
+        assertTrue(logs.list.isEmpty());
+    }
 
-	@Test
-	public void methodArgumentTypeMismatchRetorna400SemVazarMensagemESemLog() {
-		MethodArgumentTypeMismatchException ex = mock(MethodArgumentTypeMismatchException.class);
-		when(ex.getMessage()).thenReturn("tipo invalido pro parametro id");
+    @Test
+    public void methodArgumentTypeMismatchRetorna400SemVazarMensagemESemLog() {
+        MethodArgumentTypeMismatchException ex = mock(MethodArgumentTypeMismatchException.class);
+        when(ex.getMessage()).thenReturn("tipo invalido pro parametro id");
 
-		ResponseEntity<ErrorResponseDto> resposta = handler.requisicaoInvalida(ex);
+        ResponseEntity<ErrorResponseDto> resposta = handler.requisicaoInvalida(ex);
 
-		assertEquals(HttpStatus.BAD_REQUEST, resposta.getStatusCode());
-		assertEquals("Parametro de requisicao invalido", resposta.getBody().message());
-		assertTrue(logs.list.isEmpty());
-	}
+        assertEquals(HttpStatus.BAD_REQUEST, resposta.getStatusCode());
+        assertEquals("Parametro de requisicao invalido", resposta.getBody().message());
+        assertTrue(logs.list.isEmpty());
+    }
 
-	@Test
-	public void propertyReferenceExceptionRetorna400SemVazarCampoESemLog() {
-		// sort=campoInexistente nao e validado pelo PageableHandlerMethodArgumentResolver
-		// (so page/size) - so estoura quando o Hibernate resolve a propriedade contra o
-		// metamodel da entidade, na execucao real da query (achado via EstadoRepositoryIT
-		// contra Postgres real: PropertyReferenceException, nao capturada antes disto,
-		// caia no catch-all de Exception e virava 500 pra um input de cliente invalido).
-		PropertyReferenceException ex = mock(PropertyReferenceException.class);
-		when(ex.getMessage()).thenReturn("No property 'campoInexistente' found for type 'Estado'");
+    @Test
+    public void propertyReferenceExceptionRetorna400SemVazarCampoESemLog() {
+        // sort=campoInexistente nao e validado pelo PageableHandlerMethodArgumentResolver
+        // (so page/size) - so estoura quando o Hibernate resolve a propriedade contra o
+        // metamodel da entidade, na execucao real da query (achado via EstadoRepositoryIT
+        // contra Postgres real: PropertyReferenceException, nao capturada antes disto,
+        // caia no catch-all de Exception e virava 500 pra um input de cliente invalido).
+        PropertyReferenceException ex = mock(PropertyReferenceException.class);
+        when(ex.getMessage()).thenReturn("No property 'campoInexistente' found for type 'Estado'");
 
-		ResponseEntity<ErrorResponseDto> resposta = handler.sortInvalido(ex);
+        ResponseEntity<ErrorResponseDto> resposta = handler.sortInvalido(ex);
 
-		assertEquals(HttpStatus.BAD_REQUEST, resposta.getStatusCode());
-		assertEquals("Parametro de ordenacao invalido", resposta.getBody().message());
-		assertFalse(resposta.getBody().message().contains("campoInexistente"));
-		assertTrue(logs.list.isEmpty());
-	}
+        assertEquals(HttpStatus.BAD_REQUEST, resposta.getStatusCode());
+        assertEquals("Parametro de ordenacao invalido", resposta.getBody().message());
+        assertFalse(resposta.getBody().message().contains("campoInexistente"));
+        assertTrue(logs.list.isEmpty());
+    }
 
-	@Test
-	public void dataIntegrityViolationRetorna409ComWarnENaoVazaMensagemDoDriver() {
-		// achado validando end-to-end contra um Postgres real: getMessage() de
-		// DataIntegrityViolationException inclui o SQL bruto e o nome da
-		// constraint (ex: "could not execute statement [ERROR: duplicate key
-		// value violates unique constraint \"uniquenomeconstraint\"...") - nunca
-		// deveria ir pro cliente, mesma logica do handler catch-all.
-		// Status 409 (nao 400): duplicata e um conflito com o estado atual do
-		// recurso, nao um input malformado.
-		DataIntegrityViolationException ex = new DataIntegrityViolationException(
-				"could not execute statement [ERROR: duplicate key value violates unique constraint \"uniquenomeconstraint\"]");
+    @Test
+    public void dataIntegrityViolationRetorna409ComWarnENaoVazaMensagemDoDriver() {
+        // achado validando end-to-end contra um Postgres real: getMessage() de
+        // DataIntegrityViolationException inclui o SQL bruto e o nome da
+        // constraint (ex: "could not execute statement [ERROR: duplicate key
+        // value violates unique constraint \"uniquenomeconstraint\"...") - nunca
+        // deveria ir pro cliente, mesma logica do handler catch-all.
+        // Status 409 (nao 400): duplicata e um conflito com o estado atual do
+        // recurso, nao um input malformado.
+        DataIntegrityViolationException ex = new DataIntegrityViolationException(
+                "could not execute statement [ERROR: duplicate key value violates unique constraint \"uniquenomeconstraint\"]");
 
-		ResponseEntity<ErrorResponseDto> resposta = handler.integridadeDeDadosViolada(ex);
+        ResponseEntity<ErrorResponseDto> resposta = handler.integridadeDeDadosViolada(ex);
 
-		assertEquals(HttpStatus.CONFLICT, resposta.getStatusCode());
-		assertFalse(resposta.getBody().message().contains("uniquenomeconstraint"));
-		assertFalse(resposta.getBody().message().toLowerCase().contains("statement"));
-		assertEquals(1, logs.list.size());
-		assertEquals(Level.WARN, logs.list.get(0).getLevel());
-	}
+        assertEquals(HttpStatus.CONFLICT, resposta.getStatusCode());
+        assertFalse(resposta.getBody().message().contains("uniquenomeconstraint"));
+        assertFalse(resposta.getBody().message().toLowerCase().contains("statement"));
+        assertEquals(1, logs.list.size());
+        assertEquals(Level.WARN, logs.list.get(0).getLevel());
+    }
 
-	@Test
-	public void excecaoInesperadaRetorna500ComErroENaoVazaMensagemInterna() {
-		RuntimeException ex = new RuntimeException("detalhe interno sensivel de implementacao");
+    @Test
+    public void excecaoInesperadaRetorna500ComErroENaoVazaMensagemInterna() {
+        RuntimeException ex = new RuntimeException("detalhe interno sensivel de implementacao");
 
-		ResponseEntity<ErrorResponseDto> resposta = handler.erroInesperado(ex);
+        ResponseEntity<ErrorResponseDto> resposta = handler.erroInesperado(ex);
 
-		assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, resposta.getStatusCode());
-		assertEquals("Erro interno do servidor", resposta.getBody().message());
-		assertEquals(1, logs.list.size());
-		assertEquals(Level.ERROR, logs.list.get(0).getLevel());
-		assertNotNull(logs.list.get(0).getThrowableProxy());
-		assertEquals(RuntimeException.class.getName(), logs.list.get(0).getThrowableProxy().getClassName());
-	}
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, resposta.getStatusCode());
+        assertEquals("Erro interno do servidor", resposta.getBody().message());
+        assertEquals(1, logs.list.size());
+        assertEquals(Level.ERROR, logs.list.get(0).getLevel());
+        assertNotNull(logs.list.get(0).getThrowableProxy());
+        assertEquals(RuntimeException.class.getName(), logs.list.get(0).getThrowableProxy().getClassName());
+    }
 
-	@Test
-	public void erroInesperadoNaoPropagaLogParaOAppenderRaiz() {
-		// O ListAppender do @BeforeEach captura o evento pra assert, mas por
-		// padrao o Logback tambem propaga pro appender de console do root
-		// logger - fazendo o ERROR esperado deste teste aparecer no output do
-		// Maven/CI como se fosse uma falha real. Um appender de teste anexado
-		// ao root prova que essa propagacao foi desligada.
-		Logger root = (Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
-		ListAppender<ILoggingEvent> rootLogs = new ListAppender<>();
-		rootLogs.start();
-		root.addAppender(rootLogs);
+    @Test
+    public void erroInesperadoNaoPropagaLogParaOAppenderRaiz() {
+        // O ListAppender do @BeforeEach captura o evento pra assert, mas por
+        // padrao o Logback tambem propaga pro appender de console do root
+        // logger - fazendo o ERROR esperado deste teste aparecer no output do
+        // Maven/CI como se fosse uma falha real. Um appender de teste anexado
+        // ao root prova que essa propagacao foi desligada.
+        Logger root = (Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+        ListAppender<ILoggingEvent> rootLogs = new ListAppender<>();
+        rootLogs.start();
+        root.addAppender(rootLogs);
 
-		try {
-			handler.erroInesperado(new RuntimeException("detalhe interno sensivel de implementacao"));
+        try {
+            handler.erroInesperado(new RuntimeException("detalhe interno sensivel de implementacao"));
 
-			assertTrue(rootLogs.list.isEmpty());
-		} finally {
-			root.detachAppender(rootLogs);
-		}
-	}
+            assertTrue(rootLogs.list.isEmpty());
+        } finally {
+            root.detachAppender(rootLogs);
+        }
+    }
 
-	@Test
-	public void corpoDeErroInclueRequestIdDoMdcQuandoPresente() {
-		MDC.put(RequestIdFilter.MDC_KEY, "abc-123");
-		ConstraintViolationException ex = new ConstraintViolationException("invalido", null);
+    @Test
+    public void corpoDeErroInclueRequestIdDoMdcQuandoPresente() {
+        MDC.put(RequestIdFilter.MDC_KEY, "abc-123");
+        ConstraintViolationException ex = new ConstraintViolationException("invalido", null);
 
-		ResponseEntity<ErrorResponseDto> resposta = handler.requisicaoInvalida(ex);
+        ResponseEntity<ErrorResponseDto> resposta = handler.requisicaoInvalida(ex);
 
-		assertEquals("abc-123", resposta.getBody().requestId());
-	}
+        assertEquals("abc-123", resposta.getBody().requestId());
+    }
 
-	@Test
-	public void corpoDeErroTemRequestIdNuloQuandoMdcVazio() {
-		ConstraintViolationException ex = new ConstraintViolationException("invalido", null);
+    @Test
+    public void corpoDeErroTemRequestIdNuloQuandoMdcVazio() {
+        ConstraintViolationException ex = new ConstraintViolationException("invalido", null);
 
-		ResponseEntity<ErrorResponseDto> resposta = handler.requisicaoInvalida(ex);
+        ResponseEntity<ErrorResponseDto> resposta = handler.requisicaoInvalida(ex);
 
-		assertNull(resposta.getBody().requestId());
-	}
+        assertNull(resposta.getBody().requestId());
+    }
 
-	@Test
-	public void methodArgumentNotValidRetorna400ComMensagemDosCamposESemLog() throws NoSuchMethodException {
-		BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(new Object(), "estadoRequestDTO");
-		bindingResult.addError(new FieldError("estadoRequestDTO", "sigla", "must not be null"));
-		MethodParameter parametro = new MethodParameter(
-				CustomGlobalExceptionHandlerTest.class.getDeclaredMethod("metodoFalso", String.class), 0);
-		MethodArgumentNotValidException ex = new MethodArgumentNotValidException(parametro, bindingResult);
+    @Test
+    public void methodArgumentNotValidRetorna400ComMensagemDosCamposESemLog() throws NoSuchMethodException {
+        BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(new Object(), "estadoRequestDTO");
+        bindingResult.addError(new FieldError("estadoRequestDTO", "sigla", "must not be null"));
+        MethodParameter parametro = new MethodParameter(
+                CustomGlobalExceptionHandlerTest.class.getDeclaredMethod("metodoFalso", String.class), 0);
+        MethodArgumentNotValidException ex = new MethodArgumentNotValidException(parametro, bindingResult);
 
-		ResponseEntity<ErrorResponseDto> resposta = handler.validacaoFalhou(ex);
+        ResponseEntity<ErrorResponseDto> resposta = handler.validacaoFalhou(ex);
 
-		assertEquals(HttpStatus.BAD_REQUEST, resposta.getStatusCode());
-		assertTrue(resposta.getBody().message().contains("sigla"));
-		assertTrue(resposta.getBody().message().contains("must not be null"));
-		assertTrue(logs.list.isEmpty());
-	}
+        assertEquals(HttpStatus.BAD_REQUEST, resposta.getStatusCode());
+        assertTrue(resposta.getBody().message().contains("sigla"));
+        assertTrue(resposta.getBody().message().contains("must not be null"));
+        assertTrue(logs.list.isEmpty());
+    }
 
-	private void metodoFalso(String arg) {
-		// usado somente para obter um MethodParameter valido no teste acima
-	}
+    private void metodoFalso(String arg) {
+        // usado somente para obter um MethodParameter valido no teste acima
+    }
 
-	@Test
-	public void estadoNaoEncontradoRetorna404ComMensagemESemLog() {
-		EstadoNaoEncontradoException ex = new EstadoNaoEncontradoException("Estado nao encontrado: id=999");
+    @Test
+    public void estadoNaoEncontradoRetorna404ComMensagemESemLog() {
+        EstadoNaoEncontradoException ex = new EstadoNaoEncontradoException("Estado nao encontrado: id=999");
 
-		ResponseEntity<ErrorResponseDto> resposta = handler.estadoNaoEncontrado(ex);
+        ResponseEntity<ErrorResponseDto> resposta = handler.estadoNaoEncontrado(ex);
 
-		assertEquals(HttpStatus.NOT_FOUND, resposta.getStatusCode());
-		assertEquals("Estado nao encontrado: id=999", resposta.getBody().message());
-		assertTrue(logs.list.isEmpty());
-	}
+        assertEquals(HttpStatus.NOT_FOUND, resposta.getStatusCode());
+        assertEquals("Estado nao encontrado: id=999", resposta.getBody().message());
+        assertTrue(logs.list.isEmpty());
+    }
 
-	@Test
-	public void rotaInexistenteRetorna404SemLog() {
-		// achado testando o Swagger UI desligado (SPRINGDOC_SWAGGER_UI_ENABLED=false):
-		// sem handler dedicado, NoResourceFoundException caia no catch-all de
-		// Exception e virava 500 "Erro interno do servidor" pra qualquer URL sem
-		// rota correspondente - nao so Swagger, qualquer path/typo incorreto.
-		NoResourceFoundException ex = new NoResourceFoundException(HttpMethod.GET, "swagger-ui.html", null);
+    @Test
+    public void rotaInexistenteRetorna404SemLog() {
+        // achado testando o Swagger UI desligado (SPRINGDOC_SWAGGER_UI_ENABLED=false):
+        // sem handler dedicado, NoResourceFoundException caia no catch-all de
+        // Exception e virava 500 "Erro interno do servidor" pra qualquer URL sem
+        // rota correspondente - nao so Swagger, qualquer path/typo incorreto.
+        NoResourceFoundException ex = new NoResourceFoundException(HttpMethod.GET, "swagger-ui.html", null);
 
-		ResponseEntity<ErrorResponseDto> resposta = handler.rotaNaoEncontrada(ex);
+        ResponseEntity<ErrorResponseDto> resposta = handler.rotaNaoEncontrada(ex);
 
-		assertEquals(HttpStatus.NOT_FOUND, resposta.getStatusCode());
-		assertTrue(logs.list.isEmpty());
-	}
+        assertEquals(HttpStatus.NOT_FOUND, resposta.getStatusCode());
+        assertTrue(logs.list.isEmpty());
+    }
 }

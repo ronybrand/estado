@@ -29,60 +29,60 @@ import org.slf4j.MDC;
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class RequestIdFilterTest {
 
-	private static final String HEADER = "X-Request-Id";
+    private static final String HEADER = "X-Request-Id";
 
-	private final RequestIdFilter filter = new RequestIdFilter();
+    private final RequestIdFilter filter = new RequestIdFilter();
 
-	@Mock
-	HttpServletRequest request;
+    @Mock
+    HttpServletRequest request;
 
-	@Mock
-	HttpServletResponse response;
+    @Mock
+    HttpServletResponse response;
 
-	@Mock
-	FilterChain chain;
+    @Mock
+    FilterChain chain;
 
-	@Test
-	public void poeNoMdcDuranteACadeiaERemoveDepoisDoFiltro() throws ServletException, IOException {
-		when(request.getHeader(HEADER)).thenReturn(null);
-		AtomicReference<String> mdcDuranteCadeia = new AtomicReference<>();
-		doAnswer(invocation -> {
-			mdcDuranteCadeia.set(MDC.get(RequestIdFilter.MDC_KEY));
-			return null;
-		}).when(chain).doFilter(request, response);
+    @Test
+    public void poeNoMdcDuranteACadeiaERemoveDepoisDoFiltro() throws ServletException, IOException {
+        when(request.getHeader(HEADER)).thenReturn(null);
+        AtomicReference<String> mdcDuranteCadeia = new AtomicReference<>();
+        doAnswer(invocation -> {
+            mdcDuranteCadeia.set(MDC.get(RequestIdFilter.MDC_KEY));
+            return null;
+        }).when(chain).doFilter(request, response);
 
-		filter.doFilter(request, response, chain);
+        filter.doFilter(request, response, chain);
 
-		assertNotNull(mdcDuranteCadeia.get());
-		assertNull(MDC.get(RequestIdFilter.MDC_KEY));
-	}
+        assertNotNull(mdcDuranteCadeia.get());
+        assertNull(MDC.get(RequestIdFilter.MDC_KEY));
+    }
 
-	@Test
-	public void ecoaUuidGeradoComoHeaderDeResposta() throws ServletException, IOException {
-		when(request.getHeader(HEADER)).thenReturn(null);
+    @Test
+    public void ecoaUuidGeradoComoHeaderDeResposta() throws ServletException, IOException {
+        when(request.getHeader(HEADER)).thenReturn(null);
 
-		filter.doFilter(request, response, chain);
+        filter.doFilter(request, response, chain);
 
-		verify(response).setHeader(eq(HEADER), anyString());
-	}
+        verify(response).setHeader(eq(HEADER), anyString());
+    }
 
-	@Test
-	public void reaproveitaUuidValidoRecebidoNoHeaderDeEntrada() throws ServletException, IOException {
-		String uuid = "11111111-1111-1111-1111-111111111111";
-		when(request.getHeader(HEADER)).thenReturn(uuid);
+    @Test
+    public void reaproveitaUuidValidoRecebidoNoHeaderDeEntrada() throws ServletException, IOException {
+        String uuid = "11111111-1111-1111-1111-111111111111";
+        when(request.getHeader(HEADER)).thenReturn(uuid);
 
-		filter.doFilter(request, response, chain);
+        filter.doFilter(request, response, chain);
 
-		verify(response).setHeader(HEADER, uuid);
-	}
+        verify(response).setHeader(HEADER, uuid);
+    }
 
-	@Test
-	public void geraUuidNovoQuandoHeaderDeEntradaNaoEUuidValido() throws ServletException, IOException {
-		when(request.getHeader(HEADER)).thenReturn("nao-e-uuid");
+    @Test
+    public void geraUuidNovoQuandoHeaderDeEntradaNaoEUuidValido() throws ServletException, IOException {
+        when(request.getHeader(HEADER)).thenReturn("nao-e-uuid");
 
-		filter.doFilter(request, response, chain);
+        filter.doFilter(request, response, chain);
 
-		verify(response, never()).setHeader(HEADER, "nao-e-uuid");
-		verify(response).setHeader(eq(HEADER), anyString());
-	}
+        verify(response, never()).setHeader(HEADER, "nao-e-uuid");
+        verify(response).setHeader(eq(HEADER), anyString());
+    }
 }

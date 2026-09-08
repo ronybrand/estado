@@ -9,36 +9,36 @@ import org.junit.jupiter.api.Test;
 
 public class EstadoDTOTest {
 
-	@Test
-	public void fromMapeiaTodosOsCamposDaEntidade() {
-		Estado entidade = new Estado();
-		entidade.setId(1L);
-		entidade.setNome("Santa Catarina");
-		entidade.setSigla("SC");
-		LocalDateTime cadastro = LocalDateTime.now();
-		LocalDateTime atualizacao = LocalDateTime.now();
-		entidade.setDataHoraCadastro(cadastro);
-		entidade.setDataHoraUltimaAtualizacao(atualizacao);
+    @Test
+    public void fromMapeiaTodosOsCamposDaEntidade() {
+        Estado entidade = new Estado();
+        entidade.setId(1L);
+        entidade.setNome("Santa Catarina");
+        entidade.setSigla("SC");
+        LocalDateTime cadastro = LocalDateTime.now();
+        LocalDateTime atualizacao = LocalDateTime.now();
+        entidade.setDataHoraCadastro(cadastro);
+        entidade.setDataHoraUltimaAtualizacao(atualizacao);
 
-		EstadoDTO dto = EstadoDTO.from(entidade);
+        EstadoDTO dto = EstadoDTO.from(entidade);
 
-		assertEquals(1L, dto.id());
-		assertEquals("Santa Catarina", dto.nome());
-		assertEquals("SC", dto.sigla());
-		assertEquals(cadastro, dto.dataHoraCadastro());
-		assertEquals(atualizacao, dto.dataHoraUltimaAtualizacao());
-	}
+        assertEquals(1L, dto.id());
+        assertEquals("Santa Catarina", dto.nome());
+        assertEquals("SC", dto.sigla());
+        assertEquals(cadastro, dto.dataHoraCadastro());
+        assertEquals(atualizacao, dto.dataHoraUltimaAtualizacao());
+    }
 
-	@Test
-	public void fromComDataHoraUltimaAtualizacaoNulaMantemNulo() {
-		Estado entidade = new Estado();
-		entidade.setId(1L);
-		entidade.setNome("Santa Catarina");
-		entidade.setSigla("SC");
-		entidade.setDataHoraCadastro(LocalDateTime.now());
+    @Test
+    public void fromComDataHoraUltimaAtualizacaoNulaMantemNulo() {
+        Estado entidade = new Estado();
+        entidade.setId(1L);
+        entidade.setNome("Santa Catarina");
+        entidade.setSigla("SC");
+        entidade.setDataHoraCadastro(LocalDateTime.now());
 
-		EstadoDTO dto = EstadoDTO.from(entidade);
+        EstadoDTO dto = EstadoDTO.from(entidade);
 
-		assertNull(dto.dataHoraUltimaAtualizacao());
-	}
+        assertNull(dto.dataHoraUltimaAtualizacao());
+    }
 }

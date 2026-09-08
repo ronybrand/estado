@@ -39,81 +39,81 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class RateLimitFilter extends OncePerRequestFilter implements Ordered {
 
-	private final RateLimitProperty rateLimitProperty;
-	// Instancia propria, nao o bean do Spring: em alguns slices de teste
-	// (@WebMvcTest) o ObjectMapper do Jackson ainda nao esta disponivel no
-	// momento em que este filtro e criado (achado rodando a suite completa) -
-	// mesma escolha de auto-suficiencia do RequestIdFilter, sem dependencia
-	// externa alem do necessario.
-	private final ObjectMapper objectMapper = new ObjectMapper();
-	// Expira apos 2 janelas sem atividade do IP - tempo suficiente pra nao
-	// reiniciar o limite de um cliente ainda ativo, mas garante que IPs que
-	// pararam de mandar trafego (a maioria, num scraper ou scanner de passagem)
-	// sejam removidos em vez de ficar pra sempre no cache (vazamento de
-	// memoria de um Map sem eviction).
-	private final Cache<String, Bucket> buckets;
-	private final Cache<String, Bucket> loginBuckets;
+    private final RateLimitProperty rateLimitProperty;
+    // Instancia propria, nao o bean do Spring: em alguns slices de teste
+    // (@WebMvcTest) o ObjectMapper do Jackson ainda nao esta disponivel no
+    // momento em que este filtro e criado (achado rodando a suite completa) -
+    // mesma escolha de auto-suficiencia do RequestIdFilter, sem dependencia
+    // externa alem do necessario.
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    // Expira apos 2 janelas sem atividade do IP - tempo suficiente pra nao
+    // reiniciar o limite de um cliente ainda ativo, mas garante que IPs que
+    // pararam de mandar trafego (a maioria, num scraper ou scanner de passagem)
+    // sejam removidos em vez de ficar pra sempre no cache (vazamento de
+    // memoria de um Map sem eviction).
+    private final Cache<String, Bucket> buckets;
+    private final Cache<String, Bucket> loginBuckets;
 
-	public RateLimitFilter(RateLimitProperty rateLimitProperty) {
-		this.rateLimitProperty = rateLimitProperty;
-		this.buckets = Caffeine.newBuilder()
-				.expireAfterAccess(Duration.ofSeconds(rateLimitProperty.getJanelaSegundos() * 2L))
-				.build();
-		this.loginBuckets = Caffeine.newBuilder()
-				.expireAfterAccess(Duration.ofSeconds(rateLimitProperty.getLoginJanelaSegundos() * 2L))
-				.build();
-	}
+    public RateLimitFilter(RateLimitProperty rateLimitProperty) {
+        this.rateLimitProperty = rateLimitProperty;
+        this.buckets = Caffeine.newBuilder()
+                .expireAfterAccess(Duration.ofSeconds(rateLimitProperty.getJanelaSegundos() * 2L))
+                .build();
+        this.loginBuckets = Caffeine.newBuilder()
+                .expireAfterAccess(Duration.ofSeconds(rateLimitProperty.getLoginJanelaSegundos() * 2L))
+                .build();
+    }
 
-	@Override
-	public int getOrder() {
-		// Logo depois do RequestIdFilter (HIGHEST_PRECEDENCE): precisa do
-		// requestId ja no MDC pra ecoar no corpo de erro 429, mas deve rodar
-		// antes de qualquer outro processamento pra rejeitar cedo.
-		return Ordered.HIGHEST_PRECEDENCE + 1;
-	}
+    @Override
+    public int getOrder() {
+        // Logo depois do RequestIdFilter (HIGHEST_PRECEDENCE): precisa do
+        // requestId ja no MDC pra ecoar no corpo de erro 429, mas deve rodar
+        // antes de qualquer outro processamento pra rejeitar cedo.
+        return Ordered.HIGHEST_PRECEDENCE + 1;
+    }
 
-	@Override
-	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-			throws ServletException, IOException {
-		String ip = request.getRemoteAddr();
-		Bucket bucket = buckets.get(ip, chave -> novoBucket());
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
+        String ip = request.getRemoteAddr();
+        Bucket bucket = buckets.get(ip, chave -> novoBucket());
 
-		if (!bucket.tryConsume(1)) {
-			rejeitar(request, response, ip);
-			return;
-		}
+        if (!bucket.tryConsume(1)) {
+            rejeitar(request, response, ip);
+            return;
+        }
 
-		if (isLogin(request) && !loginBuckets.get(ip, chave -> novoLoginBucket()).tryConsume(1)) {
-			rejeitar(request, response, ip);
-			return;
-		}
+        if (isLogin(request) && !loginBuckets.get(ip, chave -> novoLoginBucket()).tryConsume(1)) {
+            rejeitar(request, response, ip);
+            return;
+        }
 
-		filterChain.doFilter(request, response);
-	}
+        filterChain.doFilter(request, response);
+    }
 
-	private boolean isLogin(HttpServletRequest request) {
-		return "POST".equalsIgnoreCase(request.getMethod()) && "/auth/login".equals(request.getRequestURI());
-	}
+    private boolean isLogin(HttpServletRequest request) {
+        return "POST".equalsIgnoreCase(request.getMethod()) && "/auth/login".equals(request.getRequestURI());
+    }
 
-	private void rejeitar(HttpServletRequest request, HttpServletResponse response, String ip) throws IOException {
-		log.warn("Rate limit excedido para IP {} no endpoint {}", ip, request.getRequestURI());
-		response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
-		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-		ErrorResponseDto corpo = new ErrorResponseDto(
-				"Muitas requisicoes - tente novamente em instantes", MDC.get(RequestIdFilter.MDC_KEY));
-		response.getWriter().write(objectMapper.writeValueAsString(corpo));
-	}
+    private void rejeitar(HttpServletRequest request, HttpServletResponse response, String ip) throws IOException {
+        log.warn("Rate limit excedido para IP {} no endpoint {}", ip, request.getRequestURI());
+        response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        ErrorResponseDto corpo = new ErrorResponseDto(
+                "Muitas requisicoes - tente novamente em instantes", MDC.get(RequestIdFilter.MDC_KEY));
+        response.getWriter().write(objectMapper.writeValueAsString(corpo));
+    }
 
-	private Bucket novoBucket() {
-		Bandwidth limite = Bandwidth.classic(rateLimitProperty.getCapacidade(),
-				Refill.greedy(rateLimitProperty.getCapacidade(), Duration.ofSeconds(rateLimitProperty.getJanelaSegundos())));
-		return Bucket.builder().addLimit(limite).build();
-	}
+    private Bucket novoBucket() {
+        Bandwidth limite = Bandwidth.classic(rateLimitProperty.getCapacidade(),
+                Refill.greedy(rateLimitProperty.getCapacidade(), Duration.ofSeconds(rateLimitProperty.getJanelaSegundos())));
+        return Bucket.builder().addLimit(limite).build();
+    }
 
-	private Bucket novoLoginBucket() {
-		Bandwidth limite = Bandwidth.classic(rateLimitProperty.getLoginCapacidade(),
-				Refill.greedy(rateLimitProperty.getLoginCapacidade(),
-						Duration.ofSeconds(rateLimitProperty.getLoginJanelaSegundos())));
-		return Bucket.builder().addLimit(limite).build();
-	}
+    private Bucket novoLoginBucket() {
+        Bandwidth limite = Bandwidth.classic(rateLimitProperty.getLoginCapacidade(),
+                Refill.greedy(rateLimitProperty.getLoginCapacidade(),
+                        Duration.ofSeconds(rateLimitProperty.getLoginJanelaSegundos())));
+        return Bucket.builder().addLimit(limite).build();
+    }
 }

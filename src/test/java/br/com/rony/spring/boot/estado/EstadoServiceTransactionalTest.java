@@ -15,44 +15,44 @@ import org.springframework.transaction.interceptor.TransactionAttribute;
 // separado dos metodos de escrita que herdam o @Transactional da classe.
 class EstadoServiceTransactionalTest {
 
-	@Test
-	void listarPaginadoDeveSerSomenteLeitura() throws NoSuchMethodException {
-		assertReadOnly("listarPaginado", Pageable.class);
-	}
+    @Test
+    void listarPaginadoDeveSerSomenteLeitura() throws NoSuchMethodException {
+        assertReadOnly("listarPaginado", Pageable.class);
+    }
 
-	@Test
-	void getDomainByIdDeveSerSomenteLeitura() throws NoSuchMethodException {
-		assertReadOnly("getDomainById", long.class);
-	}
+    @Test
+    void getDomainByIdDeveSerSomenteLeitura() throws NoSuchMethodException {
+        assertReadOnly("getDomainById", long.class);
+    }
 
-	@Test
-	void salvarNaoDeveSerSomenteLeitura() throws NoSuchMethodException {
-		assertNotReadOnly("salvar", Estado.class);
-	}
+    @Test
+    void salvarNaoDeveSerSomenteLeitura() throws NoSuchMethodException {
+        assertNotReadOnly("salvar", Estado.class);
+    }
 
-	@Test
-	void atualizarNaoDeveSerSomenteLeitura() throws NoSuchMethodException {
-		assertNotReadOnly("atualizar", Estado.class);
-	}
+    @Test
+    void atualizarNaoDeveSerSomenteLeitura() throws NoSuchMethodException {
+        assertNotReadOnly("atualizar", Estado.class);
+    }
 
-	@Test
-	void excluirNaoDeveSerSomenteLeitura() throws NoSuchMethodException {
-		assertNotReadOnly("excluir", long.class);
-	}
+    @Test
+    void excluirNaoDeveSerSomenteLeitura() throws NoSuchMethodException {
+        assertNotReadOnly("excluir", long.class);
+    }
 
-	private void assertReadOnly(String nomeMetodo, Class<?>... parametros) throws NoSuchMethodException {
-		assertTrue(readOnly(nomeMetodo, parametros), nomeMetodo + " deveria ser @Transactional(readOnly = true)");
-	}
+    private void assertReadOnly(String nomeMetodo, Class<?>... parametros) throws NoSuchMethodException {
+        assertTrue(readOnly(nomeMetodo, parametros), nomeMetodo + " deveria ser @Transactional(readOnly = true)");
+    }
 
-	private void assertNotReadOnly(String nomeMetodo, Class<?>... parametros) throws NoSuchMethodException {
-		assertFalse(readOnly(nomeMetodo, parametros), nomeMetodo + " nao deveria ser readOnly");
-	}
+    private void assertNotReadOnly(String nomeMetodo, Class<?>... parametros) throws NoSuchMethodException {
+        assertFalse(readOnly(nomeMetodo, parametros), nomeMetodo + " nao deveria ser readOnly");
+    }
 
-	private static final AnnotationTransactionAttributeSource SOURCE = new AnnotationTransactionAttributeSource();
+    private static final AnnotationTransactionAttributeSource SOURCE = new AnnotationTransactionAttributeSource();
 
-	private boolean readOnly(String nomeMetodo, Class<?>... parametros) throws NoSuchMethodException {
-		Method metodo = EstadoService.class.getMethod(nomeMetodo, parametros);
-		TransactionAttribute atributo = SOURCE.getTransactionAttribute(metodo, EstadoService.class);
-		return atributo.isReadOnly();
-	}
+    private boolean readOnly(String nomeMetodo, Class<?>... parametros) throws NoSuchMethodException {
+        Method metodo = EstadoService.class.getMethod(nomeMetodo, parametros);
+        TransactionAttribute atributo = SOURCE.getTransactionAttribute(metodo, EstadoService.class);
+        return atributo.isReadOnly();
+    }
 }

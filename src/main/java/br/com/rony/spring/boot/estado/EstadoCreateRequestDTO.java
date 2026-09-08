@@ -9,13 +9,13 @@ import jakarta.validation.constraints.Size;
 // SimpleJpaRepository.save() do Spring Data JPA roteava pra merge() em vez
 // de persist(), sobrescrevendo silenciosamente uma linha existente).
 public record EstadoCreateRequestDTO(
-		@NotNull @Size(min = Estado.NOME_MIN_LENGTH, max = Estado.NOME_MAX_LENGTH) String nome,
-		@NotNull @Size(min = Estado.SIGLA_LENGTH, max = Estado.SIGLA_LENGTH) String sigla) {
+        @NotNull @Size(min = Estado.NOME_MIN_LENGTH, max = Estado.NOME_MAX_LENGTH) String nome,
+        @NotNull @Size(min = Estado.SIGLA_LENGTH, max = Estado.SIGLA_LENGTH) String sigla) {
 
-	public Estado toEntity() {
-		Estado entidade = new Estado();
-		entidade.setNome(nome);
-		entidade.setSigla(sigla);
-		return entidade;
-	}
+    public Estado toEntity() {
+        Estado entidade = new Estado();
+        entidade.setNome(nome);
+        entidade.setSigla(sigla);
+        return entidade;
+    }
 }

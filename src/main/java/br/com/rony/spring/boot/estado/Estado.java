@@ -48,15 +48,15 @@ public class Estado {
     @Column(nullable = false, length = SIGLA_LENGTH, unique = true)
     private String sigla;
 
-	@Column(name = "ts_data_hora_cadastro", nullable = false)
-	private LocalDateTime dataHoraCadastro;
+    @Column(name = "ts_data_hora_cadastro", nullable = false)
+    private LocalDateTime dataHoraCadastro;
 
-	@Column(name = "ts_data_hora_ultima_atualizacao", nullable = true)
-	private LocalDateTime dataHoraUltimaAtualizacao;
+    @Column(name = "ts_data_hora_ultima_atualizacao", nullable = true)
+    private LocalDateTime dataHoraUltimaAtualizacao;
 
-	// setter manual: a sigla e sempre normalizada para maiuscula - o Lombok
-	// @Setter da classe detecta este metodo ja declarado e nao gera outro.
-	public void setSigla(String sigla) {
-		this.sigla = sigla == null ? null : sigla.toUpperCase(Locale.ROOT);
-	}
+    // setter manual: a sigla e sempre normalizada para maiuscula - o Lombok
+    // @Setter da classe detecta este metodo ja declarado e nao gera outro.
+    public void setSigla(String sigla) {
+        this.sigla = sigla == null ? null : sigla.toUpperCase(Locale.ROOT);
+    }
 }

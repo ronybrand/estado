@@ -9,22 +9,22 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 
 class OpenApiConfigTest {
 
-	private final OpenApiConfig config = new OpenApiConfig();
+    private final OpenApiConfig config = new OpenApiConfig();
 
-	@Test
-	void expoeTituloEVersaoDaApi() {
-		OpenAPI openApi = config.estadoOpenApi();
+    @Test
+    void expoeTituloEVersaoDaApi() {
+        OpenAPI openApi = config.estadoOpenApi();
 
-		assertThat(openApi.getInfo().getTitle()).isEqualTo("Estado API");
-		assertThat(openApi.getInfo().getVersion()).isNotBlank();
-	}
+        assertThat(openApi.getInfo().getTitle()).isEqualTo("Estado API");
+        assertThat(openApi.getInfo().getVersion()).isNotBlank();
+    }
 
-	@Test
-	void registraEsquemaBearerParaOsEndpointsProtegidosPorJwt() {
-		OpenAPI openApi = config.estadoOpenApi();
+    @Test
+    void registraEsquemaBearerParaOsEndpointsProtegidosPorJwt() {
+        OpenAPI openApi = config.estadoOpenApi();
 
-		SecurityScheme esquema = openApi.getComponents().getSecuritySchemes().get("bearerAuth");
-		assertThat(esquema.getScheme()).isEqualTo("bearer");
-		assertThat(esquema.getBearerFormat()).isEqualTo("JWT");
-	}
+        SecurityScheme esquema = openApi.getComponents().getSecuritySchemes().get("bearerAuth");
+        assertThat(esquema.getScheme()).isEqualTo("bearer");
+        assertThat(esquema.getBearerFormat()).isEqualTo("JWT");
+    }
 }
