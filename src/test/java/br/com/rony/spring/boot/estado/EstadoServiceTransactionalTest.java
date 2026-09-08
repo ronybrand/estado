@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.lang.reflect.Method;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.AnnotationTransactionAttributeSource;
 import org.springframework.transaction.interceptor.TransactionAttribute;
 
@@ -15,8 +16,8 @@ import org.springframework.transaction.interceptor.TransactionAttribute;
 class EstadoServiceTransactionalTest {
 
 	@Test
-	void listarDeveSerSomenteLeitura() throws NoSuchMethodException {
-		assertReadOnly("listar");
+	void listarPaginadoDeveSerSomenteLeitura() throws NoSuchMethodException {
+		assertReadOnly("listarPaginado", Pageable.class);
 	}
 
 	@Test

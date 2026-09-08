@@ -46,14 +46,6 @@ class EstadoServiceTest {
 	}
 
 	@Test
-	void listar() {
-		List<Estado> lista = this.getList();
-		when(repository.findAll()).thenReturn(lista);
-		List<Estado> retorno = service.listar();
-		assertEquals(lista.size(), retorno.size());
-	}
-
-	@Test
 	void listarPaginado() {
 		List<Estado> lista = this.getList();
 		Pageable pageable = PageRequest.of(0, 10);

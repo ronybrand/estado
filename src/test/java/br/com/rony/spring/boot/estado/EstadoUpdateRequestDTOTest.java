@@ -30,15 +30,15 @@ public class EstadoUpdateRequestDTOTest {
 		factory.close();
 	}
 
-	private EstadoUpdateRequestDTO getDto(Long id, String nome, String sigla) {
-		return new EstadoUpdateRequestDTO(id, nome, sigla);
+	private EstadoUpdateRequestDTO getDto(String nome, String sigla) {
+		return new EstadoUpdateRequestDTO(nome, sigla);
 	}
 
 	@Test
-	public void toEntityMapeiaIdNomeESigla() {
-		EstadoUpdateRequestDTO dto = this.getDto(1L, "Santa Catarina", "SC");
+	public void toEntityMapeiaIdDoParametroComNomeESigla() {
+		EstadoUpdateRequestDTO dto = this.getDto("Santa Catarina", "SC");
 
-		Estado entidade = dto.toEntity();
+		Estado entidade = dto.toEntity(1L);
 
 		assertEquals(1L, entidade.getId());
 		assertEquals("Santa Catarina", entidade.getNome());
@@ -47,7 +47,7 @@ public class EstadoUpdateRequestDTOTest {
 
 	@Test
 	public void dtoValidoNaoTemViolacoes() {
-		EstadoUpdateRequestDTO dto = this.getDto(1L, "Santa Catarina", "SC");
+		EstadoUpdateRequestDTO dto = this.getDto("Santa Catarina", "SC");
 
 		Set<ConstraintViolation<EstadoUpdateRequestDTO>> violacoes = validator.validate(dto);
 
@@ -55,17 +55,8 @@ public class EstadoUpdateRequestDTOTest {
 	}
 
 	@Test
-	public void idNuloGeraViolacao() {
-		EstadoUpdateRequestDTO dto = this.getDto(null, "Santa Catarina", "SC");
-
-		Set<ConstraintViolation<EstadoUpdateRequestDTO>> violacoes = validator.validate(dto);
-
-		assertTrue(violacoes.stream().anyMatch(v -> v.getPropertyPath().toString().equals("id")));
-	}
-
-	@Test
 	public void nomeNuloGeraViolacao() {
-		EstadoUpdateRequestDTO dto = this.getDto(1L, null, "SC");
+		EstadoUpdateRequestDTO dto = this.getDto(null, "SC");
 
 		Set<ConstraintViolation<EstadoUpdateRequestDTO>> violacoes = validator.validate(dto);
 
@@ -74,7 +65,7 @@ public class EstadoUpdateRequestDTOTest {
 
 	@Test
 	public void siglaComTamanhoDiferenteDeDoisGeraViolacao() {
-		EstadoUpdateRequestDTO dto = this.getDto(1L, "Santa Catarina", "S");
+		EstadoUpdateRequestDTO dto = this.getDto("Santa Catarina", "S");
 
 		Set<ConstraintViolation<EstadoUpdateRequestDTO>> violacoes = validator.validate(dto);
 
