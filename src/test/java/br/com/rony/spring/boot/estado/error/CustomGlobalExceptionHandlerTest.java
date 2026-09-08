@@ -63,25 +63,25 @@ public class CustomGlobalExceptionHandlerTest {
 	}
 
 	@Test
-	public void constraintViolationRetorna400ComMensagemESemLog() {
+	public void constraintViolationRetorna400SemVazarMensagemESemLog() {
 		ConstraintViolationException ex = new ConstraintViolationException("sigla invalida", null);
 
 		ResponseEntity<ErrorResponseDto> resposta = handler.requisicaoInvalida(ex);
 
 		assertEquals(HttpStatus.BAD_REQUEST, resposta.getStatusCode());
-		assertEquals("sigla invalida", resposta.getBody().message());
+		assertEquals("Parametro de requisicao invalido", resposta.getBody().message());
 		assertTrue(logs.list.isEmpty());
 	}
 
 	@Test
-	public void methodArgumentTypeMismatchRetorna400SemLog() {
+	public void methodArgumentTypeMismatchRetorna400SemVazarMensagemESemLog() {
 		MethodArgumentTypeMismatchException ex = mock(MethodArgumentTypeMismatchException.class);
 		when(ex.getMessage()).thenReturn("tipo invalido pro parametro id");
 
 		ResponseEntity<ErrorResponseDto> resposta = handler.requisicaoInvalida(ex);
 
 		assertEquals(HttpStatus.BAD_REQUEST, resposta.getStatusCode());
-		assertEquals("tipo invalido pro parametro id", resposta.getBody().message());
+		assertEquals("Parametro de requisicao invalido", resposta.getBody().message());
 		assertTrue(logs.list.isEmpty());
 	}
 

@@ -28,12 +28,15 @@ public class CustomGlobalExceptionHandler {
     private static final String MENSAGEM_ERRO_INTERNO = "Erro interno do servidor";
     private static final String MENSAGEM_INTEGRIDADE_DADOS = "Dado duplicado ou restricao de integridade violada";
     private static final String MENSAGEM_SORT_INVALIDO = "Parametro de ordenacao invalido";
+    private static final String MENSAGEM_REQUISICAO_INVALIDA = "Parametro de requisicao invalido";
 
     // Erro esperado de input do cliente - trafego normal, logar em WARN aqui
-    // vira so ruido em producao real.
+    // vira so ruido em producao real. Mensagem generica (nao ex.getMessage())
+    // pelo mesmo motivo do handler de sort: essas excecoes citam nome de
+    // parametro/metodo do controller, detalhe interno que nao devia vazar.
     @ExceptionHandler({ConstraintViolationException.class, MethodArgumentTypeMismatchException.class})
     public ResponseEntity<ErrorResponseDto> requisicaoInvalida(Exception ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(corpo(ex.getMessage()));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(corpo(MENSAGEM_REQUISICAO_INVALIDA));
     }
 
     // A mensagem do Spring Data inclui o nome da propriedade procurada e o
