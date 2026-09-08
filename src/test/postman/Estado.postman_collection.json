@@ -106,7 +106,7 @@
 					"response": []
 				},
 				{
-					"name": "GetALL",
+					"name": "GetPaginado",
 					"event": [
 						{
 							"listen": "prerequest",
@@ -123,14 +123,14 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "localhost:8090/estado/",
+							"raw": "localhost:8090/estado/paginado",
 							"host": [
 								"localhost"
 							],
 							"port": "8090",
 							"path": [
 								"estado",
-								""
+								"paginado"
 							]
 						}
 					},
@@ -158,10 +158,10 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"id\": 1,\n    \"nome\": \t\"Santa catarina\",\n    \"sigla\":    \"Sc\"\n}"
+							"raw": "{\n    \"nome\": \t\"Santa catarina\",\n    \"sigla\":    \"Sc\"\n}"
 						},
 						"url": {
-							"raw": "http://localhost:8090/estado/",
+							"raw": "http://localhost:8090/estado/1",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -169,7 +169,7 @@
 							"port": "8090",
 							"path": [
 								"estado",
-								""
+								"1"
 							]
 						}
 					},

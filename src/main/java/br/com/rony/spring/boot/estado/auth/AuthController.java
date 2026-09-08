@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 // Endpoint sempre publico (permitAll no SecurityConfig) - e a porta de
@@ -17,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/auth")
+@Tag(name = "Auth", description = "Emissao de token JWT do admin unico (ADR 0017)")
 public class AuthController {
 
     private final AdminProperty adminProperty;
@@ -24,6 +28,9 @@ public class AuthController {
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
 
+    @Operation(summary = "Login do admin", description = "Emite um JWT valido por jwt.expiration-minutes.")
+    @ApiResponse(responseCode = "200", description = "Login bem-sucedido, token emitido")
+    @ApiResponse(responseCode = "401", description = "Usuario ou senha invalidos")
     @PostMapping("/login")
     public LoginResponseDto login(@Valid @RequestBody LoginRequestDto request) {
         // request.username() nunca e nulo (@NotBlank), entao comparar a partir

@@ -2,7 +2,6 @@ package br.com.rony.spring.boot.estado;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -45,11 +44,6 @@ public class EstadoService {
     	}
     	repository.deleteById(idDomain);
     	log.info("Estado excluido: id={}", idDomain);
-    }
-
-    @Transactional(readOnly = true)
-    public List<Estado> listar() {
-    	return repository.findAll();
     }
 
     @Transactional(readOnly = true)

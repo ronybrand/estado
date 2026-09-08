@@ -104,16 +104,6 @@ public class EstadoControllerTest {
 	}
 
 	@Test
-	public void getAllRetornaListaDeEstadoDTO() throws Exception {
-		when(service.listar()).thenReturn(List.of(this.getDomain(1L, "Santa Catarina", "SC")));
-
-		mockMvc.perform(get("/estado"))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$[0].id").value(1))
-				.andExpect(jsonPath("$[0].sigla").value("SC"));
-	}
-
-	@Test
 	public void getPaginadoRetornaPageDeEstadoDTO() throws Exception {
 		Pageable pageable = PageRequest.of(0, 10);
 		List<Estado> lista = List.of(this.getDomain(1L, "Santa Catarina", "SC"));
@@ -188,19 +178,44 @@ public class EstadoControllerTest {
 		Estado atualizado = this.getDomain(1L, "Santa Catarina", "SC");
 		when(service.atualizar(any(Estado.class))).thenReturn(atualizado);
 
-		mockMvc.perform(put("/estado")
+		mockMvc.perform(put("/estado/1")
 				.with(user("admin"))
 				.contentType(MediaType.APPLICATION_JSON)
-				.content("{\"id\":1,\"nome\":\"Santa Catarina\",\"sigla\":\"SC\"}"))
+				.content("{\"nome\":\"Santa Catarina\",\"sigla\":\"SC\"}"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.id").value(1))
 				.andExpect(jsonPath("$.nome").value("Santa Catarina"));
 	}
 
 	@Test
-	public void atualizarSemIdRetorna400EmVezDeNullPointerException() throws Exception {
-		// ver EstadoUpdateRequestDTO pro motivo.
-		mockMvc.perform(put("/estado")
+	public void atualizarUsaOIdDoPathNaEntidadeEnviadaAoService() throws Exception {
+		// id vem so da URL agora (PUT /estado/{id}), nao mais do corpo - ver
+		// EstadoUpdateRequestDTO pro motivo da mudanca.
+		ArgumentCaptor<Estado> captor = ArgumentCaptor.forClass(Estado.class);
+		when(service.atualizar(captor.capture())).thenReturn(this.getDomain(42L, "Santa Catarina", "SC"));
+
+		mockMvc.perform(put("/estado/42")
+				.with(user("admin"))
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{\"nome\":\"Santa Catarina\",\"sigla\":\"SC\"}"))
+				.andExpect(status().isOk());
+
+		assertEquals(Long.valueOf(42), captor.getValue().getId());
+	}
+
+	@Test
+	public void atualizarComIdNegativoRetorna400() throws Exception {
+		mockMvc.perform(put("/estado/-1")
+				.with(user("admin"))
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{\"nome\":\"Santa Catarina\",\"sigla\":\"SC\"}"))
+				.andExpect(status().isBadRequest());
+		verify(service, never()).atualizar(any(Estado.class));
+	}
+
+	@Test
+	public void atualizarComIdZeroRetorna400() throws Exception {
+		mockMvc.perform(put("/estado/0")
 				.with(user("admin"))
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("{\"nome\":\"Santa Catarina\",\"sigla\":\"SC\"}"))
