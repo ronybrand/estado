@@ -7,6 +7,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Positive;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -32,6 +34,11 @@ public class EstadoController {
 	@GetMapping
 	public List<EstadoDTO> getAll() {
 		return service.listar().stream().map(EstadoDTO::from).collect(Collectors.toList());
+	}
+
+	@GetMapping("/paginado")
+	public Page<EstadoDTO> getPaginado(Pageable pageable) {
+		return service.listarPaginado(pageable).map(EstadoDTO::from);
 	}
 
 	@GetMapping("/{id}")

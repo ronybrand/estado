@@ -23,6 +23,9 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -105,6 +108,19 @@ public class EstadoControllerTest {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$[0].id").value(1))
 				.andExpect(jsonPath("$[0].sigla").value("SC"));
+	}
+
+	@Test
+	public void getPaginadoRetornaPageDeEstadoDTO() throws Exception {
+		Pageable pageable = PageRequest.of(0, 10);
+		List<Estado> lista = List.of(this.getDomain(1L, "Santa Catarina", "SC"));
+		when(service.listarPaginado(any(Pageable.class))).thenReturn(new PageImpl<>(lista, pageable, lista.size()));
+
+		mockMvc.perform(get("/estado/paginado"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.content[0].id").value(1))
+				.andExpect(jsonPath("$.content[0].sigla").value("SC"))
+				.andExpect(jsonPath("$.page.totalElements").value(1));
 	}
 
 	@Test
