@@ -36,6 +36,12 @@ public class EstadoController {
 		return service.listar().stream().map(EstadoDTO::from).collect(Collectors.toList());
 	}
 
+	// Sem validacao manual de page/size de proposito: o PageableHandlerMethodArgumentResolver
+	// do Spring Data ja trata os dois como dica, nao input critico - um valor nao numerico ou
+	// fora dos limites e clampado silenciosamente pro default/max (ver pagination.max-size em
+	// application.yml), nunca lanca excecao. sort e diferente e ja tem tratamento dedicado: um
+	// campo inexistente so estoura na execucao da query (PropertyReferenceException), mapeado
+	// pra 400 em CustomGlobalExceptionHandler.
 	@GetMapping("/paginado")
 	public Page<EstadoDTO> getPaginado(Pageable pageable) {
 		return service.listarPaginado(pageable).map(EstadoDTO::from);
