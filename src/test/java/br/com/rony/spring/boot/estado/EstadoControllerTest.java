@@ -234,7 +234,8 @@ public class EstadoControllerTest {
 				.with(user("admin"))
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("{\"id\":999,\"nome\":\"Santa Catarina\",\"sigla\":\"SC\"}"))
-				.andExpect(status().isCreated());
+				.andExpect(status().isCreated())
+				.andExpect(header().string("Location", "http://localhost/estado/1"));
 
 		assertNull(captor.getValue().getId());
 	}

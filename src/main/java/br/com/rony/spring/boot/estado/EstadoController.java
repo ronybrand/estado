@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -66,10 +67,11 @@ public class EstadoController {
 	@ApiResponse(responseCode = "409", description = "Nome ou sigla ja cadastrados")
 	@PostMapping
 	public ResponseEntity<EstadoDTO> salvar(@Valid @RequestBody EstadoCreateRequestDTO estado) {
-    	Estado salvo = service.salvar(estado.toEntity());
+		Estado salvo = service.salvar(estado.toEntity());
 
-    	return ResponseEntity.status(HttpStatus.CREATED).body(EstadoDTO.from(salvo));
-    }
+		return ResponseEntity.created(ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
+				.buildAndExpand(salvo.getId()).toUri()).body(EstadoDTO.from(salvo));
+	}
 
 	@Operation(summary = "Atualiza um estado existente", security = @SecurityRequirement(name = "bearerAuth"))
 	@ApiResponse(responseCode = "200", description = "Estado atualizado")
