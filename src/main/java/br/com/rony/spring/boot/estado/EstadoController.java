@@ -58,7 +58,7 @@ public class EstadoController {
 	public EstadoDTO get(@Parameter(description = "Id do estado") @Positive @Max(Integer.MAX_VALUE)
 			@PathVariable("id") Long idDomain) {
 		return EstadoDTO.from(service.getDomainById(idDomain));
-    }
+	}
 
 	@Operation(summary = "Cria um novo estado", security = @SecurityRequirement(name = "bearerAuth"))
 	@ApiResponse(responseCode = "201", description = "Estado criado")
@@ -82,10 +82,10 @@ public class EstadoController {
 	public ResponseEntity<EstadoDTO> atualizar(@Parameter(description = "Id do estado") @Positive
 			@Max(Integer.MAX_VALUE) @PathVariable("id") Long id,
 			@Valid @RequestBody EstadoUpdateRequestDTO estado) {
-    	Estado atualizado = service.atualizar(estado.toEntity(id));
+		Estado atualizado = service.atualizar(estado.toEntity(id));
 
-    	return ResponseEntity.status(HttpStatus.OK).body(EstadoDTO.from(atualizado));
-    }
+		return ResponseEntity.status(HttpStatus.OK).body(EstadoDTO.from(atualizado));
+	}
 
 	@Operation(summary = "Exclui um estado", security = @SecurityRequirement(name = "bearerAuth"))
 	@ApiResponse(responseCode = "204", description = "Estado excluido")
@@ -94,8 +94,8 @@ public class EstadoController {
 	@ApiResponse(responseCode = "404", description = "Estado nao encontrado")
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
-    public void excluir(@Parameter(description = "Id do estado") @Positive @Max(Integer.MAX_VALUE)
+	public void excluir(@Parameter(description = "Id do estado") @Positive @Max(Integer.MAX_VALUE)
 			@PathVariable("id") Long id) {
-    	service.excluir(id);
-    }
+		service.excluir(id);
+	}
 }
