@@ -46,6 +46,8 @@ public class RateLimitFilterTest {
         RateLimitProperty property = new RateLimitProperty();
         property.setCapacidade(2);
         property.setJanelaSegundos(60);
+        property.setLoginCapacidade(1);
+        property.setLoginJanelaSegundos(60);
         filter = new RateLimitFilter(property);
         when(request.getRemoteAddr()).thenReturn("127.0.0.1");
     }
@@ -84,5 +86,20 @@ public class RateLimitFilterTest {
 
         verify(chain, times(3)).doFilter(org.mockito.Mockito.any(), org.mockito.Mockito.eq(response));
         verify(response, never()).setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+    }
+
+    @Test
+    public void limitaLoginComBucketDedicado() throws ServletException, IOException {
+        StringWriter corpoEscrito = new StringWriter();
+        when(request.getMethod()).thenReturn("POST");
+        when(request.getRequestURI()).thenReturn("/auth/login");
+        when(response.getWriter()).thenReturn(new PrintWriter(corpoEscrito));
+
+        filter.doFilter(request, response, chain);
+        filter.doFilter(request, response, chain);
+
+        verify(chain).doFilter(request, response);
+        verify(response).setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+        assertTrue(corpoEscrito.toString().contains("Muitas requisicoes"));
     }
 }

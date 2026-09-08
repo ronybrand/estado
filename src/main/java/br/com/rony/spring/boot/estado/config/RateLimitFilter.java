@@ -52,11 +52,15 @@ public class RateLimitFilter extends OncePerRequestFilter implements Ordered {
 	// sejam removidos em vez de ficar pra sempre no cache (vazamento de
 	// memoria de um Map sem eviction).
 	private final Cache<String, Bucket> buckets;
+	private final Cache<String, Bucket> loginBuckets;
 
 	public RateLimitFilter(RateLimitProperty rateLimitProperty) {
 		this.rateLimitProperty = rateLimitProperty;
 		this.buckets = Caffeine.newBuilder()
 				.expireAfterAccess(Duration.ofSeconds(rateLimitProperty.getJanelaSegundos() * 2L))
+				.build();
+		this.loginBuckets = Caffeine.newBuilder()
+				.expireAfterAccess(Duration.ofSeconds(rateLimitProperty.getLoginJanelaSegundos() * 2L))
 				.build();
 	}
 
@@ -74,12 +78,25 @@ public class RateLimitFilter extends OncePerRequestFilter implements Ordered {
 		String ip = request.getRemoteAddr();
 		Bucket bucket = buckets.get(ip, chave -> novoBucket());
 
-		if (bucket.tryConsume(1)) {
-			filterChain.doFilter(request, response);
+		if (!bucket.tryConsume(1)) {
+			rejeitar(request, response, ip);
 			return;
 		}
 
-		log.warn("Rate limit excedido para IP {}", ip);
+		if (isLogin(request) && !loginBuckets.get(ip, chave -> novoLoginBucket()).tryConsume(1)) {
+			rejeitar(request, response, ip);
+			return;
+		}
+
+		filterChain.doFilter(request, response);
+	}
+
+	private boolean isLogin(HttpServletRequest request) {
+		return "POST".equalsIgnoreCase(request.getMethod()) && "/auth/login".equals(request.getRequestURI());
+	}
+
+	private void rejeitar(HttpServletRequest request, HttpServletResponse response, String ip) throws IOException {
+		log.warn("Rate limit excedido para IP {} no endpoint {}", ip, request.getRequestURI());
 		response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
 		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 		ErrorResponseDto corpo = new ErrorResponseDto(
@@ -90,6 +107,13 @@ public class RateLimitFilter extends OncePerRequestFilter implements Ordered {
 	private Bucket novoBucket() {
 		Bandwidth limite = Bandwidth.classic(rateLimitProperty.getCapacidade(),
 				Refill.greedy(rateLimitProperty.getCapacidade(), Duration.ofSeconds(rateLimitProperty.getJanelaSegundos())));
+		return Bucket.builder().addLimit(limite).build();
+	}
+
+	private Bucket novoLoginBucket() {
+		Bandwidth limite = Bandwidth.classic(rateLimitProperty.getLoginCapacidade(),
+				Refill.greedy(rateLimitProperty.getLoginCapacidade(),
+						Duration.ofSeconds(rateLimitProperty.getLoginJanelaSegundos())));
 		return Bucket.builder().addLimit(limite).build();
 	}
 }
