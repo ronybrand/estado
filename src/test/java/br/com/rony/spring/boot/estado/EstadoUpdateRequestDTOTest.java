@@ -16,59 +16,59 @@ import org.junit.jupiter.api.Test;
 
 public class EstadoUpdateRequestDTOTest {
 
-	private ValidatorFactory factory;
-	private Validator validator;
+    private ValidatorFactory factory;
+    private Validator validator;
 
-	@BeforeEach
-	public void criaValidator() {
-		factory = Validation.buildDefaultValidatorFactory();
-		validator = factory.getValidator();
-	}
+    @BeforeEach
+    public void criaValidator() {
+        factory = Validation.buildDefaultValidatorFactory();
+        validator = factory.getValidator();
+    }
 
-	@AfterEach
-	public void fechaValidator() {
-		factory.close();
-	}
+    @AfterEach
+    public void fechaValidator() {
+        factory.close();
+    }
 
-	private EstadoUpdateRequestDTO getDto(String nome, String sigla) {
-		return new EstadoUpdateRequestDTO(nome, sigla);
-	}
+    private EstadoUpdateRequestDTO getDto(String nome, String sigla) {
+        return new EstadoUpdateRequestDTO(nome, sigla);
+    }
 
-	@Test
-	public void toEntityMapeiaIdDoParametroComNomeESigla() {
-		EstadoUpdateRequestDTO dto = this.getDto("Santa Catarina", "SC");
+    @Test
+    public void toEntityMapeiaIdDoParametroComNomeESigla() {
+        EstadoUpdateRequestDTO dto = this.getDto("Santa Catarina", "SC");
 
-		Estado entidade = dto.toEntity(1L);
+        Estado entidade = dto.toEntity(1L);
 
-		assertEquals(1L, entidade.getId());
-		assertEquals("Santa Catarina", entidade.getNome());
-		assertEquals("SC", entidade.getSigla());
-	}
+        assertEquals(1L, entidade.getId());
+        assertEquals("Santa Catarina", entidade.getNome());
+        assertEquals("SC", entidade.getSigla());
+    }
 
-	@Test
-	public void dtoValidoNaoTemViolacoes() {
-		EstadoUpdateRequestDTO dto = this.getDto("Santa Catarina", "SC");
+    @Test
+    public void dtoValidoNaoTemViolacoes() {
+        EstadoUpdateRequestDTO dto = this.getDto("Santa Catarina", "SC");
 
-		Set<ConstraintViolation<EstadoUpdateRequestDTO>> violacoes = validator.validate(dto);
+        Set<ConstraintViolation<EstadoUpdateRequestDTO>> violacoes = validator.validate(dto);
 
-		assertTrue(violacoes.isEmpty());
-	}
+        assertTrue(violacoes.isEmpty());
+    }
 
-	@Test
-	public void nomeNuloGeraViolacao() {
-		EstadoUpdateRequestDTO dto = this.getDto(null, "SC");
+    @Test
+    public void nomeNuloGeraViolacao() {
+        EstadoUpdateRequestDTO dto = this.getDto(null, "SC");
 
-		Set<ConstraintViolation<EstadoUpdateRequestDTO>> violacoes = validator.validate(dto);
+        Set<ConstraintViolation<EstadoUpdateRequestDTO>> violacoes = validator.validate(dto);
 
-		assertTrue(violacoes.stream().anyMatch(v -> v.getPropertyPath().toString().equals("nome")));
-	}
+        assertTrue(violacoes.stream().anyMatch(v -> v.getPropertyPath().toString().equals("nome")));
+    }
 
-	@Test
-	public void siglaComTamanhoDiferenteDeDoisGeraViolacao() {
-		EstadoUpdateRequestDTO dto = this.getDto("Santa Catarina", "S");
+    @Test
+    public void siglaComTamanhoDiferenteDeDoisGeraViolacao() {
+        EstadoUpdateRequestDTO dto = this.getDto("Santa Catarina", "S");
 
-		Set<ConstraintViolation<EstadoUpdateRequestDTO>> violacoes = validator.validate(dto);
+        Set<ConstraintViolation<EstadoUpdateRequestDTO>> violacoes = validator.validate(dto);
 
-		assertTrue(violacoes.stream().anyMatch(v -> v.getPropertyPath().toString().equals("sigla")));
-	}
+        assertTrue(violacoes.stream().anyMatch(v -> v.getPropertyPath().toString().equals("sigla")));
+    }
 }

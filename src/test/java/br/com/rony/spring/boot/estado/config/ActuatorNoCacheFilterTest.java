@@ -21,27 +21,27 @@ import org.mockito.quality.Strictness;
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class ActuatorNoCacheFilterTest {
 
-	private final ActuatorNoCacheFilter filter = new ActuatorNoCacheFilter();
+    private final ActuatorNoCacheFilter filter = new ActuatorNoCacheFilter();
 
-	@Mock
-	HttpServletRequest request;
+    @Mock
+    HttpServletRequest request;
 
-	@Mock
-	HttpServletResponse response;
+    @Mock
+    HttpServletResponse response;
 
-	@Mock
-	FilterChain chain;
+    @Mock
+    FilterChain chain;
 
-	@Test
-	public void definePorCacheControlNoStorePraRotasDeActuator() throws ServletException, IOException {
-		when(request.getRequestURI()).thenReturn("/actuator/info");
+    @Test
+    public void definePorCacheControlNoStorePraRotasDeActuator() throws ServletException, IOException {
+        when(request.getRequestURI()).thenReturn("/actuator/info");
 
-		filter.doFilter(request, response, chain);
+        filter.doFilter(request, response, chain);
 
-		verify(response).setHeader("Cache-Control", "no-store");
-	}
+        verify(response).setHeader("Cache-Control", "no-store");
+    }
 
-	// O escopo por URL agora e responsabilidade do FilterRegistrationBean
-	// (ver WebConfigTest), nao mais do filtro - o servlet container nem
-	// invoca este filtro fora de /actuator/*.
+    // O escopo por URL agora e responsabilidade do FilterRegistrationBean
+    // (ver WebConfigTest), nao mais do filtro - o servlet container nem
+    // invoca este filtro fora de /actuator/*.
 }

@@ -22,54 +22,54 @@ import lombok.RequiredArgsConstructor;
 @EnableSpringDataWebSupport(pageSerializationMode = PageSerializationMode.VIA_DTO)
 public class WebConfig implements WebMvcConfigurer {
 
-	private final ApiProperty apiProperty;
-	private final PaginationProperty paginationProperty;
+    private final ApiProperty apiProperty;
+    private final PaginationProperty paginationProperty;
 
-	@Override
-	public void addCorsMappings(CorsRegistry registry) {
-		// /auth/** precisa do mesmo CORS que /estado/**: hoje os frontends
-		// conhecidos (Angular/CloudFront, React/Vercel) chamam a API via
-		// rewrite same-origin, mas sem este mapping um cliente que bata
-		// direto na API (ex: VITE_API_URL apontando pro backend) teria
-		// /auth/login bloqueado pelo browser mesmo com a origem na allowlist.
-		registry.addMapping("/estado/**")
-				.allowedOrigins(apiProperty.getOriginPermitida().toArray(new String[0]))
-				.allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-				.allowedHeaders("Authorization", "Content-Type", "Accept")
-				.allowCredentials(true)
-				.maxAge(3600);
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        // /auth/** precisa do mesmo CORS que /estado/**: hoje os frontends
+        // conhecidos (Angular/CloudFront, React/Vercel) chamam a API via
+        // rewrite same-origin, mas sem este mapping um cliente que bata
+        // direto na API (ex: VITE_API_URL apontando pro backend) teria
+        // /auth/login bloqueado pelo browser mesmo com a origem na allowlist.
+        registry.addMapping("/estado/**")
+                .allowedOrigins(apiProperty.getOriginPermitida().toArray(new String[0]))
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedHeaders("Authorization", "Content-Type", "Accept")
+                .allowCredentials(true)
+                .maxAge(3600);
 
-		registry.addMapping("/auth/**")
-				.allowedOrigins(apiProperty.getOriginPermitida().toArray(new String[0]))
-				.allowedMethods("POST", "OPTIONS")
-				.allowedHeaders("Authorization", "Content-Type", "Accept")
-				.allowCredentials(true)
-				.maxAge(3600);
-	}
+        registry.addMapping("/auth/**")
+                .allowedOrigins(apiProperty.getOriginPermitida().toArray(new String[0]))
+                .allowedMethods("POST", "OPTIONS")
+                .allowedHeaders("Authorization", "Content-Type", "Accept")
+                .allowCredentials(true)
+                .maxAge(3600);
+    }
 
-	// Bean declarado aqui (nao delegado so a spring.data.web.pageable.max-page-size
-	// em application.yml) porque SpringDataWebAutoConfiguration - que faria esse
-	// binding sozinha - nao entra no slice de @WebMvcTest; um customizer explicito
-	// e pego por SpringDataWebConfiguration (importada por @EnableSpringDataWebSupport
-	// acima) em qualquer contexto, slice ou completo.
-	@Bean
-	public PageableHandlerMethodArgumentResolverCustomizer pageableCustomizer() {
-		return resolver -> resolver.setMaxPageSize(paginationProperty.getMaxSize());
-	}
+    // Bean declarado aqui (nao delegado so a spring.data.web.pageable.max-page-size
+    // em application.yml) porque SpringDataWebAutoConfiguration - que faria esse
+    // binding sozinha - nao entra no slice de @WebMvcTest; um customizer explicito
+    // e pego por SpringDataWebConfiguration (importada por @EnableSpringDataWebSupport
+    // acima) em qualquer contexto, slice ou completo.
+    @Bean
+    public PageableHandlerMethodArgumentResolverCustomizer pageableCustomizer() {
+        return resolver -> resolver.setMaxPageSize(paginationProperty.getMaxSize());
+    }
 
-	@Bean
-	public UrlHandlerFilter trailingSlashFilter() {
-		return UrlHandlerFilter.trailingSlashHandler("/**").wrapRequest().build();
-	}
+    @Bean
+    public UrlHandlerFilter trailingSlashFilter() {
+        return UrlHandlerFilter.trailingSlashHandler("/**").wrapRequest().build();
+    }
 
-	// Escopo declarativo via URL pattern: o servlet container so invoca este
-	// filtro pra /actuator/*, em vez do filtro checar o prefixo em runtime a
-	// cada requisicao da aplicacao (achado de code review).
-	@Bean
-	public FilterRegistrationBean<ActuatorNoCacheFilter> actuatorNoCacheFilter() {
-		FilterRegistrationBean<ActuatorNoCacheFilter> registration = new FilterRegistrationBean<>(
-				new ActuatorNoCacheFilter());
-		registration.addUrlPatterns("/actuator/*");
-		return registration;
-	}
+    // Escopo declarativo via URL pattern: o servlet container so invoca este
+    // filtro pra /actuator/*, em vez do filtro checar o prefixo em runtime a
+    // cada requisicao da aplicacao (achado de code review).
+    @Bean
+    public FilterRegistrationBean<ActuatorNoCacheFilter> actuatorNoCacheFilter() {
+        FilterRegistrationBean<ActuatorNoCacheFilter> registration = new FilterRegistrationBean<>(
+                new ActuatorNoCacheFilter());
+        registration.addUrlPatterns("/actuator/*");
+        return registration;
+    }
 }

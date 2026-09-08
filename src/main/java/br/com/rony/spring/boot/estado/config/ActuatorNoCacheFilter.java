@@ -17,10 +17,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 // o path.
 public class ActuatorNoCacheFilter extends OncePerRequestFilter {
 
-	@Override
-	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-			throws ServletException, IOException {
-		response.setHeader("Cache-Control", "no-store");
-		filterChain.doFilter(request, response);
-	}
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
+        response.setHeader("Cache-Control", "no-store");
+        filterChain.doFilter(request, response);
+    }
 }
