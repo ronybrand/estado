@@ -24,6 +24,8 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.core.PropertyReferenceException;
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -138,6 +140,21 @@ public class EstadoControllerTest {
 				.andExpect(status().isOk());
 
 		assertEquals(100, captor.getValue().getPageSize());
+	}
+
+	@Test
+	public void getPaginadoComSortInvalidoRetorna400() throws Exception {
+		// achado via EstadoRepositoryIT contra Postgres real: sort=campo-que-nao-existe
+		// nao e barrado pelo Pageable (so page/size sao validados ali) - so estoura
+		// quando o Hibernate resolve a propriedade, como PropertyReferenceException.
+		// Sem o handler dedicado (CustomGlobalExceptionHandler), isso cai no catch-all
+		// e vira 500 pra um input de cliente invalido.
+		when(service.listarPaginado(any(Pageable.class)))
+				.thenThrow(new PropertyReferenceException("campoInexistente",
+						TypeInformation.of(Estado.class), List.of()));
+
+		mockMvc.perform(get("/estado/paginado").param("sort", "campoInexistente,asc"))
+				.andExpect(status().isBadRequest());
 	}
 
 	@Test
