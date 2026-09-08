@@ -13,6 +13,11 @@ spring:
     open-in-view: false
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.xml
+pagination:
+  # Limite no servidor independente do que o cliente pedir em ?size= - sem
+  # isso o default do Spring Data (2000) permite uma pagina grande o
+  # bastante pra virar vetor de DoS por tamanho de resposta/consulta.
+  max-size: 100
 api:
   # Aceita multiplas origens separadas por virgula (ex: "https://a,https://b").
   origin-permitida: ${API_ORIGIN_PERMITIDA:http://localhost:8000}

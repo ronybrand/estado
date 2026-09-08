@@ -5,22 +5,25 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
+import org.springframework.data.web.config.PageableHandlerMethodArgumentResolverCustomizer;
 import org.springframework.data.web.config.EnableSpringDataWebSupport.PageSerializationMode;
 import org.springframework.web.filter.UrlHandlerFilter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import br.com.rony.spring.boot.estado.property.ApiProperty;
+import br.com.rony.spring.boot.estado.property.PaginationProperty;
 import br.com.rony.spring.boot.estado.property.RateLimitProperty;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
 @RequiredArgsConstructor
-@EnableConfigurationProperties({ApiProperty.class, RateLimitProperty.class})
+@EnableConfigurationProperties({ApiProperty.class, RateLimitProperty.class, PaginationProperty.class})
 @EnableSpringDataWebSupport(pageSerializationMode = PageSerializationMode.VIA_DTO)
 public class WebConfig implements WebMvcConfigurer {
 
 	private final ApiProperty apiProperty;
+	private final PaginationProperty paginationProperty;
 
 	@Override
 	public void addCorsMappings(CorsRegistry registry) {
@@ -42,6 +45,16 @@ public class WebConfig implements WebMvcConfigurer {
 				.allowedHeaders("Authorization", "Content-Type", "Accept")
 				.allowCredentials(true)
 				.maxAge(3600);
+	}
+
+	// Bean declarado aqui (nao delegado so a spring.data.web.pageable.max-page-size
+	// em application.yml) porque SpringDataWebAutoConfiguration - que faria esse
+	// binding sozinha - nao entra no slice de @WebMvcTest; um customizer explicito
+	// e pego por SpringDataWebConfiguration (importada por @EnableSpringDataWebSupport
+	// acima) em qualquer contexto, slice ou completo.
+	@Bean
+	public PageableHandlerMethodArgumentResolverCustomizer pageableCustomizer() {
+		return resolver -> resolver.setMaxPageSize(paginationProperty.getMaxSize());
 	}
 
 	@Bean

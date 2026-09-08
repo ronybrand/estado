@@ -1,5 +1,6 @@
 package br.com.rony.spring.boot.estado;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -121,6 +122,22 @@ public class EstadoControllerTest {
 				.andExpect(jsonPath("$.content[0].id").value(1))
 				.andExpect(jsonPath("$.content[0].sigla").value("SC"))
 				.andExpect(jsonPath("$.page.totalElements").value(1));
+	}
+
+	@Test
+	public void getPaginadoComSizeAcimaDoLimiteClampaParaOMaximoConfigurado() throws Exception {
+		// app.pagination.max-size (application.yml) limita o tamanho de pagina
+		// no servidor independente do que o cliente pedir - o
+		// PageableHandlerMethodArgumentResolver do Spring Data clampa
+		// silenciosamente pro maximo, nao rejeita com 400.
+		Pageable pageable = PageRequest.of(0, 100);
+		ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
+		when(service.listarPaginado(captor.capture())).thenReturn(new PageImpl<>(List.of(), pageable, 0));
+
+		mockMvc.perform(get("/estado/paginado").param("size", "500"))
+				.andExpect(status().isOk());
+
+		assertEquals(100, captor.getValue().getPageSize());
 	}
 
 	@Test
