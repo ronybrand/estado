@@ -14,10 +14,10 @@ jobs:
         with:
           distribution: temurin
           java-version: "25"
-          cache: maven
-      - run: mvn -B verify
+          cache: gradle
+      - run: ./gradlew --no-daemon build
       - uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7
         with:
-          files: target/site/jacoco/jacoco.xml
+          files: build/reports/jacoco/test/jacocoTestReport.xml
           fail_ci_if_error: true
           token: ${{ secrets.CODECOV_TOKEN }}

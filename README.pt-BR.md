@@ -104,15 +104,16 @@ usuário admin único, sem tabela de usuários (ver ADR 0017); `GET` continua p�
 endpoints também têm rate limit por IP (padrão 60 req/min, `429` quando excedido, ver ADR 0016)
 como defesa básica contra abuso.
 
-# 1 - Compilar com Maven e executar local com java -jar
+# 1 - Compilar com Gradle e executar local com java -jar
 
 Observação: os passos abaixo foram montandos para Windows.
 
 ## 1.1 Pre-requisistos
 Para construir e rodar a aplicação você precisa de:
 - [JDK 25](https://www.azul.com/downloads/?version=java-25-lts) ou outra distribuição OpenJDK 25
-- [Maven 3.6.3+](https://maven.apache.org)
 - Um PostgreSQL acessível (local ou remoto)
+
+Não precisa de Gradle instalado localmente — o projeto já traz o wrapper (`gradlew`/`gradlew.bat`).
 
 ## 1.2 Passo a passo
 1.2.1 - [Baixar o projeto](https://github.com/ronybrand/estado/archive/master.zip)
@@ -129,7 +130,7 @@ set JDBC_DATABASE_PASSWORD=<senha>
 1.2.4 - Rodar
 - Para rodar usando a porta padrão do projeto (8080), execue o comando abaixo:
 ```
-mvn spring-boot:run
+gradlew.bat bootRun
 ```
 
 # 2 - Navegador - Local
@@ -143,7 +144,7 @@ A interface Angular não roda mais embutida neste jar (ver ADR 0013) — está n
 (`http://localhost:4200/`, com proxy pra `/api` -> este backend).
 
 # 3 - Docker
-Também dá pra buildar e rodar via container, sem instalar Maven/JDK localmente:
+Também dá pra buildar e rodar via container, sem instalar Gradle/JDK localmente:
 ```
 docker build -t estado .
 docker run -p 8080:8080 -e JDBC_DATABASE_URL=... -e JDBC_DATABASE_USERNAME=... -e JDBC_DATABASE_PASSWORD=... estado
