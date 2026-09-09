@@ -1,15 +1,17 @@
-FROM maven:3.9-eclipse-temurin-25 AS build
+FROM eclipse-temurin:25-jdk AS build
 ARG GIT_COMMIT=""
 WORKDIR /app
-COPY pom.xml .
-RUN mvn -B dependency:go-offline
+COPY gradlew gradlew.bat ./
+COPY gradle ./gradle
+COPY build.gradle.kts settings.gradle.kts ./
+RUN ./gradlew --no-daemon dependencies
 COPY src ./src
-RUN mvn -B -DskipTests -Dgit.commit=${GIT_COMMIT} package
+RUN ./gradlew --no-daemon bootJar -PgitCommit=${GIT_COMMIT}
 
 FROM eclipse-temurin:25-jre
 RUN useradd --create-home --shell /bin/bash appuser
 WORKDIR /app
-COPY --from=build /app/target/estado-*.jar app.jar
+COPY --from=build /app/build/libs/estado-*.jar app.jar
 USER appuser
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]

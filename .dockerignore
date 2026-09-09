@@ -1,4 +1,6 @@
 target/
+build/
+.gradle/
 .git/
 .github/
 .vscode/
