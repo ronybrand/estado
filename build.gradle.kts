@@ -84,6 +84,10 @@ dependencies {
 val byteBuddyAgent: Configuration = configurations.create("byteBuddyAgent")
 
 dependencies {
+    // Configuration isolada nao estende de implementation, entao o platform()
+    // precisa ser importado aqui de novo pra resolver a versao gerenciada
+    // pelo BOM do Spring Boot.
+    byteBuddyAgent(platform(SpringBootPlugin.BOM_COORDINATES))
     byteBuddyAgent("net.bytebuddy:byte-buddy-agent")
 }
 
