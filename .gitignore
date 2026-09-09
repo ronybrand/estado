@@ -1,7 +1,5 @@
 build/
 .gradle/
-# Removido junto com o pom.xml quando a migracao pra Gradle terminar.
-target/
 .classpath
 .project
 .settings/
