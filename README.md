@@ -104,15 +104,16 @@ endpoints (create/update/delete) require a JWT obtained via `POST /auth/login` �
 user, no user table (see ADR 0017); `GET` stays public. All endpoints are also rate-limited per
 IP (default 60 req/min, `429` when exceeded, see ADR 0016) as a baseline defense against abuse.
 
-# 1 - Build with Maven and run locally with java -jar
+# 1 - Build with Gradle and run locally with java -jar
 
 Note: the steps below were put together for Windows.
 
 ## 1.1 Prerequisites
 To build and run the application you need:
 - [JDK 25](https://www.azul.com/downloads/?version=java-25-lts) or another OpenJDK 25 distribution
-- [Maven 3.6.3+](https://maven.apache.org)
 - An accessible PostgreSQL instance (local or remote)
+
+No local Gradle install is needed — the project ships the Gradle wrapper (`gradlew`/`gradlew.bat`).
 
 ## 1.2 Step by step
 1.2.1 - [Download the project](https://github.com/ronybrand/estado/archive/master.zip)
@@ -129,7 +130,7 @@ set JDBC_DATABASE_PASSWORD=<password>
 1.2.4 - Run
 - To run on the project's default port (8080), run the command below:
 ```
-mvn spring-boot:run
+gradlew.bat bootRun
 ```
 
 # 2 - Browser - Local
@@ -143,7 +144,7 @@ The Angular UI is no longer embedded in this jar (see ADR 0013) — it lives in 
 `npm start` (`http://localhost:4200/`, proxying `/api` to this backend).
 
 # 3 - Docker
-You can also build and run it via container, without installing Maven/JDK locally:
+You can also build and run it via container, without installing Gradle/JDK locally:
 ```
 docker build -t estado .
 docker run -p 8080:8080 -e JDBC_DATABASE_URL=... -e JDBC_DATABASE_USERNAME=... -e JDBC_DATABASE_PASSWORD=... estado
