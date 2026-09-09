@@ -22,3 +22,4 @@ consequências (incluindo as que ficaram conscientemente sem mitigação).
 - [0016 — Rate limiting por IP, em memória, sem autenticação](0016-rate-limiting-por-ip.md)
 - [0017 — Autenticação JWT, usuário admin único, via Spring Security](0017-autenticacao-jwt-admin-unico.md)
 - [0018 — PUT /estado/{id}, remoção do GET /estado sem paginação](0018-put-por-id-e-remocao-do-get-sem-paginacao.md)
+- [0019 — Migração de Maven para Gradle](0019-migracao-maven-para-gradle.md)
