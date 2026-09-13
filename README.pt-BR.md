@@ -104,6 +104,10 @@ usuário admin único, sem tabela de usuários (ver ADR 0017); `GET` continua p�
 endpoints também têm rate limit por IP (padrão 60 req/min, `429` quando excedido, ver ADR 0016)
 como defesa básica contra abuso.
 
+**Credenciais de demonstração** (usuário / senha): `admin` / `Estado-Demo-2026` —
+intencionalmente públicas, ver seção "Produção" abaixo. Só permitem alterar dados não sensíveis
+(unidades federativas do Brasil).
+
 # 1 - Compilar com Gradle e executar local com java -jar
 
 Observação: os passos abaixo foram montandos para Windows.
@@ -127,7 +131,16 @@ set JDBC_DATABASE_USERNAME=<usuario>
 set JDBC_DATABASE_PASSWORD=<senha>
 ```
 
-1.2.4 - Rodar
+1.2.4 - Configure a autenticação (obrigatório, sem default — a aplicação falha rápido no boot
+caso contrário, ver ADR 0017). Pra reaproveitar a credencial pública de demonstração da seção
+"Funcionalidades" acima:
+```
+set ADMIN_USERNAME=admin
+set ADMIN_PASSWORD_HASH=$2a$10$7uQUkrPri9L7sGlnSlaWdOFWqxXWohPCmt4/PVGxeXvZb6nkiC4ri
+set JWT_SECRET=<qualquer string aleatória de 32+ bytes, ex: saída de `openssl rand -base64 48`>
+```
+
+1.2.5 - Rodar
 - Para rodar usando a porta padrão do projeto (8080), execue o comando abaixo:
 ```
 gradlew.bat bootRun
@@ -155,6 +168,9 @@ cada push na `master`, ver [`.github/workflows/docker-publish.yml`](.github/work
 # 4 - Produção
 https://d3bqbg07tehy1h.cloudfront.net/ (frontend) — API em https://54.94.231.248.sslip.io/estado ou
 via `/api/estado` no mesmo domínio do CloudFront. Detalhes do deploy em [`CASE_STUDY.md`](CASE_STUDY.md).
+
+Faça login com as credenciais de demonstração acima pra testar criar/alterar/excluir na instância
+em produção.
 
 O commit e a versão do build em execução ficam expostos em `/actuator/info`, útil pra confirmar que
 um deploy (ou rollback) aplicou o commit esperado sem precisar consultar o log do `deploy.sh`.

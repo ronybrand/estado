@@ -104,6 +104,10 @@ endpoints (create/update/delete) require a JWT obtained via `POST /auth/login` �
 user, no user table (see ADR 0017); `GET` stays public. All endpoints are also rate-limited per
 IP (default 60 req/min, `429` when exceeded, see ADR 0016) as a baseline defense against abuse.
 
+**Demo credentials** (username / password): `admin` / `Estado-Demo-2026` — intentionally public,
+see the "Production" section below. Only lets you mutate non-sensitive data (Brazilian federative
+units).
+
 # 1 - Build with Gradle and run locally with java -jar
 
 Note: the steps below were put together for Windows.
@@ -127,7 +131,15 @@ set JDBC_DATABASE_USERNAME=<user>
 set JDBC_DATABASE_PASSWORD=<password>
 ```
 
-1.2.4 - Run
+1.2.4 - Configure auth (required, no default — the app fails fast on boot otherwise, see ADR 0017).
+To reuse the public demo credentials from the "Features" section above:
+```
+set ADMIN_USERNAME=admin
+set ADMIN_PASSWORD_HASH=$2a$10$7uQUkrPri9L7sGlnSlaWdOFWqxXWohPCmt4/PVGxeXvZb6nkiC4ri
+set JWT_SECRET=<any random 32+ byte string, e.g. from `openssl rand -base64 48`>
+```
+
+1.2.5 - Run
 - To run on the project's default port (8080), run the command below:
 ```
 gradlew.bat bootRun
@@ -155,6 +167,8 @@ on every push to `master`, see [`.github/workflows/docker-publish.yml`](.github/
 # 4 - Production
 https://d3bqbg07tehy1h.cloudfront.net/ (frontend) — API at https://54.94.231.248.sslip.io/estado or
 via `/api/estado` under the same CloudFront domain. Deployment details in [`CASE_STUDY.md`](CASE_STUDY.md).
+
+Log in with the demo credentials above to try create/update/delete on the live instance.
 
 The running build's commit and version are exposed at `/actuator/info`, handy for confirming that
 a deploy (or rollback) applied the expected commit without having to check the `deploy.sh` log.
