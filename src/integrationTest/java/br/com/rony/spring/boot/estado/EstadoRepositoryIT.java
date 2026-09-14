@@ -77,4 +77,38 @@ class EstadoRepositoryIT {
         assertThatThrownBy(() -> repository.findAll(PageRequest.of(0, 10, Sort.by("campoInexistente"))))
                 .isInstanceOf(PropertyReferenceException.class);
     }
+
+    @Test
+    void buscaPorTrechoDoNomeEmMinusculoEncontraEstadoComNomeDiferente() {
+        // Prova a query real contra Postgres, nao so a montagem do predicado (isso ja
+        // e coberto por EstadoServiceTest, que mocka o repository): LOWER()/LIKE e
+        // aplicado pelo banco, entao so um teste com dados persistidos confirma que o
+        // case-insensitive funciona de ponta a ponta.
+        repository.saveAndFlush(novoEstado("Santa Catarina", "SC"));
+        repository.saveAndFlush(novoEstado("Paraná", "PR"));
+
+        var pagina = repository.findAll(EstadoSpecification.comBusca("catarina"), PageRequest.of(0, 10));
+
+        assertThat(pagina.getContent()).extracting(Estado::getSigla).containsExactly("SC");
+    }
+
+    @Test
+    void buscaPorSiglaEncontraEstadoMesmoSemBaterComONome() {
+        repository.saveAndFlush(novoEstado("Santa Catarina", "SC"));
+        repository.saveAndFlush(novoEstado("Paraná", "PR"));
+
+        var pagina = repository.findAll(EstadoSpecification.comBusca("pr"), PageRequest.of(0, 10));
+
+        assertThat(pagina.getContent()).extracting(Estado::getSigla).containsExactly("PR");
+    }
+
+    @Test
+    void buscaEmBrancoNaoFiltraNada() {
+        repository.saveAndFlush(novoEstado("Santa Catarina", "SC"));
+        repository.saveAndFlush(novoEstado("Paraná", "PR"));
+
+        var pagina = repository.findAll(EstadoSpecification.comBusca("  "), PageRequest.of(0, 10));
+
+        assertThat(pagina.getContent()).hasSize(2);
+    }
 }

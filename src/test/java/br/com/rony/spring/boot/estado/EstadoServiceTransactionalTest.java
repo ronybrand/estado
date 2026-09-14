@@ -17,7 +17,7 @@ class EstadoServiceTransactionalTest {
 
     @Test
     void listarPaginadoDeveSerSomenteLeitura() throws NoSuchMethodException {
-        assertReadOnly("listarPaginado", Pageable.class);
+        assertReadOnly("listarPaginado", Pageable.class, String.class);
     }
 
     @Test

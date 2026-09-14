@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -42,12 +43,15 @@ public class EstadoController {
     // campo inexistente so estoura na execucao da query (PropertyReferenceException), mapeado
     // pra 400 em CustomGlobalExceptionHandler.
     @Operation(summary = "Lista estados paginados",
-            description = "Suporta ?page, ?size (limitado por app.pagination.max-size) e ?sort=campo,asc|desc.")
+            description = "Suporta ?page, ?size (limitado por app.pagination.max-size), ?sort=campo,asc|desc "
+                    + "e ?busca=termo (filtra nome OU sigla, contendo o termo, sem diferenciar maiusculas).")
     @ApiResponse(responseCode = "200", description = "Pagina de estados retornada com sucesso")
     @ApiResponse(responseCode = "400", description = "Campo de sort inexistente na entidade")
     @GetMapping("/paginado")
-    public Page<EstadoDTO> getPaginado(Pageable pageable) {
-        return service.listarPaginado(pageable).map(EstadoDTO::from);
+    public Page<EstadoDTO> getPaginado(Pageable pageable,
+            @Parameter(description = "Filtra estados cujo nome ou sigla contem o termo (case-insensitive)")
+            @RequestParam(required = false) String busca) {
+        return service.listarPaginado(pageable, busca).map(EstadoDTO::from);
     }
 
     @Operation(summary = "Busca um estado por id")

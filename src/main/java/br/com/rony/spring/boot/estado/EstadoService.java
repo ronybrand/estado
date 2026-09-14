@@ -47,8 +47,8 @@ public class EstadoService {
     }
 
     @Transactional(readOnly = true)
-    public Page<Estado> listarPaginado(Pageable pageable) {
-        return repository.findAll(pageable);
+    public Page<Estado> listarPaginado(Pageable pageable, String busca) {
+        return repository.findAll(EstadoSpecification.comBusca(busca), pageable);
     }
 
     @Transactional(readOnly = true)
