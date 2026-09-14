@@ -81,15 +81,15 @@ class EstadoSpecificationTest {
         when(root.<String>get("sigla")).thenReturn(siglaPath);
         when(builder.lower(nomePath)).thenReturn(nomeLower);
         when(builder.lower(siglaPath)).thenReturn(siglaLower);
-        when(builder.like(nomeLower, "%santa%")).thenReturn(likeNome);
-        when(builder.like(siglaLower, "%santa%")).thenReturn(likeSigla);
+        when(builder.like(nomeLower, "%santa%", '\\')).thenReturn(likeNome);
+        when(builder.like(siglaLower, "%santa%", '\\')).thenReturn(likeSigla);
         when(builder.or(likeNome, likeSigla)).thenReturn(ou);
 
         Predicate resultado = EstadoSpecification.comBusca(" Santa ").toPredicate(root, query, builder);
 
         assertSame(ou, resultado);
-        verify(builder).like(nomeLower, "%santa%");
-        verify(builder).like(siglaLower, "%santa%");
+        verify(builder).like(nomeLower, "%santa%", '\\');
+        verify(builder).like(siglaLower, "%santa%", '\\');
         verify(builder).or(likeNome, likeSigla);
     }
 }

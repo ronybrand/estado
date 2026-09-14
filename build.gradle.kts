@@ -50,6 +50,7 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.13.0")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.13.0")
     implementation("org.postgresql:postgresql")
+    implementation("org.apache.commons:commons-lang3")
 
     compileOnly("org.projectlombok:lombok")
     // annotationProcessor nao estende de implementation, entao o platform()
