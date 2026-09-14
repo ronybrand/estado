@@ -55,6 +55,50 @@ timer every 5min, whenever a new image lands in GHCR (see [`deploy/`](deploy/) a
 [`angular_estado`](https://github.com/ronybrand/angular_estado) repo) is
 published independently to S3/CloudFront.
 
+## Authentication (JWT)
+
+Single admin user, stateless JWT (see ADR 0017). `AuthController` compares
+username and password hash unconditionally (even on a wrong username) to avoid
+a timing side-channel; `JwtAuthFilter` only populates the security context on
+a valid token and never decides authorization itself — that's
+`SecurityConfig#authorizeHttpRequests`.
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant AuthController as AuthController<br/>(/auth/login)
+    participant JwtService
+    participant JwtAuthFilter
+    participant EstadoController as EstadoController<br/>(protected route)
+
+    Client->>AuthController: POST /auth/login {username, password}
+    AuthController->>AuthController: BCrypt.matches(password, adminProperty.passwordHash)
+    alt invalid credentials
+        AuthController-->>Client: 401 Invalid username or password
+    else valid credentials
+        AuthController->>JwtService: issueToken(username)
+        JwtService-->>AuthController: signed JWT (exp = jwt.expiration-minutes)
+        AuthController-->>Client: 200 {token, expiresInSeconds}
+    end
+
+    Client->>JwtAuthFilter: request with Authorization: Bearer <token>
+    JwtAuthFilter->>JwtService: validateAndGetSubject(token)
+    alt token missing/invalid/expired
+        JwtService-->>JwtAuthFilter: throws JwtException
+        JwtAuthFilter->>EstadoController: forward request, no auth in context
+        EstadoController-->>Client: 401 (AuthenticationEntryPoint)
+    else token valid
+        JwtService-->>JwtAuthFilter: subject (username)
+        JwtAuthFilter->>JwtAuthFilter: SecurityContext = UsernamePasswordAuthenticationToken
+        JwtAuthFilter->>EstadoController: forward request, authenticated
+        EstadoController-->>Client: 200
+    end
+```
+
+There's no refresh token: the client re-authenticates via `/auth/login` once
+the JWT expires. Session is stateless (`SessionCreationPolicy.STATELESS`) —
+nothing is persisted server-side per request.
+
 ## Project structure
 
 ```
