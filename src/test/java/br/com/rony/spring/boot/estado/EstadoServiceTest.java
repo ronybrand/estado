@@ -3,6 +3,7 @@ package br.com.rony.spring.boot.estado;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -13,12 +14,14 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 @ExtendWith(MockitoExtension.class)
 class EstadoServiceTest {
@@ -49,12 +52,27 @@ class EstadoServiceTest {
     void listarPaginado() {
         List<Estado> lista = this.getList();
         Pageable pageable = PageRequest.of(0, 10);
-        when(repository.findAll(pageable)).thenReturn(new PageImpl<>(lista, pageable, lista.size()));
+        when(repository.findAll(ArgumentMatchers.<Specification<Estado>>any(), eq(pageable)))
+                .thenReturn(new PageImpl<>(lista, pageable, lista.size()));
 
-        var retorno = service.listarPaginado(pageable);
+        var retorno = service.listarPaginado(pageable, null);
 
         assertEquals(lista.size(), retorno.getTotalElements());
         assertEquals(lista.size(), retorno.getContent().size());
+    }
+
+    @Test
+    void listarPaginadoComBuscaRepassaSpecificationParaORepository() {
+        // Nao valida o predicado em si (isso e papel de EstadoRepositoryIT contra
+        // Postgres real) - so que o Service delega pro repository com uma
+        // Specification nao-nula quando ha termo de busca.
+        Pageable pageable = PageRequest.of(0, 10);
+        when(repository.findAll(ArgumentMatchers.<Specification<Estado>>any(), eq(pageable)))
+                .thenReturn(new PageImpl<>(List.of(), pageable, 0));
+
+        service.listarPaginado(pageable, "santa");
+
+        verify(repository).findAll(ArgumentMatchers.<Specification<Estado>>any(), eq(pageable));
     }
 
     @Test

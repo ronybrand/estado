@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -107,7 +109,8 @@ public class EstadoControllerTest {
     public void getPaginadoRetornaPageDeEstadoDTO() throws Exception {
         Pageable pageable = PageRequest.of(0, 10);
         List<Estado> lista = List.of(this.getDomain(1L, "Santa Catarina", "SC"));
-        when(service.listarPaginado(any(Pageable.class))).thenReturn(new PageImpl<>(lista, pageable, lista.size()));
+        when(service.listarPaginado(any(Pageable.class), nullable(String.class)))
+                .thenReturn(new PageImpl<>(lista, pageable, lista.size()));
 
         mockMvc.perform(get("/estado/paginado"))
                 .andExpect(status().isOk())
@@ -124,12 +127,35 @@ public class EstadoControllerTest {
         // silenciosamente pro maximo, nao rejeita com 400.
         Pageable pageable = PageRequest.of(0, 100);
         ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-        when(service.listarPaginado(captor.capture())).thenReturn(new PageImpl<>(List.of(), pageable, 0));
+        when(service.listarPaginado(captor.capture(), nullable(String.class)))
+                .thenReturn(new PageImpl<>(List.of(), pageable, 0));
 
         mockMvc.perform(get("/estado/paginado").param("size", "500"))
                 .andExpect(status().isOk());
 
         assertEquals(100, captor.getValue().getPageSize());
+    }
+
+    @Test
+    public void getPaginadoComBuscaRepassaOTermoParaOService() throws Exception {
+        Pageable pageable = PageRequest.of(0, 10);
+        when(service.listarPaginado(any(Pageable.class), eq("santa")))
+                .thenReturn(new PageImpl<>(List.of(), pageable, 0));
+
+        mockMvc.perform(get("/estado/paginado").param("busca", "santa")).andExpect(status().isOk());
+
+        verify(service).listarPaginado(any(Pageable.class), eq("santa"));
+    }
+
+    @Test
+    public void getPaginadoSemBuscaRepassaNuloParaOService() throws Exception {
+        Pageable pageable = PageRequest.of(0, 10);
+        when(service.listarPaginado(any(Pageable.class), nullable(String.class)))
+                .thenReturn(new PageImpl<>(List.of(), pageable, 0));
+
+        mockMvc.perform(get("/estado/paginado")).andExpect(status().isOk());
+
+        verify(service).listarPaginado(any(Pageable.class), nullable(String.class));
     }
 
     @Test
@@ -139,7 +165,7 @@ public class EstadoControllerTest {
         // quando o Hibernate resolve a propriedade, como PropertyReferenceException.
         // Sem o handler dedicado (CustomGlobalExceptionHandler), isso cai no catch-all
         // e vira 500 pra um input de cliente invalido.
-        when(service.listarPaginado(any(Pageable.class)))
+        when(service.listarPaginado(any(Pageable.class), nullable(String.class)))
                 .thenThrow(new PropertyReferenceException("campoInexistente",
                         TypeInformation.of(Estado.class), List.of()));
 
