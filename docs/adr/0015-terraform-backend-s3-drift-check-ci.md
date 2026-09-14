@@ -76,3 +76,19 @@ detectou essa divergência na primeira vez que rodou de ponta a ponta. Decisão 
 o apply manual (ver recomendação registrada na sessão que fez esse achado): automatizar apply em
 push/merge trocaria "esqueci de aplicar" por "um erro de código aplica sozinho em produção",
 desproporcional pra um projeto de operador único.
+
+## Nota de atualização (2026-09-14)
+
+Drift real causado por edição manual do Security Group (`revoke`/`authorize-security-group-ingress`
+via AWS CLI, direto na AWS) pra restaurar o acesso SSH depois de uma troca de IP residencial do
+operador — o `admin_cidr` antigo (`189.98.241.130/32`) não batia mais com o IP atual, bloqueando o
+próprio SSH que a regra existe pra permitir. Corrigido atualizando o secret `ADMIN_CIDR` (GitHub
+Actions) e o `terraform.tfvars` local pro IP novo, reconciliando o `terraform plan` (drift
+confirmado, depois "No changes").
+
+Esse é exatamente o cenário que a ADR 0004 já apontava como motivação pro acesso via SSM (`terraform/ssm.tf`,
+autenticado por IAM em vez de IP de origem) — que já estava provisionado, mas não foi usado dessa
+vez: a regra do Security Group foi editada direto em vez de conectar via
+`aws ssm start-session --target <instance-id>`, que não teria gerado drift nenhum (não toca
+`admin_cidr`). Reforça pra próxima troca de IP: preferir SSM e só mexer em `admin_cidr`/Security
+Group quando o acesso via SSM não for suficiente (ex: precisar de `scp`).
