@@ -54,6 +54,50 @@ Um único EC2 roda os três containers Docker (app, Postgres, Alloy) via Compose
 [`angular_estado`](https://github.com/ronybrand/angular_estado) separado) é
 publicado independentemente em S3/CloudFront.
 
+## Autenticação (JWT)
+
+Admin único, JWT stateless (ver ADR 0017). O `AuthController` compara usuário
+e hash de senha incondicionalmente (mesmo com usuário errado) pra evitar um
+timing side-channel; o `JwtAuthFilter` só popula o contexto de segurança
+quando o token é válido e não decide autorização por conta própria — isso é
+responsabilidade do `SecurityConfig#authorizeHttpRequests`.
+
+```mermaid
+sequenceDiagram
+    participant Client as Cliente
+    participant AuthController as AuthController<br/>(/auth/login)
+    participant JwtService
+    participant JwtAuthFilter
+    participant EstadoController as EstadoController<br/>(rota protegida)
+
+    Client->>AuthController: POST /auth/login {username, password}
+    AuthController->>AuthController: BCrypt.matches(senha, adminProperty.passwordHash)
+    alt credenciais inválidas
+        AuthController-->>Client: 401 Usuario ou senha invalidos
+    else credenciais válidas
+        AuthController->>JwtService: issueToken(username)
+        JwtService-->>AuthController: JWT assinado (exp = jwt.expiration-minutes)
+        AuthController-->>Client: 200 {token, expiresInSeconds}
+    end
+
+    Client->>JwtAuthFilter: requisicao com Authorization: Bearer <token>
+    JwtAuthFilter->>JwtService: validateAndGetSubject(token)
+    alt token ausente/invalido/expirado
+        JwtService-->>JwtAuthFilter: lanca JwtException
+        JwtAuthFilter->>EstadoController: segue a requisicao, sem auth no contexto
+        EstadoController-->>Client: 401 (AuthenticationEntryPoint)
+    else token valido
+        JwtService-->>JwtAuthFilter: subject (username)
+        JwtAuthFilter->>JwtAuthFilter: SecurityContext = UsernamePasswordAuthenticationToken
+        JwtAuthFilter->>EstadoController: segue a requisicao, autenticado
+        EstadoController-->>Client: 200
+    end
+```
+
+Não existe refresh token: o cliente reautentica via `/auth/login` quando o JWT
+expira. A sessão é stateless (`SessionCreationPolicy.STATELESS`) — nada fica
+persistido no servidor entre requisições.
+
 ## Estrutura do projeto
 
 ```
