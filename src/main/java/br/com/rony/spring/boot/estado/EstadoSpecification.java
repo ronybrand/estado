@@ -17,13 +17,21 @@ public final class EstadoSpecification {
     // digitando um termo sem saber se e nome ou sigla (ex: "SC" ou "Santa Catarina") - dois
     // campos distintos exigiriam ele escolher, e uma combinacao AND dos dois nunca bateria
     // (nenhum estado tem nome igual a sigla).
+    private static final char ESCAPE_CHAR = '\\';
+
     public static Specification<Estado> comBusca(String busca) {
         if (!StringUtils.hasText(busca)) {
             return (root, query, builder) -> builder.conjunction();
         }
-        String termo = "%" + busca.trim().toLowerCase(Locale.ROOT) + "%";
+        // Escapa "%" e "_" do termo digitado para que sejam tratados como texto literal, nao
+        // como coringas do LIKE (ex: buscar "a_b" nao deve casar "axb").
+        String escapado = busca.trim().toLowerCase(Locale.ROOT)
+                .replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_");
+        String termo = "%" + escapado + "%";
         return (root, query, builder) -> builder.or(
-                builder.like(builder.lower(root.get("nome")), termo),
-                builder.like(builder.lower(root.get("sigla")), termo));
+                builder.like(builder.lower(root.get("nome")), termo, ESCAPE_CHAR),
+                builder.like(builder.lower(root.get("sigla")), termo, ESCAPE_CHAR));
     }
 }
