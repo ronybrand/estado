@@ -2,8 +2,8 @@ package br.com.rony.spring.boot.estado;
 
 import java.util.Locale;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.util.StringUtils;
 
 // Specification em vez de metodo derivado (findByNomeContainingOrSiglaContaining) porque o
 // predicado e condicional: "busca" pode vir vazio (sem filtro nenhum) ou preenchido (filtra
@@ -20,7 +20,7 @@ public final class EstadoSpecification {
     private static final char ESCAPE_CHAR = '\\';
 
     public static Specification<Estado> comBusca(String busca) {
-        if (!StringUtils.hasText(busca)) {
+        if (StringUtils.isBlank(busca)) {
             return (root, query, builder) -> builder.conjunction();
         }
         // Escapa "%" e "_" do termo digitado para que sejam tratados como texto literal, nao
