@@ -55,6 +55,12 @@ configurado via env var, sem tabela de usuarios nem roles.
 - **Filtro artesanal equivalente ao Spring Security** (parsing/validacao manual de JWT, sem a
   dependencia): descartado - ver raciocinio na secao Decisao acima. Autenticacao e especificamente
   onde vale demonstrar a ferramenta padrao do mercado, nao economizar peso.
+- **Revogacao server-side de token (blacklist/tabela de tokens invalidados)**: descartado - exigiria
+  estado novo (Redis ou tabela) so pra permitir "logout imediato" antes da expiracao natural, que
+  ja e curta (default 60min). Logout e tratado inteiramente no frontend (descartar o token guardado
+  e parar de enviar o header `Authorization`); o token antigo continua tecnicamente valido ate
+  expirar, risco aceito dado admin unico e janela curta. Voltaria a fazer sentido se o modelo mudasse
+  pra multi-usuario ou tokens de vida longa.
 
 ## Consequencias
 - Positivo: fecha a lacuna real que a ADR 0016 deixou aberta conscientemente - mutacao na API
@@ -71,3 +77,6 @@ configurado via env var, sem tabela de usuarios nem roles.
   pra `POSTGRES_PASSWORD` neste modelo de deploy (segredo em `.env` na instancia, nunca no repo).
 - Negativo aceito: sem auditoria de login (quem logou quando) - proporcional a um unico admin
   conhecido; nao ha "quem" pra distinguir.
+- Negativo aceito: logout e so client-side (descarte do token no frontend), sem revogacao no
+  backend - o token descartado continua valido ate expirar naturalmente; aceitavel dada a janela
+  curta de expiracao e a ausencia de sessao no servidor.
