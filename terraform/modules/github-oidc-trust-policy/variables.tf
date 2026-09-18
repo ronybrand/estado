@@ -19,3 +19,9 @@ variable "workflow_filename" {
   type        = string
   default     = null
 }
+
+variable "environment_name" {
+  description = "Nome do GitHub Environment (chave `environment:` do job) tambem autorizado a assumir a role via sub - null (default) nao adiciona esse valor, deixando o sub aceitar so o padrao ref:refs/heads/<branch>. Necessario quando o job declara `environment:`: isso muda o claim sub emitido pelo GitHub de repo:<repo>:ref:refs/heads/<branch> para repo:<repo>:environment:<nome>, e sem este valor adicional o AssumeRoleWithWebIdentity passa a falhar (achado ao adicionar tracking de Environment no deploy do angular_estado)."
+  type        = string
+  default     = null
+}

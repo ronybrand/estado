@@ -32,6 +32,11 @@ module "estado_frontend_deploy" {
   github_repo                 = var.frontend_github_repo
   frontend_bucket_arn         = module.estado_frontend.bucket_arn
   cloudfront_distribution_arn = "arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:distribution/${module.estado_frontend.distribution_id}"
+  # O job de deploy do angular_estado declara `environment: production`
+  # (Environment tracking do GitHub) - sem este valor, o sub emitido vira
+  # repo:.../environment:production e deixa de bater com o padrao
+  # ref:refs/heads/<branch> abaixo, quebrando o AssumeRoleWithWebIdentity.
+  environment_name = "production"
 }
 
 # Role read-only pro workflow de drift-check do Terraform no CI - ver ADR 0015.

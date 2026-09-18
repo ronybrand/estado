@@ -18,3 +18,9 @@ variable "cloudfront_distribution_arn" {
   description = "ARN da CloudFront distribution que a role pode invalidar"
   type        = string
 }
+
+variable "environment_name" {
+  description = "Nome do GitHub Environment (chave `environment:` do job de deploy) tambem autorizado a assumir a role via sub - null (default) nao adiciona essa condicao. Ver a variavel de mesmo nome em modules/github-oidc-trust-policy."
+  type        = string
+  default     = null
+}
