@@ -26,6 +26,7 @@ module "trust_policy" {
 
   oidc_provider_arn = aws_iam_openid_connect_provider.github.arn
   github_repo       = var.github_repo
+  environment_name  = var.environment_name
 }
 
 resource "aws_iam_role" "deploy" {
