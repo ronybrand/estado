@@ -2,6 +2,7 @@ package br.com.rony.spring.boot.estado.auth;
 
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -45,33 +46,41 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) {
         // withDefaults() delega pro WebMvcConfigurer#addCorsMappings ja
         // existente em WebConfig (via HandlerMappingIntrospector) - sem isso,
         // o Security bloquearia o preflight OPTIONS antes do CORS do MVC
         // sequer rodar.
-        http.cors(Customizer.withDefaults());
+        try {
+            http.cors(Customizer.withDefaults());
 
-        // CSRF nao se aplica aqui: autenticacao e via header Authorization
-        // (Bearer token), nunca cookie/sessao - o browser nao anexa esse
-        // header automaticamente entre sites, que e o vetor que CSRF explora.
-        // Pratica padrao da propria doc do Spring Security pra APIs stateless
-        // (ver ADR 0017). Falso positivo conhecido do CodeQL pra esse caso.
-        http.csrf(AbstractHttpConfigurer::disable); // lgtm[java/spring-disabled-csrf-protection]
+            // CSRF nao se aplica aqui: autenticacao e via header Authorization
+            // (Bearer token), nunca cookie/sessao - o browser nao anexa esse
+            // header automaticamente entre sites, que e o vetor que CSRF explora.
+            // Pratica padrao da propria doc do Spring Security pra APIs stateless
+            // (ver ADR 0017). Falso positivo conhecido do CodeQL pra esse caso.
+            http.csrf(AbstractHttpConfigurer::disable); // lgtm[java/spring-disabled-csrf-protection]
 
-        http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/estado/**").permitAll()
-                        .requestMatchers("/auth/login").permitAll()
-                        .requestMatchers("/actuator/**", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**")
-                        .permitAll()
-                        .anyRequest().authenticated())
-                .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(authenticationEntryPoint()))
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .headers(this::configureHeaders);
+            http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                    .authorizeHttpRequests(auth -> auth
+                            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                            .requestMatchers(HttpMethod.GET, "/estado/**").permitAll()
+                            .requestMatchers("/auth/login").permitAll()
+                            .requestMatchers("/actuator/**", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**")
+                            .permitAll()
+                            .anyRequest().authenticated())
+                    .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(authenticationEntryPoint()))
+                    .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                    .headers(this::configureHeaders);
 
-        return http.build();
+            return http.build();
+        } catch (Exception e) {
+            // HttpSecurity#build() declara "throws Exception" generico, mas so
+            // pode falhar aqui por erro de configuracao do proprio bean (bug de
+            // codigo, nao condicao de runtime recuperavel) - converte pra
+            // unchecked pra nao vazar Exception generica na assinatura do bean.
+            throw new BeanCreationException("Falha ao configurar SecurityFilterChain", e);
+        }
     }
 
     // Achado numa analise comparativa com os projetos irmaos do portfolio
