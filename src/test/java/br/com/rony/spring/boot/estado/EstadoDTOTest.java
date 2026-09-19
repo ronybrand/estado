@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 public class EstadoDTOTest {
 
     @Test
-    public void fromMapeiaTodosOsCamposDaEntidade() {
+    void fromMapeiaTodosOsCamposDaEntidade() {
         Estado entidade = new Estado();
         entidade.setId(1L);
         entidade.setNome("Santa Catarina");
@@ -30,7 +30,7 @@ public class EstadoDTOTest {
     }
 
     @Test
-    public void fromComDataHoraUltimaAtualizacaoNulaMantemNulo() {
+    void fromComDataHoraUltimaAtualizacaoNulaMantemNulo() {
         Estado entidade = new Estado();
         entidade.setId(1L);
         entidade.setNome("Santa Catarina");

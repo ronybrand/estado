@@ -19,7 +19,7 @@ public class WebConfigTest {
     private final WebConfig webConfig = new WebConfig(new ApiProperty(), paginationProperty);
 
     @Test
-    public void actuatorNoCacheFilterEscopadoSoPraRotasDeActuator() {
+    void actuatorNoCacheFilterEscopadoSoPraRotasDeActuator() {
         // achado de code review: o filtro escopava via startsWith em runtime,
         // rodando pra toda requisicao da aplicacao - o escopo agora e
         // declarativo, via FilterRegistrationBean, e o servlet container nem
@@ -31,7 +31,7 @@ public class WebConfigTest {
     }
 
     @Test
-    public void pageableCustomizerAplicaMaxSizeConfigurado() {
+    void pageableCustomizerAplicaMaxSizeConfigurado() {
         paginationProperty.setMaxSize(42);
         PageableHandlerMethodArgumentResolverCustomizer customizer = webConfig.pageableCustomizer();
         PageableHandlerMethodArgumentResolver resolver = mock(PageableHandlerMethodArgumentResolver.class);

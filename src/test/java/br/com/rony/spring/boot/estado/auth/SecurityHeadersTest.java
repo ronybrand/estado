@@ -41,7 +41,7 @@ public class SecurityHeadersTest {
     JwtService jwtService;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         Estado domain = new Estado();
         domain.setId(1L);
         domain.setNome("Santa Catarina");
@@ -51,17 +51,17 @@ public class SecurityHeadersTest {
     }
 
     @Test
-    public void respostaTemContentSecurityPolicy() throws Exception {
+    void respostaTemContentSecurityPolicy() throws Exception {
         mockMvc.perform(get("/estado/1")).andExpect(header().string("Content-Security-Policy", "default-src 'self'"));
     }
 
     @Test
-    public void respostaTemXFrameOptionsDeny() throws Exception {
+    void respostaTemXFrameOptionsDeny() throws Exception {
         mockMvc.perform(get("/estado/1")).andExpect(header().string("X-Frame-Options", "DENY"));
     }
 
     @Test
-    public void respostaTemStrictTransportSecurity() throws Exception {
+    void respostaTemStrictTransportSecurity() throws Exception {
         // HSTS so e escrito em requisicao segura (HstsHeaderWriter checa request.isSecure())
         // - simula o que o Caddy entrega pro Spring quando o cliente chega via HTTPS.
         mockMvc.perform(get("/estado/1").secure(true))
@@ -69,13 +69,13 @@ public class SecurityHeadersTest {
     }
 
     @Test
-    public void respostaTemPermissionsPolicy() throws Exception {
+    void respostaTemPermissionsPolicy() throws Exception {
         mockMvc.perform(get("/estado/1"))
                 .andExpect(header().string("Permissions-Policy", "geolocation=(), camera=(), microphone=()"));
     }
 
     @Test
-    public void statusDaRequisicaoPublicaContinua200() throws Exception {
+    void statusDaRequisicaoPublicaContinua200() throws Exception {
         mockMvc.perform(get("/estado/1")).andExpect(status().isOk());
     }
 }

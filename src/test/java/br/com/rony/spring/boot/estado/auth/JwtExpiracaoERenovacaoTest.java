@@ -28,7 +28,7 @@ public class JwtExpiracaoERenovacaoTest {
     private static final String SEGREDO = "segredo-de-teste-com-pelo-menos-32-bytes";
 
     @AfterEach
-    public void limpaContexto() {
+    void limpaContexto() {
         SecurityContextHolder.clearContext();
     }
 
@@ -46,7 +46,7 @@ public class JwtExpiracaoERenovacaoTest {
     }
 
     @Test
-    public void tokenExpiradoNaoPopulaContextoAoPassarPeloFiltroReal() throws Exception {
+    void tokenExpiradoNaoPopulaContextoAoPassarPeloFiltroReal() throws Exception {
         // expirationMinutes=-1 emite um token com "exp" no passado (mesma tecnica de
         // JwtServiceTest), sem precisar de Thread.sleep/mock de relogio. JwtProperty
         // real exige expirationMinutes > 0 (@Positive) - a aplicacao nunca emitiria um
@@ -62,7 +62,7 @@ public class JwtExpiracaoERenovacaoTest {
     }
 
     @Test
-    public void tokenValidoEmitidoPeloJwtServiceRealPopulaContextoAoPassarPeloFiltroReal() throws Exception {
+    void tokenValidoEmitidoPeloJwtServiceRealPopulaContextoAoPassarPeloFiltroReal() throws Exception {
         JwtService servico = jwtService(60);
         JwtAuthFilter filtro = new JwtAuthFilter(servico);
         String token = servico.issueToken("admin");
@@ -75,7 +75,7 @@ public class JwtExpiracaoERenovacaoTest {
     }
 
     @Test
-    public void aposTokenExpiradoReautenticacaoEmiteNovoTokenQuePassaNoMesmoFiltro() throws Exception {
+    void aposTokenExpiradoReautenticacaoEmiteNovoTokenQuePassaNoMesmoFiltro() throws Exception {
         JwtService servico = jwtService(60);
         JwtAuthFilter filtro = new JwtAuthFilter(servico);
 

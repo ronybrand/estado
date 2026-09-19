@@ -43,7 +43,7 @@ public class RequestIdFilterTest {
     FilterChain chain;
 
     @Test
-    public void poeNoMdcDuranteACadeiaERemoveDepoisDoFiltro() throws ServletException, IOException {
+    void poeNoMdcDuranteACadeiaERemoveDepoisDoFiltro() throws ServletException, IOException {
         when(request.getHeader(HEADER)).thenReturn(null);
         AtomicReference<String> mdcDuranteCadeia = new AtomicReference<>();
         doAnswer(invocation -> {
@@ -58,7 +58,7 @@ public class RequestIdFilterTest {
     }
 
     @Test
-    public void ecoaUuidGeradoComoHeaderDeResposta() throws ServletException, IOException {
+    void ecoaUuidGeradoComoHeaderDeResposta() throws ServletException, IOException {
         when(request.getHeader(HEADER)).thenReturn(null);
 
         filter.doFilter(request, response, chain);
@@ -67,7 +67,7 @@ public class RequestIdFilterTest {
     }
 
     @Test
-    public void reaproveitaUuidValidoRecebidoNoHeaderDeEntrada() throws ServletException, IOException {
+    void reaproveitaUuidValidoRecebidoNoHeaderDeEntrada() throws ServletException, IOException {
         String uuid = "11111111-1111-1111-1111-111111111111";
         when(request.getHeader(HEADER)).thenReturn(uuid);
 
@@ -77,7 +77,7 @@ public class RequestIdFilterTest {
     }
 
     @Test
-    public void geraUuidNovoQuandoHeaderDeEntradaNaoEUuidValido() throws ServletException, IOException {
+    void geraUuidNovoQuandoHeaderDeEntradaNaoEUuidValido() throws ServletException, IOException {
         when(request.getHeader(HEADER)).thenReturn("nao-e-uuid");
 
         filter.doFilter(request, response, chain);

@@ -42,7 +42,7 @@ public class RateLimitFilterTest {
     FilterChain chain;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         RateLimitProperty property = new RateLimitProperty();
         property.setCapacidade(2);
         property.setJanelaSegundos(60);
@@ -53,7 +53,7 @@ public class RateLimitFilterTest {
     }
 
     @Test
-    public void deixaPassarRequisicoesDentroDaCapacidade() throws ServletException, IOException {
+    void deixaPassarRequisicoesDentroDaCapacidade() throws ServletException, IOException {
         filter.doFilter(request, response, chain);
         filter.doFilter(request, response, chain);
 
@@ -62,7 +62,7 @@ public class RateLimitFilterTest {
     }
 
     @Test
-    public void bloqueiaComQuandoEstourarCapacidadeDaJanela() throws ServletException, IOException {
+    void bloqueiaComQuandoEstourarCapacidadeDaJanela() throws ServletException, IOException {
         StringWriter corpoEscrito = new StringWriter();
         when(response.getWriter()).thenReturn(new PrintWriter(corpoEscrito));
 
@@ -76,7 +76,7 @@ public class RateLimitFilterTest {
     }
 
     @Test
-    public void contaBucketsSeparadosPorIp() throws ServletException, IOException {
+    void contaBucketsSeparadosPorIp() throws ServletException, IOException {
         HttpServletRequest outroRequest = org.mockito.Mockito.mock(HttpServletRequest.class);
         when(outroRequest.getRemoteAddr()).thenReturn("10.0.0.1");
 
@@ -89,7 +89,7 @@ public class RateLimitFilterTest {
     }
 
     @Test
-    public void devolveRetryAfterQuandoEstourarCapacidade() throws ServletException, IOException {
+    void devolveRetryAfterQuandoEstourarCapacidade() throws ServletException, IOException {
         StringWriter corpoEscrito = new StringWriter();
         when(response.getWriter()).thenReturn(new PrintWriter(corpoEscrito));
 
@@ -101,7 +101,7 @@ public class RateLimitFilterTest {
     }
 
     @Test
-    public void limitaLoginComBucketDedicado() throws ServletException, IOException {
+    void limitaLoginComBucketDedicado() throws ServletException, IOException {
         StringWriter corpoEscrito = new StringWriter();
         when(request.getMethod()).thenReturn("POST");
         when(request.getRequestURI()).thenReturn("/auth/login");

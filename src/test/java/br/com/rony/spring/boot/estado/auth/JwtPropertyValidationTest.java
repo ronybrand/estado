@@ -18,21 +18,21 @@ public class JwtPropertyValidationTest {
             .withUserConfiguration(JwtPropertyEnabler.class);
 
     @Test
-    public void expirationMinutesZeroFalhaNaInicializacao() {
+    void expirationMinutesZeroFalhaNaInicializacao() {
         runner.withPropertyValues("jwt.secret=segredo-de-teste-com-pelo-menos-32-bytes-de-tamanho",
                 "jwt.expiration-minutes=0")
                 .run(context -> assertThat(context).hasFailed());
     }
 
     @Test
-    public void expirationMinutesNegativoFalhaNaInicializacao() {
+    void expirationMinutesNegativoFalhaNaInicializacao() {
         runner.withPropertyValues("jwt.secret=segredo-de-teste-com-pelo-menos-32-bytes-de-tamanho",
                 "jwt.expiration-minutes=-5")
                 .run(context -> assertThat(context).hasFailed());
     }
 
     @Test
-    public void expirationMinutesPositivoInicializaComSucesso() {
+    void expirationMinutesPositivoInicializaComSucesso() {
         runner.withPropertyValues("jwt.secret=segredo-de-teste-com-pelo-menos-32-bytes-de-tamanho",
                 "jwt.expiration-minutes=60")
                 .run(context -> assertThat(context).hasNotFailed());

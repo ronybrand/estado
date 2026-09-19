@@ -71,30 +71,30 @@ public class EstadoControllerTest {
     }
 
     @Test
-    public void getComIdPositivoValidoRetorna200() throws Exception {
+    void getComIdPositivoValidoRetorna200() throws Exception {
         when(service.getDomainById(1L)).thenReturn(this.getDomain(1L, "Santa Catarina", "SC"));
 
         mockMvc.perform(get("/estado/1")).andExpect(status().isOk());
     }
 
     @Test
-    public void getComIdNegativoRetorna400() throws Exception {
+    void getComIdNegativoRetorna400() throws Exception {
         mockMvc.perform(get("/estado/-1")).andExpect(status().isBadRequest());
         verify(service, never()).getDomainById(anyLong());
     }
 
     @Test
-    public void getComIdZeroRetorna400() throws Exception {
+    void getComIdZeroRetorna400() throws Exception {
         mockMvc.perform(get("/estado/0")).andExpect(status().isBadRequest());
     }
 
     @Test
-    public void getComIdAcimaDoLimiteSuperiorRetorna400() throws Exception {
+    void getComIdAcimaDoLimiteSuperiorRetorna400() throws Exception {
         mockMvc.perform(get("/estado/9999999999")).andExpect(status().isBadRequest());
     }
 
     @Test
-    public void getRetornaEstadoDTOComOsDadosDaEntidade() throws Exception {
+    void getRetornaEstadoDTOComOsDadosDaEntidade() throws Exception {
         Estado domain = this.getDomain(1L, "Santa Catarina", "SC");
         when(service.getDomainById(1L)).thenReturn(domain);
 
@@ -106,7 +106,7 @@ public class EstadoControllerTest {
     }
 
     @Test
-    public void getPaginadoRetornaPageDeEstadoDTO() throws Exception {
+    void getPaginadoRetornaPageDeEstadoDTO() throws Exception {
         Pageable pageable = PageRequest.of(0, 10);
         List<Estado> lista = List.of(this.getDomain(1L, "Santa Catarina", "SC"));
         when(service.listarPaginado(any(Pageable.class), nullable(String.class)))
@@ -120,7 +120,7 @@ public class EstadoControllerTest {
     }
 
     @Test
-    public void getPaginadoComSizeAcimaDoLimiteClampaParaOMaximoConfigurado() throws Exception {
+    void getPaginadoComSizeAcimaDoLimiteClampaParaOMaximoConfigurado() throws Exception {
         // app.pagination.max-size (application.yml) limita o tamanho de pagina
         // no servidor independente do que o cliente pedir - o
         // PageableHandlerMethodArgumentResolver do Spring Data clampa
@@ -137,7 +137,7 @@ public class EstadoControllerTest {
     }
 
     @Test
-    public void getPaginadoComBuscaRepassaOTermoParaOService() throws Exception {
+    void getPaginadoComBuscaRepassaOTermoParaOService() throws Exception {
         Pageable pageable = PageRequest.of(0, 10);
         when(service.listarPaginado(any(Pageable.class), eq("santa")))
                 .thenReturn(new PageImpl<>(List.of(), pageable, 0));
@@ -148,7 +148,7 @@ public class EstadoControllerTest {
     }
 
     @Test
-    public void getPaginadoSemBuscaRepassaNuloParaOService() throws Exception {
+    void getPaginadoSemBuscaRepassaNuloParaOService() throws Exception {
         Pageable pageable = PageRequest.of(0, 10);
         when(service.listarPaginado(any(Pageable.class), nullable(String.class)))
                 .thenReturn(new PageImpl<>(List.of(), pageable, 0));
@@ -159,7 +159,7 @@ public class EstadoControllerTest {
     }
 
     @Test
-    public void getPaginadoComSortInvalidoRetorna400() throws Exception {
+    void getPaginadoComSortInvalidoRetorna400() throws Exception {
         // achado via EstadoRepositoryIT contra Postgres real: sort=campo-que-nao-existe
         // nao e barrado pelo Pageable (so page/size sao validados ali) - so estoura
         // quando o Hibernate resolve a propriedade, como PropertyReferenceException.
@@ -175,7 +175,7 @@ public class EstadoControllerTest {
     }
 
     @Test
-    public void salvarComPayloadValidoRetorna201ComEstadoDTOCriado() throws Exception {
+    void salvarComPayloadValidoRetorna201ComEstadoDTOCriado() throws Exception {
         Estado salvo = this.getDomain(1L, "Santa Catarina", "SC");
         when(service.salvar(any(Estado.class))).thenReturn(salvo);
 
@@ -189,7 +189,7 @@ public class EstadoControllerTest {
     }
 
     @Test
-    public void salvarSemSiglaRetorna400ComFormatoDeErroDaApi() throws Exception {
+    void salvarSemSiglaRetorna400ComFormatoDeErroDaApi() throws Exception {
         mockMvc.perform(post("/estado")
                 .with(user("admin"))
                 .contentType(MediaType.APPLICATION_JSON)
@@ -201,7 +201,7 @@ public class EstadoControllerTest {
     }
 
     @Test
-    public void atualizarComPayloadValidoRetorna200ComEstadoDTOAtualizado() throws Exception {
+    void atualizarComPayloadValidoRetorna200ComEstadoDTOAtualizado() throws Exception {
         Estado atualizado = this.getDomain(1L, "Santa Catarina", "SC");
         when(service.atualizar(any(Estado.class))).thenReturn(atualizado);
 
@@ -215,7 +215,7 @@ public class EstadoControllerTest {
     }
 
     @Test
-    public void atualizarUsaOIdDoPathNaEntidadeEnviadaAoService() throws Exception {
+    void atualizarUsaOIdDoPathNaEntidadeEnviadaAoService() throws Exception {
         // id vem so da URL agora (PUT /estado/{id}), nao mais do corpo - ver
         // EstadoUpdateRequestDTO pro motivo da mudanca.
         ArgumentCaptor<Estado> captor = ArgumentCaptor.forClass(Estado.class);
@@ -231,7 +231,7 @@ public class EstadoControllerTest {
     }
 
     @Test
-    public void atualizarComIdNegativoRetorna400() throws Exception {
+    void atualizarComIdNegativoRetorna400() throws Exception {
         mockMvc.perform(put("/estado/-1")
                 .with(user("admin"))
                 .contentType(MediaType.APPLICATION_JSON)
@@ -241,7 +241,7 @@ public class EstadoControllerTest {
     }
 
     @Test
-    public void atualizarComIdZeroRetorna400() throws Exception {
+    void atualizarComIdZeroRetorna400() throws Exception {
         mockMvc.perform(put("/estado/0")
                 .with(user("admin"))
                 .contentType(MediaType.APPLICATION_JSON)
@@ -251,7 +251,7 @@ public class EstadoControllerTest {
     }
 
     @Test
-    public void salvarComIdNoPayloadIgnoraOIdEnviado() throws Exception {
+    void salvarComIdNoPayloadIgnoraOIdEnviado() throws Exception {
         // ver EstadoCreateRequestDTO pro motivo.
         ArgumentCaptor<Estado> captor = ArgumentCaptor.forClass(Estado.class);
         when(service.salvar(captor.capture())).thenReturn(this.getDomain(1L, "Santa Catarina", "SC"));
@@ -267,12 +267,12 @@ public class EstadoControllerTest {
     }
 
     @Test
-    public void excluirRetorna204() throws Exception {
+    void excluirRetorna204() throws Exception {
         mockMvc.perform(delete("/estado/1").with(user("admin"))).andExpect(status().isNoContent());
     }
 
     @Test
-    public void excluirComIdNegativoRetorna400() throws Exception {
+    void excluirComIdNegativoRetorna400() throws Exception {
         // achado de code review: excluir() nao tinha @Positive/@Max, diferente
         // do get() irmao - o mesmo input invalido respondia 404 no DELETE e
         // 400 no GET, um contrato inconsistente entre endpoints do mesmo
@@ -282,18 +282,18 @@ public class EstadoControllerTest {
     }
 
     @Test
-    public void excluirComIdZeroRetorna400() throws Exception {
+    void excluirComIdZeroRetorna400() throws Exception {
         mockMvc.perform(delete("/estado/0").with(user("admin"))).andExpect(status().isBadRequest());
     }
 
     @Test
-    public void excluirSemAutenticacaoRetorna401() throws Exception {
+    void excluirSemAutenticacaoRetorna401() throws Exception {
         mockMvc.perform(delete("/estado/1")).andExpect(status().isUnauthorized());
         verify(service, never()).excluir(anyLong());
     }
 
     @Test
-    public void getComOrigemPermitidaEcoaOAccessControlAllowOrigin() throws Exception {
+    void getComOrigemPermitidaEcoaOAccessControlAllowOrigin() throws Exception {
         when(service.getDomainById(1L)).thenReturn(this.getDomain(1L, "Santa Catarina", "SC"));
 
         mockMvc.perform(get("/estado/1").header("Origin", "http://localhost:8000"))
@@ -302,7 +302,7 @@ public class EstadoControllerTest {
     }
 
     @Test
-    public void getComOrigemNaoPermitidaRetorna403() throws Exception {
+    void getComOrigemNaoPermitidaRetorna403() throws Exception {
         // achado ao investigar o deploy do react-state: WebConfig.originPermitida
         // virou lista pra suportar mais de uma origem (ver ApiProperty) - este
         // teste prova que uma origem fora da lista continua sendo rejeitada,
