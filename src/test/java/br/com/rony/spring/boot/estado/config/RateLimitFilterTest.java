@@ -1,6 +1,7 @@
 package br.com.rony.spring.boot.estado.config;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -77,7 +78,7 @@ public class RateLimitFilterTest {
 
     @Test
     void contaBucketsSeparadosPorIp() throws ServletException, IOException {
-        HttpServletRequest outroRequest = org.mockito.Mockito.mock(HttpServletRequest.class);
+        HttpServletRequest outroRequest = mock(HttpServletRequest.class);
         when(outroRequest.getRemoteAddr()).thenReturn("10.0.0.1");
 
         filter.doFilter(request, response, chain);
