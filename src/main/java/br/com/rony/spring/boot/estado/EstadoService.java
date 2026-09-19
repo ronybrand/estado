@@ -28,7 +28,7 @@ public class EstadoService {
 
 
     public Estado atualizar(Estado domain) {
-        Estado domainBD = this.getDomainById(domain.getId());
+        Estado domainBD = buscarOuFalhar(domain.getId());
         domainBD.setNome(domain.getNome());
         domainBD.setSigla(domain.getSigla());
         domainBD.setDataHoraUltimaAtualizacao(LocalDateTime.now(ZoneOffset.UTC));
@@ -53,6 +53,15 @@ public class EstadoService {
 
     @Transactional(readOnly = true)
     public Estado getDomainById(long idDomain) {
+        return buscarOuFalhar(idDomain);
+    }
+
+    // Chamada direta (nao via 'this') do metodo publico @Transactional a partir
+    // de atualizar(): invocacao interna pularia o proxy do Spring e perderia o
+    // atributo readOnly de getDomainById (nao quebra atualizar() em si, que ja
+    // roda dentro da propria transacao REQUIRED da classe, mas o Sonar aponta o
+    // padrao como risco pra quem depender desse atributo no futuro).
+    private Estado buscarOuFalhar(long idDomain) {
         return repository.findById(idDomain)
                 .orElseThrow(() -> naoEncontrado(idDomain));
     }
