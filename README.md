@@ -3,8 +3,8 @@
 🇧🇷 [Ler em português](README.pt-BR.md)
 
 [![CI](https://github.com/ronybrand/estado/actions/workflows/ci.yml/badge.svg)](https://github.com/ronybrand/estado/actions/workflows/ci.yml)
-[![Quality gate status](https://sonarcloud.io/api/project_badges/measure?project=ronybrand_estado&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=ronybrand_estado)
 [![CodeQL](https://github.com/ronybrand/estado/actions/workflows/codeql.yml/badge.svg)](https://github.com/ronybrand/estado/actions/workflows/codeql.yml)
+[![Quality gate status](https://sonarcloud.io/api/project_badges/measure?project=ronybrand_estado&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=ronybrand_estado)
 [![codecov](https://codecov.io/gh/ronybrand/estado/graph/badge.svg)](https://codecov.io/gh/ronybrand/estado)
 
 CRUD project for Brazilian federative units (states).
