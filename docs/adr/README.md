@@ -24,3 +24,4 @@ consequências (incluindo as que ficaram conscientemente sem mitigação).
 - [0018 — PUT /estado/{id}, remoção do GET /estado sem paginação](0018-put-por-id-e-remocao-do-get-sem-paginacao.md)
 - [0019 — Migração de Maven para Gradle](0019-migracao-maven-para-gradle.md)
 - [0020 — hibernate.ddl-auto=validate só em teste, não em produção](0020-ddl-auto-validate-so-em-teste.md)
+- [0021 — SonarQube Cloud como análise estática, não PMD/Checkstyle/SpotBugs](0021-sonarqube-cloud-analise-estatica.md)

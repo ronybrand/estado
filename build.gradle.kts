@@ -5,6 +5,14 @@ plugins {
     java
     id("org.springframework.boot") version "4.1.1"
     id("jacoco")
+    // SonarQube Cloud (ex-SonarCloud) - analise estatica que o projeto nao
+    // tinha nenhuma (nem PMD/Checkstyle/SpotBugs). Free forever pra repo
+    // publico com licenca OSI - achado numa comparacao com os projetos
+    // irmaos do portfolio, cada um ja usando uma ferramenta de SAST
+    // diferente (PMD no spring-order-api, bandit no fastapi-order-api,
+    // eslint-plugin-security no nest-order-api) - Sonar aqui soma uma
+    // quarta, em vez de so replicar o PMD.
+    id("org.sonarqube") version "7.5.0.8588"
 }
 
 group = "br.com.rony.spring.boot"
@@ -143,6 +151,19 @@ tasks.jacocoTestReport {
 // "gradlew check" ~ "mvn verify": unit + IT + relatorio de cobertura.
 tasks.check {
     dependsOn(integrationTest, tasks.jacocoTestReport)
+}
+
+sonar {
+    properties {
+        // ATENCAO: "ronybrand" e o chute mais provavel pra chave da organizacao
+        // (SonarQube Cloud costuma derivar do usuario/org do GitHub no
+        // cadastro), mas so fica confirmado depois que a organizacao for
+        // criada em sonarcloud.io/create-organization - ajuste aqui se vier
+        // diferente (ex. com sufixo "-github").
+        property("sonar.organization", "ronybrand")
+        property("sonar.projectKey", "ronybrand_estado")
+        property("sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml")
+    }
 }
 
 springBoot {
