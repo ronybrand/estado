@@ -79,12 +79,12 @@ public class RateLimitFilter extends OncePerRequestFilter implements Ordered {
         Bucket bucket = buckets.get(ip, chave -> novoBucket());
 
         if (!bucket.tryConsume(1)) {
-            rejeitar(request, response, ip);
+            rejeitar(request, response, ip, rateLimitProperty.getJanelaSegundos());
             return;
         }
 
         if (isLogin(request) && !loginBuckets.get(ip, chave -> novoLoginBucket()).tryConsume(1)) {
-            rejeitar(request, response, ip);
+            rejeitar(request, response, ip, rateLimitProperty.getLoginJanelaSegundos());
             return;
         }
 
@@ -95,9 +95,14 @@ public class RateLimitFilter extends OncePerRequestFilter implements Ordered {
         return "POST".equalsIgnoreCase(request.getMethod()) && "/auth/login".equals(request.getRequestURI());
     }
 
-    private void rejeitar(HttpServletRequest request, HttpServletResponse response, String ip) throws IOException {
+    private void rejeitar(HttpServletRequest request, HttpServletResponse response, String ip, long janelaSegundos)
+            throws IOException {
         log.warn("Rate limit excedido para IP {} no endpoint {}", ip, request.getRequestURI());
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+        // Informa ao cliente quando faz sentido tentar de novo - a janela e fixa (fixed-window,
+        // nao sliding), entao o pior caso e esperar a janela inteira; nao vale a pena calcular o
+        // tempo exato restante no bucket so pra um header informativo.
+        response.setHeader("Retry-After", String.valueOf(janelaSegundos));
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         ErrorResponseDto corpo = new ErrorResponseDto(
                 "Muitas requisicoes - tente novamente em instantes", MDC.get(RequestIdFilter.MDC_KEY));

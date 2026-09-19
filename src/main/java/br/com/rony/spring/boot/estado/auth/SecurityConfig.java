@@ -11,12 +11,14 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.StaticHeadersWriter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -66,9 +68,22 @@ public class SecurityConfig {
                         .permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(authenticationEntryPoint()))
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .headers(this::configureHeaders);
 
         return http.build();
+    }
+
+    // Achado numa analise comparativa com os projetos irmaos do portfolio
+    // (spring-order-api ja tinha os quatro) - GET /estado/** e publico, entao
+    // esses headers sao o unico teto de seguranca contra XSS/clickjacking/
+    // downgrade pra HTTP nessas respostas.
+    private void configureHeaders(HeadersConfigurer<HttpSecurity> headers) {
+        headers.contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'"))
+                .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
+                .httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31536000))
+                .addHeaderWriter(new StaticHeadersWriter(
+                        "Permissions-Policy", "geolocation=(), camera=(), microphone=()"));
     }
 
     // Corpo de erro no mesmo formato ErrorResponseDto do resto da API - sem
