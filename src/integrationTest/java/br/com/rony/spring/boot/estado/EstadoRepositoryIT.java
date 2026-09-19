@@ -14,6 +14,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -22,8 +23,14 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 // (Estado.java) sao aplicadas pelo banco, nao pela app, entao so um teste contra
 // Postgres de verdade prova o fluxo fim a fim que CustomGlobalExceptionHandler
 // espera (DataIntegrityViolationException -> 409).
+//
+// ddl-auto=validate so aqui, nao em application.yml (ver ADR 0020): o Hibernate
+// confere que o mapeamento de Estado bate com o schema aplicado pelo Liquibase -
+// se alguem adicionar/renomear um campo sem o changeset correspondente, este
+// teste falha antes de virar drift em producao.
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@TestPropertySource(properties = "spring.jpa.hibernate.ddl-auto=validate")
 @Testcontainers
 class EstadoRepositoryIT {
 

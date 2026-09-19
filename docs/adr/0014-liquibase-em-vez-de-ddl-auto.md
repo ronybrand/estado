@@ -1,7 +1,9 @@
 # ADR 0014: Liquibase em vez de hibernate.ddl-auto:update
 
 ## Status
-Aceito
+Aceito — a adoção do Liquibase continua valendo integralmente. O valor de `ddl-auto` em produção
+(`validate`) foi ajustado pela [ADR 0020](0020-ddl-auto-validate-so-em-teste.md): volta a `none`
+em produção, `validate` passa a rodar só em teste.
 
 ## Contexto
 O schema do banco era gerenciado pelo Hibernate (`ddl-auto: update`) - a tabela
