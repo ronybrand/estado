@@ -50,7 +50,7 @@ public class RequestIdFilter extends OncePerRequestFilter implements Ordered {
         if (recebido != null) {
             try {
                 return UUID.fromString(recebido).toString();
-            } catch (IllegalArgumentException ex) {
+            } catch (IllegalArgumentException _) {
                 // header recebido nao e um UUID valido - ignora e gera um novo
             }
         }

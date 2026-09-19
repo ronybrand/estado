@@ -41,7 +41,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 String username = jwtService.validateAndGetSubject(token);
                 SecurityContextHolder.getContext().setAuthentication(
                         new UsernamePasswordAuthenticationToken(username, null, List.of()));
-            } catch (JwtException | IllegalArgumentException ex) {
+            } catch (JwtException | IllegalArgumentException _) {
                 // Token invalido/expirado/adulterado - nao autentica, segue sem
                 // contexto (ver comentario da classe).
             }

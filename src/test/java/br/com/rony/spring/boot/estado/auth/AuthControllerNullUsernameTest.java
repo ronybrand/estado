@@ -32,8 +32,8 @@ public class AuthControllerNullUsernameTest {
 
         AuthController controller = new AuthController(adminProperty, jwtProperty,
                 new JwtService(jwtProperty), passwordEncoder);
+        LoginRequestDto request = new LoginRequestDto("admin", "qualquer");
 
-        assertThrows(InvalidCredentialsException.class,
-                () -> controller.login(new LoginRequestDto("admin", "qualquer")));
+        assertThrows(InvalidCredentialsException.class, () -> controller.login(request));
     }
 }
