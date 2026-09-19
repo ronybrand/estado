@@ -89,6 +89,18 @@ public class RateLimitFilterTest {
     }
 
     @Test
+    public void devolveRetryAfterQuandoEstourarCapacidade() throws ServletException, IOException {
+        StringWriter corpoEscrito = new StringWriter();
+        when(response.getWriter()).thenReturn(new PrintWriter(corpoEscrito));
+
+        filter.doFilter(request, response, chain);
+        filter.doFilter(request, response, chain);
+        filter.doFilter(request, response, chain);
+
+        verify(response).setHeader("Retry-After", "60");
+    }
+
+    @Test
     public void limitaLoginComBucketDedicado() throws ServletException, IOException {
         StringWriter corpoEscrito = new StringWriter();
         when(request.getMethod()).thenReturn("POST");
