@@ -7,9 +7,11 @@ spring:
   jpa:
     hibernate:
       # Schema gerenciado por Liquibase (db/changelog/), nao pelo Hibernate -
-      # validate so confere que o mapeamento da entidade bate com o schema
-      # aplicado, sem tentar alterar nada (ver ADR 0014).
-      ddl-auto: validate
+      # nunca altera nada (ver ADR 0014). "validate" so roda em teste
+      # (EstadoRepositoryIT), nao aqui: um falso positivo do Hibernate
+      # (naming strategy, tipo especifico de banco) derrubaria um deploy real
+      # em vez de so falhar o CI (ver ADR 0020).
+      ddl-auto: none
     open-in-view: false
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.xml
