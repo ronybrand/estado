@@ -46,17 +46,17 @@ public class JwtAuthFilterTest {
     private JwtAuthFilter filter;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         filter = new JwtAuthFilter(jwtService);
     }
 
     @AfterEach
-    public void limpaContexto() {
+    void limpaContexto() {
         SecurityContextHolder.clearContext();
     }
 
     @Test
-    public void headerAusenteSeguesSemPopularContexto() throws ServletException, IOException {
+    void headerAusenteSeguesSemPopularContexto() throws ServletException, IOException {
         when(request.getHeader(HEADER)).thenReturn(null);
 
         filter.doFilter(request, response, chain);
@@ -66,7 +66,7 @@ public class JwtAuthFilterTest {
     }
 
     @Test
-    public void tokenValidoPopulaContextoComOUsername() throws ServletException, IOException {
+    void tokenValidoPopulaContextoComOUsername() throws ServletException, IOException {
         when(request.getHeader(HEADER)).thenReturn("Bearer token-valido");
         when(jwtService.validateAndGetSubject("token-valido")).thenReturn("admin");
 
@@ -77,7 +77,7 @@ public class JwtAuthFilterTest {
     }
 
     @Test
-    public void tokenInvalidoSeguesSemPopularContexto() throws ServletException, IOException {
+    void tokenInvalidoSeguesSemPopularContexto() throws ServletException, IOException {
         when(request.getHeader(HEADER)).thenReturn("Bearer token-invalido");
         when(jwtService.validateAndGetSubject("token-invalido")).thenThrow(new JwtException("invalido"));
 
@@ -92,7 +92,7 @@ public class JwtAuthFilterTest {
     // KeyException -> SecurityException -> JwtException), entao ja cai no
     // catch existente - misconfiguracao de JWT_SECRET nao deve virar 500.
     @Test
-    public void segredoFracoNaValidacaoSeguesSemPopularContextoENaoPropaga() throws ServletException, IOException {
+    void segredoFracoNaValidacaoSeguesSemPopularContextoENaoPropaga() throws ServletException, IOException {
         when(request.getHeader(HEADER)).thenReturn("Bearer token-qualquer");
         when(jwtService.validateAndGetSubject("token-qualquer")).thenThrow(new WeakKeyException("segredo fraco"));
 
@@ -103,7 +103,7 @@ public class JwtAuthFilterTest {
     }
 
     @Test
-    public void headerSemPrefixoBearerSeguesSemPopularContexto() throws ServletException, IOException {
+    void headerSemPrefixoBearerSeguesSemPopularContexto() throws ServletException, IOException {
         when(request.getHeader(HEADER)).thenReturn("token-sem-prefixo");
 
         filter.doFilter(request, response, chain);

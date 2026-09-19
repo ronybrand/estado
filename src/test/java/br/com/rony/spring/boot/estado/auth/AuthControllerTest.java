@@ -39,7 +39,7 @@ public class AuthControllerTest {
     PasswordEncoder passwordEncoder;
 
     @Test
-    public void loginComCredenciaisValidasRetorna200ComToken() throws Exception {
+    void loginComCredenciaisValidasRetorna200ComToken() throws Exception {
         when(passwordEncoder.matches("senha-correta", "hash-de-teste")).thenReturn(true);
         when(jwtService.issueToken("admin")).thenReturn("token-emitido");
 
@@ -52,7 +52,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void loginComSenhaErradaRetorna401() throws Exception {
+    void loginComSenhaErradaRetorna401() throws Exception {
         when(passwordEncoder.matches("senha-errada", "hash-de-teste")).thenReturn(false);
 
         mockMvc.perform(post("/auth/login")
@@ -63,7 +63,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void loginComUsuarioErradoRetorna401() throws Exception {
+    void loginComUsuarioErradoRetorna401() throws Exception {
         mockMvc.perform(post("/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"username\":\"outro\",\"password\":\"qualquer\"}"))
@@ -74,7 +74,7 @@ public class AuthControllerTest {
     // short-circuit no username criaria um timing side-channel que revela o
     // username valido pela diferenca de latencia entre as duas respostas 401.
     @Test
-    public void loginComUsuarioErradoAindaAssimInvocaBcryptParaEvitarTimingSideChannel() throws Exception {
+    void loginComUsuarioErradoAindaAssimInvocaBcryptParaEvitarTimingSideChannel() throws Exception {
         mockMvc.perform(post("/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"username\":\"outro\",\"password\":\"qualquer\"}"))
@@ -84,7 +84,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void loginComCamposEmBrancoRetorna400() throws Exception {
+    void loginComCamposEmBrancoRetorna400() throws Exception {
         mockMvc.perform(post("/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"username\":\"\",\"password\":\"\"}"))
@@ -96,7 +96,7 @@ public class AuthControllerTest {
     // pelo rewrite same-origin da Vercel) nunca conseguia ler a resposta de
     // /auth/login, mesmo com a origem na allowlist.
     @Test
-    public void loginComOrigemPermitidaEcoaOAccessControlAllowOrigin() throws Exception {
+    void loginComOrigemPermitidaEcoaOAccessControlAllowOrigin() throws Exception {
         when(passwordEncoder.matches("senha-correta", "hash-de-teste")).thenReturn(true);
         when(jwtService.issueToken("admin")).thenReturn("token-emitido");
 

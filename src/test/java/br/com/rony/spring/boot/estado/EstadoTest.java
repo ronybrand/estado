@@ -15,24 +15,24 @@ public class EstadoTest {
     private Locale localePadraoOriginal;
 
     @BeforeEach
-    public void guardaLocalePadrao() {
+    void guardaLocalePadrao() {
         localePadraoOriginal = Locale.getDefault();
     }
 
     @AfterEach
-    public void restauraLocalePadrao() {
+    void restauraLocalePadrao() {
         Locale.setDefault(localePadraoOriginal);
     }
 
     @Test
-    public void setSiglaComValorConvertePraMaiuscula() {
+    void setSiglaComValorConvertePraMaiuscula() {
         Estado estado = new Estado();
         estado.setSigla("sc");
         assertEquals("SC", estado.getSigla());
     }
 
     @Test
-    public void setSiglaConverteParaMaiusculaIndependenteDoLocalePadrao() {
+    void setSiglaConverteParaMaiusculaIndependenteDoLocalePadrao() {
         // achado de code review: toUpperCase() sem Locale usa o locale padrao
         // da JVM - em turco/azeri, "pi".toUpperCase() vira "Pİ" (I pontuado)
         // em vez de "PI", quebrando a sigla de um estado como Piaui.
@@ -45,7 +45,7 @@ public class EstadoTest {
     }
 
     @Test
-    public void setSiglaComNuloNaoLancaExcecao() {
+    void setSiglaComNuloNaoLancaExcecao() {
         // Jackson chama o setter durante o deserialize do JSON antes do @Valid
         // rodar - se o corpo da requisicao nao trouxer "sigla", o setter e
         // chamado com null e nao pode estourar NPE (isso viraria 500 em vez

@@ -33,7 +33,7 @@ public class ActuatorNoCacheFilterTest {
     FilterChain chain;
 
     @Test
-    public void definePorCacheControlNoStorePraRotasDeActuator() throws ServletException, IOException {
+    void definePorCacheControlNoStorePraRotasDeActuator() throws ServletException, IOException {
         when(request.getRequestURI()).thenReturn("/actuator/info");
 
         filter.doFilter(request, response, chain);

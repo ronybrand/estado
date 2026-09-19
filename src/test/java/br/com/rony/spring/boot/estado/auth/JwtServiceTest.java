@@ -18,7 +18,7 @@ public class JwtServiceTest {
     }
 
     @Test
-    public void issueTokenSeguidoDeValidateAndGetSubjectRetornaOMesmoUsername() {
+    void issueTokenSeguidoDeValidateAndGetSubjectRetornaOMesmoUsername() {
         JwtService service = new JwtService(property(60));
 
         String token = service.issueToken("admin");
@@ -27,7 +27,7 @@ public class JwtServiceTest {
     }
 
     @Test
-    public void validateAndGetSubjectLancaExcecaoParaTokenExpirado() {
+    void validateAndGetSubjectLancaExcecaoParaTokenExpirado() {
         JwtService service = new JwtService(property(-1));
 
         String tokenExpirado = service.issueToken("admin");
@@ -36,7 +36,7 @@ public class JwtServiceTest {
     }
 
     @Test
-    public void validateAndGetSubjectLancaExcecaoParaTokenAdulterado() {
+    void validateAndGetSubjectLancaExcecaoParaTokenAdulterado() {
         JwtService service = new JwtService(property(60));
         String token = service.issueToken("admin");
         String tokenAdulterado = token.substring(0, token.length() - 1)

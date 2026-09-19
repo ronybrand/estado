@@ -11,7 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 public class AuthControllerNullUsernameTest {
 
     @Test
-    public void loginComAdminUsernameNuloLancaInvalidCredentialsEmVezDeNpe() {
+    void loginComAdminUsernameNuloLancaInvalidCredentialsEmVezDeNpe() {
         AdminProperty adminProperty = new AdminProperty();
         adminProperty.setUsername(null);
         adminProperty.setPasswordHash("hash-de-teste");

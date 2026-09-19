@@ -43,7 +43,7 @@ public class CustomGlobalExceptionHandlerTest {
     private ListAppender<ILoggingEvent> logs;
 
     @BeforeEach
-    public void capturaLogs() {
+    void capturaLogs() {
         logger = (Logger) LoggerFactory.getLogger(CustomGlobalExceptionHandler.class);
         logs = new ListAppender<>();
         logs.start();
@@ -56,14 +56,14 @@ public class CustomGlobalExceptionHandlerTest {
     }
 
     @AfterEach
-    public void limpaLogsEMdc() {
+    void limpaLogsEMdc() {
         logger.detachAppender(logs);
         logger.setAdditive(true);
         MDC.clear();
     }
 
     @Test
-    public void constraintViolationRetorna400SemVazarMensagemESemLog() {
+    void constraintViolationRetorna400SemVazarMensagemESemLog() {
         ConstraintViolationException ex = new ConstraintViolationException("sigla invalida", null);
 
         ResponseEntity<ErrorResponseDto> resposta = handler.requisicaoInvalida(ex);
@@ -74,7 +74,7 @@ public class CustomGlobalExceptionHandlerTest {
     }
 
     @Test
-    public void methodArgumentTypeMismatchRetorna400SemVazarMensagemESemLog() {
+    void methodArgumentTypeMismatchRetorna400SemVazarMensagemESemLog() {
         MethodArgumentTypeMismatchException ex = mock(MethodArgumentTypeMismatchException.class);
         when(ex.getMessage()).thenReturn("tipo invalido pro parametro id");
 
@@ -86,7 +86,7 @@ public class CustomGlobalExceptionHandlerTest {
     }
 
     @Test
-    public void propertyReferenceExceptionRetorna400SemVazarCampoESemLog() {
+    void propertyReferenceExceptionRetorna400SemVazarCampoESemLog() {
         // sort=campoInexistente nao e validado pelo PageableHandlerMethodArgumentResolver
         // (so page/size) - so estoura quando o Hibernate resolve a propriedade contra o
         // metamodel da entidade, na execucao real da query (achado via EstadoRepositoryIT
@@ -104,7 +104,7 @@ public class CustomGlobalExceptionHandlerTest {
     }
 
     @Test
-    public void dataIntegrityViolationRetorna409ComWarnENaoVazaMensagemDoDriver() {
+    void dataIntegrityViolationRetorna409ComWarnENaoVazaMensagemDoDriver() {
         // achado validando end-to-end contra um Postgres real: getMessage() de
         // DataIntegrityViolationException inclui o SQL bruto e o nome da
         // constraint (ex: "could not execute statement [ERROR: duplicate key
@@ -125,7 +125,7 @@ public class CustomGlobalExceptionHandlerTest {
     }
 
     @Test
-    public void excecaoInesperadaRetorna500ComErroENaoVazaMensagemInterna() {
+    void excecaoInesperadaRetorna500ComErroENaoVazaMensagemInterna() {
         RuntimeException ex = new RuntimeException("detalhe interno sensivel de implementacao");
 
         ResponseEntity<ErrorResponseDto> resposta = handler.erroInesperado(ex);
@@ -139,7 +139,7 @@ public class CustomGlobalExceptionHandlerTest {
     }
 
     @Test
-    public void erroInesperadoNaoPropagaLogParaOAppenderRaiz() {
+    void erroInesperadoNaoPropagaLogParaOAppenderRaiz() {
         // O ListAppender do @BeforeEach captura o evento pra assert, mas por
         // padrao o Logback tambem propaga pro appender de console do root
         // logger - fazendo o ERROR esperado deste teste aparecer no output do
@@ -160,7 +160,7 @@ public class CustomGlobalExceptionHandlerTest {
     }
 
     @Test
-    public void corpoDeErroInclueRequestIdDoMdcQuandoPresente() {
+    void corpoDeErroInclueRequestIdDoMdcQuandoPresente() {
         MDC.put(RequestIdFilter.MDC_KEY, "abc-123");
         ConstraintViolationException ex = new ConstraintViolationException("invalido", null);
 
@@ -170,7 +170,7 @@ public class CustomGlobalExceptionHandlerTest {
     }
 
     @Test
-    public void corpoDeErroTemRequestIdNuloQuandoMdcVazio() {
+    void corpoDeErroTemRequestIdNuloQuandoMdcVazio() {
         ConstraintViolationException ex = new ConstraintViolationException("invalido", null);
 
         ResponseEntity<ErrorResponseDto> resposta = handler.requisicaoInvalida(ex);
@@ -179,7 +179,7 @@ public class CustomGlobalExceptionHandlerTest {
     }
 
     @Test
-    public void methodArgumentNotValidRetorna400ComMensagemDosCamposESemLog() throws NoSuchMethodException {
+    void methodArgumentNotValidRetorna400ComMensagemDosCamposESemLog() throws NoSuchMethodException {
         BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(new Object(), "estadoRequestDTO");
         bindingResult.addError(new FieldError("estadoRequestDTO", "sigla", "must not be null"));
         MethodParameter parametro = new MethodParameter(
@@ -199,7 +199,7 @@ public class CustomGlobalExceptionHandlerTest {
     }
 
     @Test
-    public void estadoNaoEncontradoRetorna404ComMensagemESemLog() {
+    void estadoNaoEncontradoRetorna404ComMensagemESemLog() {
         EstadoNaoEncontradoException ex = new EstadoNaoEncontradoException("Estado nao encontrado: id=999");
 
         ResponseEntity<ErrorResponseDto> resposta = handler.estadoNaoEncontrado(ex);
@@ -210,7 +210,7 @@ public class CustomGlobalExceptionHandlerTest {
     }
 
     @Test
-    public void rotaInexistenteRetorna404SemLog() {
+    void rotaInexistenteRetorna404SemLog() {
         // achado testando o Swagger UI desligado (SPRINGDOC_SWAGGER_UI_ENABLED=false):
         // sem handler dedicado, NoResourceFoundException caia no catch-all de
         // Exception e virava 500 "Erro interno do servidor" pra qualquer URL sem

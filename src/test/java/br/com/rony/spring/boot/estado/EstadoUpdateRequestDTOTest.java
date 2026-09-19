@@ -20,13 +20,13 @@ public class EstadoUpdateRequestDTOTest {
     private Validator validator;
 
     @BeforeEach
-    public void criaValidator() {
+    void criaValidator() {
         factory = Validation.buildDefaultValidatorFactory();
         validator = factory.getValidator();
     }
 
     @AfterEach
-    public void fechaValidator() {
+    void fechaValidator() {
         factory.close();
     }
 
@@ -35,7 +35,7 @@ public class EstadoUpdateRequestDTOTest {
     }
 
     @Test
-    public void toEntityMapeiaIdDoParametroComNomeESigla() {
+    void toEntityMapeiaIdDoParametroComNomeESigla() {
         EstadoUpdateRequestDTO dto = this.getDto("Santa Catarina", "SC");
 
         Estado entidade = dto.toEntity(1L);
@@ -46,7 +46,7 @@ public class EstadoUpdateRequestDTOTest {
     }
 
     @Test
-    public void dtoValidoNaoTemViolacoes() {
+    void dtoValidoNaoTemViolacoes() {
         EstadoUpdateRequestDTO dto = this.getDto("Santa Catarina", "SC");
 
         Set<ConstraintViolation<EstadoUpdateRequestDTO>> violacoes = validator.validate(dto);
@@ -55,7 +55,7 @@ public class EstadoUpdateRequestDTOTest {
     }
 
     @Test
-    public void nomeNuloGeraViolacao() {
+    void nomeNuloGeraViolacao() {
         EstadoUpdateRequestDTO dto = this.getDto(null, "SC");
 
         Set<ConstraintViolation<EstadoUpdateRequestDTO>> violacoes = validator.validate(dto);
@@ -64,7 +64,7 @@ public class EstadoUpdateRequestDTOTest {
     }
 
     @Test
-    public void siglaComTamanhoDiferenteDeDoisGeraViolacao() {
+    void siglaComTamanhoDiferenteDeDoisGeraViolacao() {
         EstadoUpdateRequestDTO dto = this.getDto("Santa Catarina", "S");
 
         Set<ConstraintViolation<EstadoUpdateRequestDTO>> violacoes = validator.validate(dto);

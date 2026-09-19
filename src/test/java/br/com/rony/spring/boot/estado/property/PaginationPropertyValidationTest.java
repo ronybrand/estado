@@ -18,19 +18,19 @@ public class PaginationPropertyValidationTest {
             .withUserConfiguration(PaginationPropertyEnabler.class);
 
     @Test
-    public void maxSizeZeroFalhaNaInicializacao() {
+    void maxSizeZeroFalhaNaInicializacao() {
         runner.withPropertyValues("pagination.max-size=0")
                 .run(context -> assertThat(context).hasFailed());
     }
 
     @Test
-    public void maxSizeNegativoFalhaNaInicializacao() {
+    void maxSizeNegativoFalhaNaInicializacao() {
         runner.withPropertyValues("pagination.max-size=-10")
                 .run(context -> assertThat(context).hasFailed());
     }
 
     @Test
-    public void maxSizePositivoInicializaComSucesso() {
+    void maxSizePositivoInicializaComSucesso() {
         runner.withPropertyValues("pagination.max-size=100")
                 .run(context -> assertThat(context).hasNotFailed());
     }
