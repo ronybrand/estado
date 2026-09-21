@@ -29,3 +29,7 @@
 # <app>.54.94.231.248.sslip.io {
 # 	reverse_proxy <app>-app:8080
 # }
+
+ai-agent.54.94.231.248.sslip.io {
+	reverse_proxy estado-ai-agent-app:8080
+}
