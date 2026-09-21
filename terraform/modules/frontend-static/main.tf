@@ -137,7 +137,11 @@ resource "aws_cloudfront_response_headers_policy" "frontend" {
     }
 
     content_security_policy {
-      content_security_policy = "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; base-uri 'self'; frame-ancestors 'none'"
+      # connect-src inclui o subdominio do estado-ai-agent (app de
+      # portfolio novo, deploy proprio na mesma EC2 via subdominio
+      # sslip.io) - sem isso o navegador bloqueia a chamada por CSP
+      # mesmo com o CORS do backend configurado corretamente.
+      content_security_policy = "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' https://ai-agent.54.94.231.248.sslip.io; base-uri 'self'; frame-ancestors 'none'"
       override                = true
     }
   }
