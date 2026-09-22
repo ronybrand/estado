@@ -43,6 +43,12 @@ jwt:
   # admin acima.
   secret: ${JWT_SECRET}
   expiration-minutes: ${JWT_EXPIRATION_MINUTES:60}
+ask-api:
+  # Proxy server-to-server pro estado-ai-agent (BFF) - a ASK_API_KEY nunca
+  # mais vai pro bundle do Angular, so existe aqui. Sem default em nenhum
+  # dos dois, mesmo motivo do admin/jwt acima.
+  base-url: ${ASK_API_BASE_URL}
+  api-key: ${ASK_API_KEY}
 springdoc:
   # Habilitado por padrao (dev-friendly) - lib-swap.sh desliga explicitamente
   # em producao via env var, pra nao expor o Swagger UI publicamente.

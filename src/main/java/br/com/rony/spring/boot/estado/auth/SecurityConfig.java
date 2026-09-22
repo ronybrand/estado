@@ -65,6 +65,12 @@ public class SecurityConfig {
                     .authorizeHttpRequests(auth -> auth
                             .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                             .requestMatchers(HttpMethod.GET, "/estado/**").permitAll()
+                            // Sem login de proposito, mesmo raciocinio do GET acima: e
+                            // um proxy pro estado-ai-agent, e a ASK_API_KEY (nao um
+                            // token de usuario) e quem autentica esta app perante o
+                            // ai-agent (ver AskProxyService). Exigir JWT aqui so
+                            // quebraria o uso publico do chat sem ganho de seguranca.
+                            .requestMatchers(HttpMethod.POST, "/ask").permitAll()
                             .requestMatchers("/auth/login").permitAll()
                             .requestMatchers("/actuator/**", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**")
                             .permitAll()
