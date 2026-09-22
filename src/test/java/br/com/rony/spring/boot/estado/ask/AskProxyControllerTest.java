@@ -1,6 +1,7 @@
 package br.com.rony.spring.boot.estado.ask;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -42,7 +43,7 @@ class AskProxyControllerTest {
 
     @Test
     void deveRepassarPerguntaSemExigirAutenticacaoEDevolverResposta() throws Exception {
-        when(askProxyService.ask(any(), any())).thenReturn(new AskProxyResponseDto("Curitiba"));
+        when(askProxyService.ask(any(), any(), any())).thenReturn(new AskProxyResponseDto("Curitiba"));
 
         mockMvc.perform(post("/ask")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -56,7 +57,7 @@ class AskProxyControllerTest {
     // repassado ao service - e isso que este teste protege contra regressao.
     @Test
     void deveRepassarIpRemotoDoClienteParaOService() throws Exception {
-        when(askProxyService.ask(any(), any())).thenReturn(new AskProxyResponseDto("Curitiba"));
+        when(askProxyService.ask(any(), any(), any())).thenReturn(new AskProxyResponseDto("Curitiba"));
 
         mockMvc.perform(post("/ask")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -67,7 +68,7 @@ class AskProxyControllerTest {
                 }))
                 .andExpect(status().isOk());
 
-        verify(askProxyService).ask(new AskProxyRequestDto("Qual a capital do Parana?"), "203.0.113.5");
+        verify(askProxyService).ask(eq(new AskProxyRequestDto("Qual a capital do Parana?")), eq("203.0.113.5"), any());
     }
 
     @Test
@@ -93,7 +94,7 @@ class AskProxyControllerTest {
     // rewrite same-origin) tinha /ask bloqueado mesmo com a origem na allowlist.
     @Test
     void perguntaComOrigemPermitidaEcoaOAccessControlAllowOrigin() throws Exception {
-        when(askProxyService.ask(any(), any())).thenReturn(new AskProxyResponseDto("Curitiba"));
+        when(askProxyService.ask(any(), any(), any())).thenReturn(new AskProxyResponseDto("Curitiba"));
 
         mockMvc.perform(post("/ask")
                 .header("Origin", "http://localhost:8000")
