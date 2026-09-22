@@ -30,6 +30,11 @@
 # 	reverse_proxy <app>-app:8080
 # }
 
-ai-agent.54.94.231.248.sslip.io {
-	reverse_proxy estado-ai-agent-app:8080
-}
+# ai-agent.54.94.231.248.sslip.io removido: o estado-ai-agent nao deveria
+# mais ser alcancavel diretamente de fora - o backend estado agora fala com
+# ele via rede Docker interna (estado_internal, ASK_API_BASE_URL), como BFF
+# guardando a ASK_API_KEY server-side (ver AskProxyService). Expor
+# publicamente permitia a qualquer um com a key (e o
+# forward-headers-strategy=framework do ai-agent confia cegamente em
+# X-Forwarded-For) forjar esse header e furar o rate limit por IP - fechar
+# a rota nega essa conexao a nivel de rede, nao so de aplicacao.
