@@ -33,6 +33,7 @@ import ch.qos.logback.core.read.ListAppender;
 import jakarta.validation.ConstraintViolationException;
 
 import br.com.rony.spring.boot.estado.EstadoNaoEncontradoException;
+import br.com.rony.spring.boot.estado.ask.AskUpstreamException;
 import br.com.rony.spring.boot.estado.config.RequestIdFilter;
 
 public class CustomGlobalExceptionHandlerTest {
@@ -207,6 +208,19 @@ public class CustomGlobalExceptionHandlerTest {
         assertEquals(HttpStatus.NOT_FOUND, resposta.getStatusCode());
         assertEquals("Estado nao encontrado: id=999", resposta.getBody().message());
         assertTrue(logs.list.isEmpty());
+    }
+
+    @Test
+    void askUpstreamExceptionRetorna502ComWarnENaoVazaMensagemDaCausa() {
+        AskUpstreamException ex = new AskUpstreamException(
+                "Falha ao consultar o estado-ai-agent", new RuntimeException("connection refused"));
+
+        ResponseEntity<ErrorResponseDto> resposta = handler.askUpstreamFalhou(ex);
+
+        assertEquals(HttpStatus.BAD_GATEWAY, resposta.getStatusCode());
+        assertEquals("Falha ao consultar o estado-ai-agent", resposta.getBody().message());
+        assertEquals(1, logs.list.size());
+        assertEquals(Level.WARN, logs.list.get(0).getLevel());
     }
 
     @Test

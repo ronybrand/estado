@@ -45,6 +45,17 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedHeaders("Authorization", "Content-Type", "Accept")
                 .allowCredentials(true)
                 .maxAge(3600);
+
+        // Mesmo motivo de /auth/** acima: sem mapping proprio, um cliente
+        // cross-origin de verdade teria /ask bloqueado mesmo com a origem na
+        // allowlist. allowCredentials(false) aqui de proposito - /ask nao usa
+        // Authorization/cookie (rota publica, ver SecurityConfig), entao nao
+        // precisa do browser anexar credenciais.
+        registry.addMapping("/ask")
+                .allowedOrigins(apiProperty.getOriginPermitida().toArray(new String[0]))
+                .allowedMethods("POST", "OPTIONS")
+                .allowedHeaders("Content-Type", "Accept")
+                .maxAge(3600);
     }
 
     // Bean declarado aqui (nao delegado so a spring.data.web.pageable.max-page-size

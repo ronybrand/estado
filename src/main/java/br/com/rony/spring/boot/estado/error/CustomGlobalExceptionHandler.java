@@ -17,6 +17,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import br.com.rony.spring.boot.estado.EstadoNaoEncontradoException;
+import br.com.rony.spring.boot.estado.ask.AskUpstreamException;
 import br.com.rony.spring.boot.estado.auth.InvalidCredentialsException;
 import br.com.rony.spring.boot.estado.config.RequestIdFilter;
 import lombok.extern.slf4j.Slf4j;
@@ -84,6 +85,16 @@ public class CustomGlobalExceptionHandler {
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ErrorResponseDto> credenciaisInvalidas(InvalidCredentialsException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(corpo(ex.getMessage()));
+    }
+
+    // Falha ao chamar o estado-ai-agent (timeout, DNS, 5xx do proprio ai-agent)
+    // - 502 (Bad Gateway), nao 500: o erro nao e deste backend, e do upstream
+    // que ele proxya. Mensagem da excecao e segura de expor (fixa, definida
+    // no proprio AskProxyService), diferente do catch-all generico abaixo.
+    @ExceptionHandler(AskUpstreamException.class)
+    public ResponseEntity<ErrorResponseDto> askUpstreamFalhou(AskUpstreamException ex) {
+        log.warn("Falha ao consultar o estado-ai-agent", ex);
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(corpo(ex.getMessage()));
     }
 
     // Sem rota/recurso estatico correspondente a URL pedida (ex: typo no path,
