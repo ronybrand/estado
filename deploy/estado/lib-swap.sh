@@ -8,8 +8,8 @@
 # rede/DNS do Compose estao ok, nao so que o processo subiu.
 #
 # Requer no ambiente: CURRENT, NEXT, POSTGRES_PASSWORD, API_ORIGIN_PERMITIDA,
-# ADMIN_PASSWORD_HASH, JWT_SECRET (via .env, carregado com "set -a" pelo
-# chamador).
+# ADMIN_PASSWORD_HASH, JWT_SECRET, ASK_API_KEY, ASK_API_BASE_URL (via .env,
+# carregado com "set -a" pelo chamador).
 
 swap_to() {
     local image="$1"
@@ -26,6 +26,8 @@ swap_to() {
         -e ADMIN_USERNAME="${ADMIN_USERNAME:-admin}" \
         -e ADMIN_PASSWORD_HASH="$ADMIN_PASSWORD_HASH" \
         -e JWT_SECRET="$JWT_SECRET" \
+        -e ASK_API_KEY="$ASK_API_KEY" \
+        -e ASK_API_BASE_URL="$ASK_API_BASE_URL" \
         -e SPRINGDOC_API_DOCS_ENABLED=false \
         -e SPRINGDOC_SWAGGER_UI_ENABLED=false \
         "$image" >/dev/null
