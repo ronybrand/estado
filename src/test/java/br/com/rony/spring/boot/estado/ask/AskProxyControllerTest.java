@@ -1,7 +1,6 @@
 package br.com.rony.spring.boot.estado.ask;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -68,7 +67,7 @@ class AskProxyControllerTest {
                 }))
                 .andExpect(status().isOk());
 
-        verify(askProxyService).ask(eq(new AskProxyRequestDto("Qual a capital do Parana?")), eq("203.0.113.5"));
+        verify(askProxyService).ask(new AskProxyRequestDto("Qual a capital do Parana?"), "203.0.113.5");
     }
 
     @Test

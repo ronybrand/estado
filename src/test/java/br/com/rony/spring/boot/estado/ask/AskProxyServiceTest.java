@@ -55,8 +55,9 @@ class AskProxyServiceTest {
     @Test
     void deveLancarAskUpstreamExceptionQuandoOUpstreamFalha() {
         server.expect(requestTo(BASE_URL + "/ask")).andRespond(withServerError());
+        AskProxyRequestDto request = new AskProxyRequestDto("Qual a capital do Parana?");
 
-        assertThatThrownBy(() -> service.ask(new AskProxyRequestDto("Qual a capital do Parana?"), CLIENT_IP))
+        assertThatThrownBy(() -> service.ask(request, CLIENT_IP))
                 .isInstanceOf(AskUpstreamException.class);
     }
 }

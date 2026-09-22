@@ -22,6 +22,10 @@ import lombok.RequiredArgsConstructor;
 @EnableSpringDataWebSupport(pageSerializationMode = PageSerializationMode.VIA_DTO)
 public class WebConfig implements WebMvcConfigurer {
 
+    private static final String OPTIONS = "OPTIONS";
+    private static final String CONTENT_TYPE = "Content-Type";
+    private static final String ACCEPT = "Accept";
+
     private final ApiProperty apiProperty;
     private final PaginationProperty paginationProperty;
 
@@ -34,15 +38,15 @@ public class WebConfig implements WebMvcConfigurer {
         // /auth/login bloqueado pelo browser mesmo com a origem na allowlist.
         registry.addMapping("/estado/**")
                 .allowedOrigins(apiProperty.getOriginPermitida().toArray(new String[0]))
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("Authorization", "Content-Type", "Accept")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", OPTIONS)
+                .allowedHeaders("Authorization", CONTENT_TYPE, ACCEPT)
                 .allowCredentials(true)
                 .maxAge(3600);
 
         registry.addMapping("/auth/**")
                 .allowedOrigins(apiProperty.getOriginPermitida().toArray(new String[0]))
-                .allowedMethods("POST", "OPTIONS")
-                .allowedHeaders("Authorization", "Content-Type", "Accept")
+                .allowedMethods("POST", OPTIONS)
+                .allowedHeaders("Authorization", CONTENT_TYPE, ACCEPT)
                 .allowCredentials(true)
                 .maxAge(3600);
 
@@ -53,8 +57,8 @@ public class WebConfig implements WebMvcConfigurer {
         // precisa do browser anexar credenciais.
         registry.addMapping("/ask")
                 .allowedOrigins(apiProperty.getOriginPermitida().toArray(new String[0]))
-                .allowedMethods("POST", "OPTIONS")
-                .allowedHeaders("Content-Type", "Accept")
+                .allowedMethods("POST", OPTIONS)
+                .allowedHeaders(CONTENT_TYPE, ACCEPT)
                 .maxAge(3600);
     }
 
