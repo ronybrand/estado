@@ -38,7 +38,7 @@ class AskProxyServiceTest {
         property.setBaseUrl(BASE_URL);
         property.setApiKey("chave-de-teste");
 
-        service = new AskProxyService(builder, property, new com.fasterxml.jackson.databind.ObjectMapper());
+        service = new AskProxyService(builder, property);
     }
 
     private static final String REQUEST_ID = "8f14e45f-ceea-4b78-8b0f-000000000001";

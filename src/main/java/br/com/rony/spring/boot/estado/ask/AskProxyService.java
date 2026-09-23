@@ -38,12 +38,16 @@ public class AskProxyService {
 
     private final RestClient restClient;
     private final AskApiProperty askApiProperty;
-    private final ObjectMapper objectMapper;
+    // new ObjectMapper() direto, nao injetado: o Boot 4 deste projeto so
+    // disponibiliza um bean tools.jackson.databind.ObjectMapper (Jackson 3)
+    // via autoconfig, entao um construtor pedindo o tipo Jackson 2 (usado
+    // aqui e no resto do projeto) quebra o boot com NoSuchBeanDefinitionException
+    // - mesmo motivo documentado em RateLimitFilter.
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public AskProxyService(RestClient.Builder restClientBuilder, AskApiProperty askApiProperty, ObjectMapper objectMapper) {
+    public AskProxyService(RestClient.Builder restClientBuilder, AskApiProperty askApiProperty) {
         this.restClient = restClientBuilder.baseUrl(askApiProperty.getBaseUrl()).build();
         this.askApiProperty = askApiProperty;
-        this.objectMapper = objectMapper;
     }
 
     public AskProxyResponseDto ask(AskProxyRequestDto request, String clientIp, String requestId) {
