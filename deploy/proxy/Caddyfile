@@ -1,12 +1,16 @@
 54.94.231.248.sslip.io {
-	# /actuator/** nunca deveria ser alcançável de fora — o Alloy já faz scrape
-	# de /actuator/prometheus via rede Docker interna (estado-app:8080 direto,
-	# ver deploy/alloy/config.alloy) e o rolling swap consulta /actuator/health
-	# via curl interno (lib-swap.sh); nenhum consumidor real passa pelo Caddy.
-	# Bloqueado antes do handle_path /api/* de propósito — sem isso,
-	# /api/actuator/prometheus escaparia deste bloco e chegaria ao backend
-	# mesmo assim. 404 em vez de 403 pra não confirmar que a rota existe.
-	@actuator path /actuator* /api/actuator*
+	# /actuator/health e /actuator/prometheus nunca deveriam ser alcançáveis de
+	# fora — o Alloy já faz scrape de /actuator/prometheus via rede Docker
+	# interna (estado-app:8080 direto, ver deploy/alloy/config.alloy) e o
+	# rolling swap consulta /actuator/health via curl interno (lib-swap.sh);
+	# nenhum consumidor real passa pelo Caddy. Bloqueado antes do
+	# handle_path /api/* de propósito — sem isso, escapariam deste bloco e
+	# chegariam ao backend mesmo assim. 404 em vez de 403 pra não confirmar
+	# que a rota existe.
+	# /actuator/info fica de fora do bloqueio: é build-info sem dado sensível,
+	# exposto de propósito (ver application.yml) para o footer do front Angular
+	# mostrar a versão do backend.
+	@actuator path /actuator/health* /actuator/prometheus* /api/actuator/health* /api/actuator/prometheus*
 	handle @actuator {
 		respond 404
 	}
