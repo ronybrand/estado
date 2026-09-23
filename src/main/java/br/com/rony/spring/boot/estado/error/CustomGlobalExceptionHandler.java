@@ -87,14 +87,18 @@ public class CustomGlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(corpo(ex.getMessage()));
     }
 
-    // Falha ao chamar o estado-ai-agent (timeout, DNS, 5xx do proprio ai-agent)
-    // - 502 (Bad Gateway), nao 500: o erro nao e deste backend, e do upstream
-    // que ele proxya. Mensagem da excecao e segura de expor (fixa, definida
-    // no proprio AskProxyService), diferente do catch-all generico abaixo.
+    // Falha ao chamar o estado-ai-agent. Status default 502 (Bad Gateway,
+    // nao 500: o erro nao e deste backend, e do upstream que ele proxya) para
+    // timeout/DNS/5xx do upstream - mas AskProxyService pode setar um status
+    // diferente (400/429) quando o upstream respondeu algo que faz sentido
+    // repassar ao cliente final em vez de mascarar como falha generica.
+    // Mensagem da excecao e segura de expor (definida em AskProxyService a
+    // partir de um conjunto fixo de casos, nunca da mensagem crua da causa),
+    // diferente do catch-all generico abaixo.
     @ExceptionHandler(AskUpstreamException.class)
     public ResponseEntity<ErrorResponseDto> askUpstreamFalhou(AskUpstreamException ex) {
         log.warn("Falha ao consultar o estado-ai-agent", ex);
-        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(corpo(ex.getMessage()));
+        return ResponseEntity.status(ex.getStatus()).body(corpo(ex.getMessage()));
     }
 
     // Sem rota/recurso estatico correspondente a URL pedida (ex: typo no path,

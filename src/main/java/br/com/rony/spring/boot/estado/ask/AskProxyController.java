@@ -3,10 +3,12 @@ package br.com.rony.spring.boot.estado.ask;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
+import org.slf4j.MDC;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.com.rony.spring.boot.estado.config.RequestIdFilter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,6 +30,6 @@ public class AskProxyController {
     @ApiResponse(responseCode = "502", description = "Falha ao consultar o estado-ai-agent")
     @PostMapping("/ask")
     public AskProxyResponseDto ask(@Valid @RequestBody AskProxyRequestDto request, HttpServletRequest httpRequest) {
-        return askProxyService.ask(request, httpRequest.getRemoteAddr());
+        return askProxyService.ask(request, httpRequest.getRemoteAddr(), MDC.get(RequestIdFilter.MDC_KEY));
     }
 }
