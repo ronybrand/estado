@@ -82,7 +82,7 @@ public class AskProxyService {
             if (message != null && message.isTextual() && !message.asText().isBlank()) {
                 return java.util.Optional.of(message.asText());
             }
-        } catch (Exception parseFailure) {
+        } catch (Exception _) {
             // Corpo do erro upstream nao e o JSON esperado - cai no fallback
             // generico abaixo em vez de propagar uma falha de parsing.
         }
