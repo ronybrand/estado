@@ -9,7 +9,7 @@
 
 CRUD project for Brazilian federative units (states).
 
-The Estado project is a system built on Java 25/Spring Boot 4, with Gradle for dependency management and PostgreSQL as the database, exposing an HTTP service. The frontend (Angular, separate [`angular_estado`](https://github.com/ronybrand/angular_estado) repo) is served as a static bundle via S3 + CloudFront, with the API reachable at `/api/*` under the same domain (see ADR 0013). A second, alternate frontend for the same API exists in React: [`react_state`](https://github.com/ronybrand/react_state).
+The Estado project is a system built on Java 25/Spring Boot 4, with Gradle for dependency management and PostgreSQL as the database, exposing an HTTP service. The frontend (Angular, separate [`angular_estado`](https://github.com/ronybrand/angular_estado) repo) is served as a static bundle via S3 + CloudFront, with the API reachable at `/api/*` under the same domain (see ADR 0013). A second, alternate frontend for the same API exists in React: [`react_state`](https://github.com/ronybrand/react_state). `/ask` proxies (`AskProxyService`) to a separate LLM agent, [`estado-ai-agent`](https://github.com/ronybrand/estado-ai-agent) (Spring AI + Gemini, tool calling against this same API), so the Angular frontend never talks to it directly.
 
 **Live**: https://d3bqbg07tehy1h.cloudfront.net/ (frontend, S3 + CloudFront) · API at
 https://54.94.231.248.sslip.io/estado (also reachable via `/api/estado` under the same
@@ -37,22 +37,27 @@ flowchart LR
         App["estado-app\n(Spring Boot)"]
         DB[("Postgres")]
         Alloy["Grafana Alloy"]
+        Agent["estado-ai-agent\n(Spring AI)"]
     end
 
     Grafana["Grafana Cloud"]
+    Gemini["Google Gemini"]
 
     Browser -- "/ (static)" --> S3
     Browser -- "/api/*" --> Caddy
     Caddy --> App
     App --> DB
+    App -- "/ask (AskProxyService)" --> Agent
+    Agent -- "tool calling: /estado/*" --> App
+    Agent --> Gemini
     Alloy -- "scrape /actuator/prometheus" --> App
     Alloy -- metrics/logs --> Grafana
 ```
 
-A single EC2 instance runs the three Docker containers (app, Postgres, Alloy) via
-Compose + `deploy.sh`, with a zero-downtime rolling swap triggered by a systemd
-timer every 5min, whenever a new image lands in GHCR (see [`deploy/`](deploy/) and
-`docs/adr/`). The frontend (separate
+A single EC2 instance runs the four Docker containers (app, Postgres, Alloy,
+estado-ai-agent) via Compose + `deploy.sh`, with a zero-downtime rolling swap
+triggered by a systemd timer every 5min, whenever a new image lands in GHCR
+(see [`deploy/`](deploy/) and `docs/adr/`). The frontend (separate
 [`angular_estado`](https://github.com/ronybrand/angular_estado) repo) is
 published independently to S3/CloudFront.
 
