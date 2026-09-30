@@ -123,7 +123,7 @@ public class RateLimitFilter extends OncePerRequestFilter implements Ordered {
         try {
             InetAddress.ofLiteral(valor);
             return true;
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             return false;
         }
     }
