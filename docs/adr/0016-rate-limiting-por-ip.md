@@ -35,6 +35,15 @@ nao substitui autenticacao, complementa.
   partir do `X-Forwarded-For` que o Caddy ja injeta. Seguro confiar nesse header aqui porque o
   container `estado-app` so e alcancavel via Caddy - a porta 8080 nunca e publicada pro host (ver
   ADR 0012), entao ninguem consegue falar direto com a app pra forjar o header.
+- **Frontend React na Vercel**: o BFF (`react_estado`, rota `/api`) chega ao Caddy com o IP de
+  saida da propria Vercel, entao todo visitante dividiria um unico bucket - 5 logins por minuto
+  para o site inteiro, trivial de esgotar. O BFF repassa o IP real (`x-vercel-forwarded-for`, que a
+  Vercel define e o cliente nao consegue forjar) em `X-Client-IP`, acompanhado de
+  `X-Proxy-Secret`. O `RateLimitFilter` so usa `X-Client-IP` quando o segredo confere
+  (`RATE_LIMIT_PROXY_SECRET`, comparacao em tempo constante) e o valor e um IP literal; sem
+  segredo configurado, ou com segredo errado, cai no IP da conexao como antes. O segredo e
+  necessario porque a Vercel nao publica faixas de IP estaveis para o Caddy confiar via
+  `trusted_proxies`.
 
 ## Alternativas consideradas
 - **Nao fazer nada / esperar por autenticacao**: autenticacao e a correcao de raiz do problema mais
