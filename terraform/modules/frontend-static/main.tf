@@ -145,6 +145,24 @@ resource "aws_cloudfront_response_headers_policy" "frontend" {
       override                = true
     }
   }
+
+  # Permissions-Policy e COOP nao tem bloco dedicado em
+  # security_headers_config, entao entram como custom headers. O front nao
+  # usa camera/microfone/geolocalizacao; COOP same-origin isola o contexto
+  # de navegacao de janelas abertas por outras origens.
+  custom_headers_config {
+    items {
+      header   = "Permissions-Policy"
+      value    = "camera=(), microphone=(), geolocation=()"
+      override = true
+    }
+
+    items {
+      header   = "Cross-Origin-Opener-Policy"
+      value    = "same-origin"
+      override = true
+    }
+  }
 }
 
 resource "aws_cloudfront_origin_access_control" "frontend" {
