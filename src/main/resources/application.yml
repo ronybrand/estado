@@ -15,6 +15,14 @@ spring:
     open-in-view: false
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.xml
+  autoconfigure:
+    exclude:
+      # Sem UserDetailsService proprio (autenticacao e so o JwtAuthFilter, ADR
+      # 0017 - e o SecurityConfig nao habilita httpBasic/formLogin), o Boot
+      # criaria um usuario "user" com senha aleatoria que nada usa e ainda a
+      # imprimiria no log de todo boot (e o Alloy envia esse log pro Grafana
+      # Cloud).
+      - org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
 pagination:
   # Limite no servidor independente do que o cliente pedir em ?size= - sem
   # isso o default do Spring Data (2000) permite uma pagina grande o
