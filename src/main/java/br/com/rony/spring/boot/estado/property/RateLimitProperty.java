@@ -24,4 +24,8 @@ public class RateLimitProperty {
 
     private int loginJanelaSegundos = 60;
 
+    // Vazio (default) desliga a confianca em X-Client-IP: so o IP da conexao
+    // e usado, como antes. Ver RateLimitFilter.resolverIp.
+    private String proxySecret = "";
+
 }

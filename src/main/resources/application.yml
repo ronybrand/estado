@@ -32,6 +32,8 @@ rate-limit:
   # restritivo, aplicado apenas a POST /auth/login.
   login-capacidade: ${LOGIN_RATE_LIMIT_CAPACIDADE:5}
   login-janela-segundos: ${LOGIN_RATE_LIMIT_JANELA_SEGUNDOS:60}
+  # Segredo compartilhado com o BFF do frontend React (ver RateLimitFilter).
+  proxy-secret: ${RATE_LIMIT_PROXY_SECRET:}
 admin:
   # Usuario admin unico, sem tabela de usuarios (ADR 0017). O hash da senha
   # nao tem default - falha rapido no boot em vez de rodar com credencial
