@@ -24,6 +24,10 @@ jobs:
       TF_VAR_admin_cidr: ${{ secrets.ADMIN_CIDR }}
       TF_VAR_frontend_bucket_name: ${{ vars.FRONTEND_BUCKET_NAME }}
       TF_VAR_frontend_github_repo: ${{ vars.FRONTEND_GITHUB_REPO }}
+      # Opcional (default vazio), mas precisa do mesmo valor aplicado: sem
+      # ele o plan enxerga o header X-Proxy-Secret do origin como "a remover"
+      # e o drift-check falha toda semana.
+      TF_VAR_proxy_secret: ${{ secrets.RATE_LIMIT_PROXY_SECRET }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 

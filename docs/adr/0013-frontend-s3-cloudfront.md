@@ -65,6 +65,19 @@ distribution).
   valor de logar acesso a assets estáticos de baixíssimo tráfego não paga o
   custo de mais um componente rodando + ingestão no Grafana Cloud. Registrado
   aqui como próximo passo, não como esquecimento.
+- IP real do visitante para o rate limit (ADR 0016): o Caddy só vê o IP de borda
+  do CloudFront (descarta o `X-Forwarded-For` de peers não confiáveis), então o
+  limite por IP viraria "por nó de borda". Uma CloudFront Function no behavior
+  `/api/*` copia `event.viewer.ip` para `X-Client-IP` (sobrescrevendo o que o
+  visitante mandar) e o origin `api-backend` envia `X-Proxy-Secret` como header
+  customizado (também sobrescreve o do visitante). O backend só confia no
+  `X-Client-IP` quando o segredo confere - o mesmo mecanismo do frontend React
+  na Vercel, com um único caminho no `RateLimitFilter`. Descartado
+  `trusted_proxies` com as faixas de IP publicadas do CloudFront: a lista muda
+  com o tempo e, sem `trusted_proxies_strict` + `header_up`, confiar no
+  `X-Forwarded-For` deixa o IP forjável (o CloudFront acrescenta o IP do
+  visitante ao header que o cliente já mandou). `proxy_secret` (variável
+  Terraform sensível, default vazio) fica no state, criptografado no S3.
 
 ## Alternativas consideradas
 - **Manter servindo pelo Spring Boot**: mais simples (zero infra nova), mas

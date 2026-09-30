@@ -24,6 +24,7 @@ module "estado_frontend" {
 
   bucket_name       = var.frontend_bucket_name
   api_origin_domain = "${module.portfolio.public_ip}.sslip.io"
+  proxy_secret      = var.proxy_secret
 }
 
 module "estado_frontend_deploy" {

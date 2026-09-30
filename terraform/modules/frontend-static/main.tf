@@ -195,6 +195,27 @@ resource "aws_cloudfront_function" "spa_fallback" {
   EOT
 }
 
+# Sem isso o backend so enxerga o IP de borda do CloudFront (o Caddy descarta o
+# X-Forwarded-For de peers nao confiaveis), e o rate limit por IP do
+# RateLimitFilter (ADR 0016) vira "por no de borda" em vez de por visitante.
+# Roda so em /api/* e SOBRESCREVE qualquer x-client-ip enviado pelo visitante,
+# entao o valor que chega ao origin e sempre o IP visto pelo CloudFront.
+# Sozinho nao basta: o backend so confia no header junto com o segredo
+# compartilhado (custom_header X-Proxy-Secret no origin abaixo).
+resource "aws_cloudfront_function" "api_client_ip" {
+  name    = "estado-api-client-ip"
+  runtime = "cloudfront-js-2.0"
+  publish = true
+  comment = "Repassa o IP do visitante ao backend em X-Client-IP (rate limit por IP, ADR 0016)"
+  code    = <<-EOT
+    function handler(event) {
+      var request = event.request;
+      request.headers['x-client-ip'] = { value: event.viewer.ip };
+      return request;
+    }
+  EOT
+}
+
 resource "aws_cloudfront_distribution" "frontend" {
   enabled             = true
   default_root_object = "index.html"
@@ -219,6 +240,17 @@ resource "aws_cloudfront_distribution" "frontend" {
       https_port             = 443
       origin_protocol_policy = "https-only"
       origin_ssl_protocols   = ["TLSv1.2"]
+    }
+
+    # Header customizado do origin sobrescreve um X-Proxy-Secret que o visitante
+    # tente mandar. nonsensitive so no "esta definido?" (um bool): for_each nao
+    # aceita valor sensivel, e saber se o segredo existe nao o revela.
+    dynamic "custom_header" {
+      for_each = nonsensitive(var.proxy_secret != "") ? [1] : []
+      content {
+        name  = "X-Proxy-Secret"
+        value = var.proxy_secret
+      }
     }
   }
 
@@ -245,6 +277,11 @@ resource "aws_cloudfront_distribution" "frontend" {
     viewer_protocol_policy   = "https-only"
     cache_policy_id          = data.aws_cloudfront_cache_policy.caching_disabled.id
     origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer.id
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.api_client_ip.arn
+    }
   }
 
   logging_config {

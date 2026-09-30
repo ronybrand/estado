@@ -25,6 +25,13 @@ variable "frontend_github_repo" {
   type        = string
 }
 
+variable "proxy_secret" {
+  description = "Segredo compartilhado com o backend (RATE_LIMIT_PROXY_SECRET, mesmo valor de BACKEND_PROXY_SECRET no frontend React na Vercel) - deixa o CloudFront repassar o IP real do visitante ao rate limit por IP, ver ADR 0016. Vazio desliga (o limite volta a ser por no de borda)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 variable "backend_github_repo" {
   description = "Repo do GitHub deste projeto (backend + Terraform), autorizado a assumir a role read-only do drift-check via OIDC, formato owner/repo - ver ADR 0015"
   type        = string
