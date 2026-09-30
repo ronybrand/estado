@@ -8,6 +8,13 @@ variable "api_origin_domain" {
   type        = string
 }
 
+variable "proxy_secret" {
+  description = "Segredo compartilhado com o backend (RATE_LIMIT_PROXY_SECRET), enviado ao origin /api/* em X-Proxy-Secret pra que o RateLimitFilter aceite o X-Client-IP com o IP real do visitante - ver ADR 0016. Vazio = header nao enviado e o limite continua por IP do no de borda"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 variable "price_class" {
   description = "Price class do CloudFront - PriceClass_100 cobre so America do Norte/Europa, suficiente pro publico atual e mais barato que All"
   type        = string

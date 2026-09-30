@@ -9,3 +9,9 @@ frontend_bucket_name = "estado-frontend-<sufixo>"
 # Repo do GitHub do frontend Angular, formato owner/repo - autorizado a
 # assumir a role de deploy via OIDC.
 frontend_github_repo = "<owner>/angular_estado"
+
+# Opcional. Mesmo valor de RATE_LIMIT_PROXY_SECRET no ~/estado/.env da EC2 (e
+# de BACKEND_PROXY_SECRET no frontend React): deixa o CloudFront repassar o IP
+# real do visitante ao rate limit por IP (ADR 0016). Gerar com
+# `openssl rand -base64 32`. Vazio = limite por no de borda, como antes.
+# proxy_secret = "<segredo>"
