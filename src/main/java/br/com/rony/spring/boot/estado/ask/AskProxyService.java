@@ -1,7 +1,9 @@
 package br.com.rony.spring.boot.estado.ask;
 
+import java.util.Optional;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
@@ -75,17 +77,17 @@ public class AskProxyService {
         return new AskUpstreamException(extractMessage(e).orElse(GENERIC_UPSTREAM_FAILURE_MESSAGE), status, e);
     }
 
-    private java.util.Optional<String> extractMessage(RestClientResponseException e) {
+    private Optional<String> extractMessage(RestClientResponseException e) {
         try {
             JsonNode body = objectMapper.readTree(e.getResponseBodyAsString());
             JsonNode message = body.get("message");
-            if (message != null && message.isTextual() && !message.asText().isBlank()) {
-                return java.util.Optional.of(message.asText());
+            if (message != null && message.isTextual() && StringUtils.isNotBlank(message.asText())) {
+                return Optional.of(message.asText());
             }
         } catch (Exception _) {
             // Corpo do erro upstream nao e o JSON esperado - cai no fallback
             // generico abaixo em vez de propagar uma falha de parsing.
         }
-        return java.util.Optional.empty();
+        return Optional.empty();
     }
 }
