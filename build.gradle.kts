@@ -25,6 +25,36 @@ repositories {
 dependencies {
     implementation(platform(SpringBootPlugin.BOM_COORDINATES))
 
+    // Overrides pontuais acima do BOM do Spring Boot 4.1.1, pra CVEs com patch
+    // ja publicado mas que o BOM ainda nao absorveu (so existe 4.1.0/4.1.1 no
+    // Maven Central no momento, ver Dependabot alerts #1-18). Remover cada
+    // constraint quando uma versao nova do Spring Boot trouxer o BOM atualizado
+    // pra essas versoes ou mais recente.
+    constraints {
+        // Tomcat embutido: Incorrect Authorization (FORM auth), Authentication
+        // Bypass (DIGEST, capture-replay) e Improper Access Control - todos
+        // criticos, corrigidos em 11.0.25 (resolvia em 11.0.24 via BOM).
+        implementation("org.apache.tomcat.embed:tomcat-embed-core:11.0.26") {
+            because("CVEs criticos corrigidos em 11.0.25+ (BOM do Spring Boot 4.1.1 ainda resolve 11.0.24)")
+        }
+        // Jackson 2.x: puxado pelo springdoc-openapi/swagger-core, que ainda
+        // nao migrou pro Jackson 3 nativo do Spring Boot 4 - ver comentario em
+        // AskProxyService/RateLimitFilter sobre os dois ObjectMapper coexistindo.
+        implementation("com.fasterxml.jackson.core:jackson-core:2.22.3") {
+            because("ReDoS/DoS corrigidos em 2.22.3 (BOM resolve 2.22.1)")
+        }
+        implementation("com.fasterxml.jackson.core:jackson-databind:2.22.3") {
+            because("Multiplos CVEs corrigidos em 2.22.2/2.22.3 (BOM resolve 2.22.1)")
+        }
+        // Jackson 3.x: o ObjectMapper nativo do Spring Boot 4 (tools.jackson.*).
+        implementation("tools.jackson.core:jackson-core:3.1.7") {
+            because("ReDoS/DoS corrigidos em 3.1.7 (BOM resolve 3.1.5)")
+        }
+        implementation("tools.jackson.core:jackson-databind:3.1.7") {
+            because("Multiplos CVEs corrigidos em 3.1.6/3.1.7 (BOM resolve 3.1.5)")
+        }
+    }
+
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("io.micrometer:micrometer-registry-prometheus")
     implementation("org.springframework.boot:spring-boot-starter-web")
