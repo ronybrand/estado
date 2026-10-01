@@ -18,23 +18,16 @@ repositories {
     mavenCentral()
 }
 
-// CVEs com patch publicado rio acima do que o BOM do Spring Boot 4.1.1 (unica
-// versao 4.1.x no Maven Central ate agora) resolve - ver Dependabot alerts
-// #2-18 e checkCveOverrides abaixo, que detecta quando um override aqui vira
-// redundante (BOM alcancou ou passou a versao pinada) pra poder ser removido.
-val cveOverrides = mapOf(
-    // Tomcat embutido: Incorrect Authorization (FORM auth), Authentication
-    // Bypass (DIGEST, capture-replay) e Improper Access Control - todos
-    // criticos, corrigidos em 11.0.25 (BOM resolvia 11.0.24).
-    "org.apache.tomcat.embed:tomcat-embed-core" to "11.0.26",
-    // Jackson 2.x: puxado pelo springdoc-openapi/swagger-core, que ainda nao
-    // migrou pro Jackson 3 nativo do Spring Boot 4 - ver comentario em
-    // AskProxyService/RateLimitFilter sobre os dois ObjectMapper coexistindo.
-    "com.fasterxml.jackson.core:jackson-core" to "2.22.3",
-    "com.fasterxml.jackson.core:jackson-databind" to "2.22.3",
-    // Jackson 3.x: o ObjectMapper nativo do Spring Boot 4 (tools.jackson.*).
-    "tools.jackson.core:jackson-core" to "3.1.7",
-    "tools.jackson.core:jackson-databind" to "3.1.7",
+// GAs com override de versao acima do BOM abaixo (so o group:name, sem
+// versao) - usado pelo checkCveOverrides para saber quais constraints
+// verificar. A versao pinada em si fica so na declaracao literal da
+// constraint, nunca duplicada aqui.
+val cveOverrideCoordinates = setOf(
+    "org.apache.tomcat.embed:tomcat-embed-core",
+    "com.fasterxml.jackson.core:jackson-core",
+    "com.fasterxml.jackson.core:jackson-databind",
+    "tools.jackson.core:jackson-core",
+    "tools.jackson.core:jackson-databind",
 )
 
 // Import nativo do BOM do Spring Boot em vez do plugin
@@ -44,11 +37,41 @@ val cveOverrides = mapOf(
 dependencies {
     implementation(platform(SpringBootPlugin.BOM_COORDINATES))
 
+    // CVEs com patch publicado rio acima do que o BOM do Spring Boot 4.1.1
+    // (unica versao 4.1.x no Maven Central ate agora) resolve - ver
+    // Dependabot alerts #2-18 e checkCveOverrides abaixo, que detecta quando
+    // um override vira redundante (BOM alcancou ou passou a versao pinada)
+    // pra poder ser removido.
+    //
+    // Declaradas literalmente de proposito, nao geradas via loop/interpolacao
+    // de string a partir de um Map: o parser do Dependabot para Gradle
+    // Kotlin DSL so reconhece dependencias escritas assim - uma versao
+    // anterior gerada dinamicamente fez os jobs de "security update" do
+    // Dependabot falharem com security_update_dependency_not_found (erro
+    // vermelho recorrente no Actions da main, nao so alerta ignorado).
     constraints {
-        cveOverrides.forEach { (coordinate, version) ->
-            implementation("$coordinate:$version") {
-                because("CVE com patch publicado rio acima do BOM do Spring Boot 4.1.1 - ver checkCveOverrides")
-            }
+        // Tomcat embutido: Incorrect Authorization (FORM auth), Authentication
+        // Bypass (DIGEST, capture-replay) e Improper Access Control - todos
+        // criticos, corrigidos em 11.0.25 (BOM resolvia 11.0.24).
+        implementation("org.apache.tomcat.embed:tomcat-embed-core:11.0.26") {
+            because("CVEs criticos corrigidos em 11.0.25+ (BOM do Spring Boot 4.1.1 ainda resolve 11.0.24)")
+        }
+        // Jackson 2.x: puxado pelo springdoc-openapi/swagger-core, que ainda
+        // nao migrou pro Jackson 3 nativo do Spring Boot 4 - ver comentario
+        // em AskProxyService/RateLimitFilter sobre os dois ObjectMapper
+        // coexistindo.
+        implementation("com.fasterxml.jackson.core:jackson-core:2.22.3") {
+            because("ReDoS/DoS corrigidos em 2.22.3 (BOM resolve 2.22.1)")
+        }
+        implementation("com.fasterxml.jackson.core:jackson-databind:2.22.3") {
+            because("Multiplos CVEs corrigidos em 2.22.2/2.22.3 (BOM resolve 2.22.1)")
+        }
+        // Jackson 3.x: o ObjectMapper nativo do Spring Boot 4 (tools.jackson.*).
+        implementation("tools.jackson.core:jackson-core:3.1.7") {
+            because("ReDoS/DoS corrigidos em 3.1.7 (BOM resolve 3.1.5)")
+        }
+        implementation("tools.jackson.core:jackson-databind:3.1.7") {
+            because("Multiplos CVEs corrigidos em 3.1.6/3.1.7 (BOM resolve 3.1.5)")
         }
     }
 
@@ -104,40 +127,50 @@ dependencies {
     testAnnotationProcessor("org.projectlombok:lombok")
 }
 
-// Resolve cada coordenada de cveOverrides numa configuration isolada, so com
-// o BOM do Spring Boot e sem os overrides acima, pra saber que versao o BOM
-// resolveria sozinho hoje - sem isso, nunca ficaria obvio que um override
-// virou redundante depois de um bump no BOM.
-val cveOverridesBomOnly: Configuration = configurations.create("cveOverridesBomOnly") {
-    isCanBeConsumed = false
-}
-
-dependencies {
-    cveOverridesBomOnly(platform(SpringBootPlugin.BOM_COORDINATES))
-    cveOverrides.keys.forEach { coordinate -> cveOverridesBomOnly(coordinate) }
-}
+// Resolve as mesmas coordenadas de cveOverrideCoordinates numa configuration
+// isolada, so com o BOM do Spring Boot e sem as constraints acima, pra saber
+// que versao o BOM resolveria sozinho hoje - sem isso, nunca ficaria obvio
+// que um override virou redundante depois de um bump no BOM.
+//
+// detachedConfiguration, nao configurations.create: uma configuration normal
+// do projeto e varrida pelo Automatic Dependency Submission junto com todas
+// as outras, entao a versao vulneravel que ela resolve de proposito (BOM
+// puro, sem o override) seria submetida ao grafo de dependencias do GitHub
+// como se o projeto realmente dependesse dela - gerou alertas novos e falsos
+// (#19-25) na primeira vez que isso rodou. Uma configuration detached nunca
+// entra no container de configurations do projeto, entao fica fora da
+// varredura.
+val cveOverridesBomOnly: Configuration = configurations.detachedConfiguration(
+    dependencies.platform(SpringBootPlugin.BOM_COORDINATES),
+    *cveOverrideCoordinates.map { coordinate -> dependencies.create(coordinate) }.toTypedArray(),
+)
 
 // Falha com instrucao de qual constraint apagar assim que o BOM do Spring
-// Boot alcancar (ou passar) a versao pinada em cveOverrides - ver ADR 0016
-// (mesmo espirito de "nao deixar uma excecao acumular poeira" das outras
-// decisoes de proporcionalidade deste projeto). Rodado semanalmente junto
-// com o CodeQL (.github/workflows/codeql.yml, cron de segunda as 06h) em vez
-// de ganhar um workflow dedicado so pra isso.
+// Boot alcancar (ou passar) a versao pinada - ver ADR 0016 (mesmo espirito
+// de "nao deixar uma excecao acumular poeira" das outras decisoes de
+// proporcionalidade deste projeto). A versao pinada e lida direto das
+// constraints literais declaradas acima (nunca duplicada num Map, pelo
+// mesmo motivo do comentario ali). Rodado semanalmente junto com o CodeQL
+// (.github/workflows/codeql.yml, cron de segunda as 06h) em vez de ganhar
+// um workflow dedicado so pra isso.
 val checkCveOverrides = tasks.register("checkCveOverrides") {
     group = "verification"
-    description = "Falha se o BOM do Spring Boot ja alcancou a versao de algum override em cveOverrides (pode ser removido)."
+    description = "Falha se o BOM do Spring Boot ja alcancou a versao de alguma constraint de CVE (pode ser removida)."
     doLast {
+        val pinnedVersions = configurations.getByName("implementation").dependencyConstraints
+            .filter { "${it.group}:${it.name}" in cveOverrideCoordinates }
+            .associate { "${it.group}:${it.name}" to it.version!! }
         val bomResolved = cveOverridesBomOnly.resolvedConfiguration.resolvedArtifacts
             .associate { "${it.moduleVersion.id.group}:${it.moduleVersion.id.name}" to it.moduleVersion.id.version }
-        val redundant = cveOverrides.filter { (coordinate, pinned) ->
+        val redundant = pinnedVersions.filter { (coordinate, pinned) ->
             val resolved = bomResolved[coordinate] ?: return@filter false
             compareVersions(resolved, pinned) >= 0
         }
         if (redundant.isNotEmpty()) {
             val detalhe = redundant.entries.joinToString("\n") { (coordinate, pinned) ->
-                "  - $coordinate: BOM ja resolve ${bomResolved[coordinate]} (pinado em $pinned) - remova o override"
+                "  - $coordinate: BOM ja resolve ${bomResolved[coordinate]} (pinado em $pinned) - remova a constraint"
             }
-            throw GradleException("cveOverrides com override redundante, o BOM do Spring Boot ja alcancou:\n$detalhe")
+            throw GradleException("Constraints de CVE redundantes, o BOM do Spring Boot ja alcancou:\n$detalhe")
         }
     }
 }
