@@ -24,12 +24,13 @@ import br.com.rony.spring.boot.estado.auth.SecurityConfig;
 // @Import(SecurityConfig.class): mesmo motivo do AuthControllerTest - e a
 // unica fonte de AdminProperty/JwtProperty, e o filtro precisa de JwtService
 // mockado pra existir como bean. POST /ask e permitAll (ver SecurityConfig),
-// entao o filterChain nao interfere no resultado destes testes.
+// entao o filterChain nao interfere no resultado destes testes. ClientIpResolver
+// vem de WebConfig (@Bean), auto-detectado por @WebMvcTest sem import extra.
 @WebMvcTest(AskProxyController.class)
 @Import(SecurityConfig.class)
 @TestPropertySource(properties = {"admin.username=admin", "admin.password-hash=hash-de-teste",
         "jwt.secret=segredo-de-teste-com-pelo-menos-32-bytes", "jwt.expiration-minutes=60",
-        "rate-limit.login-capacidade=100"})
+        "rate-limit.login-capacidade=100", "rate-limit.proxy-secret=s3cret"})
 class AskProxyControllerTest {
 
     @Autowired
@@ -69,6 +70,47 @@ class AskProxyControllerTest {
                 .andExpect(status().isOk());
 
         verify(askProxyService).ask(eq(new AskProxyRequestDto("Qual a capital do Parana?")), eq("203.0.113.5"), any());
+    }
+
+    // Atras do CloudFront, getRemoteAddr() resolve pro IP de borda do CDN, nao
+    // o visitante real (ver ADR 0013/0016) - sem isso, o rate limit do
+    // estado-ai-agent agruparia todo mundo que passa pelo mesmo no de borda no
+    // mesmo bucket. Mesmo mecanismo X-Client-IP + X-Proxy-Secret que o
+    // RateLimitFilter ja usa pro rate limit deste proprio backend.
+    @Test
+    void deveRepassarIpDoHeaderXClientIpQuandoSegredoConfere() throws Exception {
+        when(askProxyService.ask(any(), any(), any())).thenReturn(new AskProxyResponseDto("Curitiba"));
+
+        mockMvc.perform(post("/ask")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"question\":\"Qual a capital do Parana?\"}")
+                .header("X-Client-IP", "198.51.100.7")
+                .header("X-Proxy-Secret", "s3cret")
+                .with(request -> {
+                    request.setRemoteAddr("64.252.128.1");
+                    return request;
+                }))
+                .andExpect(status().isOk());
+
+        verify(askProxyService).ask(eq(new AskProxyRequestDto("Qual a capital do Parana?")), eq("198.51.100.7"), any());
+    }
+
+    @Test
+    void deveIgnorarHeaderXClientIpQuandoSegredoErrado() throws Exception {
+        when(askProxyService.ask(any(), any(), any())).thenReturn(new AskProxyResponseDto("Curitiba"));
+
+        mockMvc.perform(post("/ask")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"question\":\"Qual a capital do Parana?\"}")
+                .header("X-Client-IP", "198.51.100.7")
+                .header("X-Proxy-Secret", "errado")
+                .with(request -> {
+                    request.setRemoteAddr("64.252.128.1");
+                    return request;
+                }))
+                .andExpect(status().isOk());
+
+        verify(askProxyService).ask(eq(new AskProxyRequestDto("Qual a capital do Parana?")), eq("64.252.128.1"), any());
     }
 
     @Test

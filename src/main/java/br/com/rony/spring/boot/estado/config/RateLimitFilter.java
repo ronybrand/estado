@@ -1,9 +1,6 @@
 package br.com.rony.spring.boot.estado.config;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.time.Duration;
 
 import jakarta.servlet.FilterChain;
@@ -42,10 +39,8 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class RateLimitFilter extends OncePerRequestFilter implements Ordered {
 
-    private static final String CLIENT_IP_HEADER = "X-Client-IP";
-    private static final String PROXY_SECRET_HEADER = "X-Proxy-Secret";
-
     private final RateLimitProperty rateLimitProperty;
+    private final ClientIpResolver clientIpResolver;
     // Instancia propria, nao o bean do Spring: em alguns slices de teste
     // (@WebMvcTest) o ObjectMapper do Jackson ainda nao esta disponivel no
     // momento em que este filtro e criado (achado rodando a suite completa) -
@@ -60,8 +55,9 @@ public class RateLimitFilter extends OncePerRequestFilter implements Ordered {
     private final Cache<String, Bucket> buckets;
     private final Cache<String, Bucket> loginBuckets;
 
-    public RateLimitFilter(RateLimitProperty rateLimitProperty) {
+    public RateLimitFilter(RateLimitProperty rateLimitProperty, ClientIpResolver clientIpResolver) {
         this.rateLimitProperty = rateLimitProperty;
+        this.clientIpResolver = clientIpResolver;
         this.buckets = Caffeine.newBuilder()
                 .expireAfterAccess(Duration.ofSeconds(rateLimitProperty.getJanelaSegundos() * 2L))
                 .build();
@@ -81,7 +77,7 @@ public class RateLimitFilter extends OncePerRequestFilter implements Ordered {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        String ip = resolverIp(request);
+        String ip = clientIpResolver.resolve(request);
         Bucket bucket = buckets.get(ip, chave -> novoBucket());
 
         if (!bucket.tryConsume(1)) {
@@ -95,37 +91,6 @@ public class RateLimitFilter extends OncePerRequestFilter implements Ordered {
         }
 
         filterChain.doFilter(request, response);
-    }
-
-    // O BFF do frontend React (Vercel) chega aqui sempre com o IP de saida da
-    // propria Vercel, entao getRemoteAddr() colocaria todos os visitantes no
-    // mesmo bucket. Ele repassa o IP real em X-Client-IP, mas so e aceito com o
-    // segredo compartilhado: sem isso qualquer cliente que alcance a API
-    // poderia forjar o header e escolher o proprio bucket.
-    private String resolverIp(HttpServletRequest request) {
-        String ipDeclarado = request.getHeader(CLIENT_IP_HEADER);
-        if (ipDeclarado != null && segredoConfere(request.getHeader(PROXY_SECRET_HEADER)) && isIpLiteral(ipDeclarado)) {
-            return ipDeclarado;
-        }
-        return request.getRemoteAddr();
-    }
-
-    private boolean segredoConfere(String segredoRecebido) {
-        String segredoEsperado = rateLimitProperty.getProxySecret();
-        if (segredoEsperado == null || segredoEsperado.isBlank() || segredoRecebido == null) {
-            return false;
-        }
-        return MessageDigest.isEqual(
-                segredoEsperado.getBytes(StandardCharsets.UTF_8), segredoRecebido.getBytes(StandardCharsets.UTF_8));
-    }
-
-    private boolean isIpLiteral(String valor) {
-        try {
-            InetAddress.ofLiteral(valor);
-            return true;
-        } catch (IllegalArgumentException _) {
-            return false;
-        }
     }
 
     private boolean isLogin(HttpServletRequest request) {

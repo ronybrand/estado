@@ -78,6 +78,15 @@ distribution).
   `X-Forwarded-For` deixa o IP forjável (o CloudFront acrescenta o IP do
   visitante ao header que o cliente já mandou). `proxy_secret` (variável
   Terraform sensível, default vazio) fica no state, criptografado no S3.
+- **Lacuna encontrada e corrigida**: `AskProxyController` (o proxy `/ask` pro
+  `estado-ai-agent`) usava `httpRequest.getRemoteAddr()` direto em vez de
+  passar pela mesma resolução `X-Client-IP`/`X-Proxy-Secret` acima - atrás do
+  CloudFront isso repassava o IP de borda do CDN ao agente, não o visitante
+  real, agrupando todo mundo que passa pelo mesmo nó de borda no mesmo bucket
+  de rate limit do `estado-ai-agent`. A lógica de resolução foi extraída do
+  `RateLimitFilter` para `ClientIpResolver` (bean compartilhado, declarado em
+  `WebConfig`) e `AskProxyController` passou a usá-la também, em vez de ter
+  dois caminhos de confiança divergentes pro mesmo header.
 
 ## Alternativas consideradas
 - **Manter servindo pelo Spring Boot**: mais simples (zero infra nova), mas
