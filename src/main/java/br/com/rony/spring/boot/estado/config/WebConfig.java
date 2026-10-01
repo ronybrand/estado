@@ -72,6 +72,15 @@ public class WebConfig implements WebMvcConfigurer {
         return resolver -> resolver.setMaxPageSize(paginationProperty.getMaxSize());
     }
 
+    // Declarado aqui (nao @Component) pro mesmo motivo do pageableCustomizer
+    // acima: precisa existir em qualquer slice de @WebMvcTest que tambem
+    // auto-detecta RateLimitFilter (Filter), e WebConfig (WebMvcConfigurer) ja
+    // e auto-detectado nesses mesmos slices.
+    @Bean
+    public ClientIpResolver clientIpResolver(RateLimitProperty rateLimitProperty) {
+        return new ClientIpResolver(rateLimitProperty);
+    }
+
     @Bean
     public UrlHandlerFilter trailingSlashFilter() {
         return UrlHandlerFilter.trailingSlashHandler("/**").wrapRequest().build();

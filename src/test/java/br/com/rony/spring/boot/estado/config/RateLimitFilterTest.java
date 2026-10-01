@@ -49,24 +49,8 @@ public class RateLimitFilterTest {
         property.setJanelaSegundos(60);
         property.setLoginCapacidade(1);
         property.setLoginJanelaSegundos(60);
-        filter = new RateLimitFilter(property);
+        filter = new RateLimitFilter(property, new ClientIpResolver(property));
         when(request.getRemoteAddr()).thenReturn("127.0.0.1");
-    }
-
-    private RateLimitFilter filtroComProxySecret(String segredo) {
-        RateLimitProperty property = new RateLimitProperty();
-        property.setCapacidade(2);
-        property.setJanelaSegundos(60);
-        property.setProxySecret(segredo);
-        return new RateLimitFilter(property);
-    }
-
-    private HttpServletRequest requisicaoViaProxy(String ipDoCliente, String segredo) {
-        HttpServletRequest requisicao = mock(HttpServletRequest.class);
-        when(requisicao.getRemoteAddr()).thenReturn("76.76.21.21");
-        when(requisicao.getHeader("X-Client-IP")).thenReturn(ipDoCliente);
-        when(requisicao.getHeader("X-Proxy-Secret")).thenReturn(segredo);
-        return requisicao;
     }
 
     @Test
@@ -117,61 +101,9 @@ public class RateLimitFilterTest {
         verify(response).setHeader("Retry-After", "60");
     }
 
-    @Test
-    void usaIpDoHeaderQuandoSegredoConfere() throws ServletException, IOException {
-        RateLimitFilter filtroComSegredo = filtroComProxySecret("s3cret");
-        HttpServletRequest a = requisicaoViaProxy("203.0.113.1", "s3cret");
-        HttpServletRequest b = requisicaoViaProxy("203.0.113.2", "s3cret");
-
-        filtroComSegredo.doFilter(a, response, chain);
-        filtroComSegredo.doFilter(a, response, chain);
-        filtroComSegredo.doFilter(b, response, chain);
-
-        verify(chain, times(3)).doFilter(org.mockito.Mockito.any(), org.mockito.Mockito.eq(response));
-        verify(response, never()).setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
-    }
-
-    @Test
-    void ignoraHeaderQuandoSegredoErrado() throws ServletException, IOException {
-        RateLimitFilter filtroComSegredo = filtroComProxySecret("s3cret");
-        when(response.getWriter()).thenReturn(new PrintWriter(new StringWriter()));
-        HttpServletRequest a = requisicaoViaProxy("203.0.113.1", "errado");
-        HttpServletRequest b = requisicaoViaProxy("203.0.113.2", "errado");
-
-        filtroComSegredo.doFilter(a, response, chain);
-        filtroComSegredo.doFilter(a, response, chain);
-        filtroComSegredo.doFilter(b, response, chain);
-
-        verify(response).setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
-    }
-
-    @Test
-    void ignoraHeaderQuandoNenhumSegredoConfigurado() throws ServletException, IOException {
-        RateLimitFilter filtroSemSegredo = filtroComProxySecret("");
-        when(response.getWriter()).thenReturn(new PrintWriter(new StringWriter()));
-        HttpServletRequest a = requisicaoViaProxy("203.0.113.1", "");
-        HttpServletRequest b = requisicaoViaProxy("203.0.113.2", "");
-
-        filtroSemSegredo.doFilter(a, response, chain);
-        filtroSemSegredo.doFilter(a, response, chain);
-        filtroSemSegredo.doFilter(b, response, chain);
-
-        verify(response).setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
-    }
-
-    @Test
-    void ignoraHeaderQueNaoEUmIpLiteral() throws ServletException, IOException {
-        RateLimitFilter filtroComSegredo = filtroComProxySecret("s3cret");
-        when(response.getWriter()).thenReturn(new PrintWriter(new StringWriter()));
-        HttpServletRequest a = requisicaoViaProxy("nao-e-um-ip", "s3cret");
-        HttpServletRequest b = requisicaoViaProxy("outro-lixo", "s3cret");
-
-        filtroComSegredo.doFilter(a, response, chain);
-        filtroComSegredo.doFilter(a, response, chain);
-        filtroComSegredo.doFilter(b, response, chain);
-
-        verify(response).setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
-    }
+    // Resolucao do IP real atras de um proxy (X-Client-IP + X-Proxy-Secret) e
+    // testada em ClientIpResolverTest - RateLimitFilter so delega pro
+    // ClientIpResolver agora, sem logica propria pra duplicar aqui.
 
     @Test
     void limitaLoginComBucketDedicado() throws ServletException, IOException {
