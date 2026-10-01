@@ -18,6 +18,25 @@ repositories {
     mavenCentral()
 }
 
+// CVEs com patch publicado rio acima do que o BOM do Spring Boot 4.1.1 (unica
+// versao 4.1.x no Maven Central ate agora) resolve - ver Dependabot alerts
+// #2-18 e checkCveOverrides abaixo, que detecta quando um override aqui vira
+// redundante (BOM alcancou ou passou a versao pinada) pra poder ser removido.
+val cveOverrides = mapOf(
+    // Tomcat embutido: Incorrect Authorization (FORM auth), Authentication
+    // Bypass (DIGEST, capture-replay) e Improper Access Control - todos
+    // criticos, corrigidos em 11.0.25 (BOM resolvia 11.0.24).
+    "org.apache.tomcat.embed:tomcat-embed-core" to "11.0.26",
+    // Jackson 2.x: puxado pelo springdoc-openapi/swagger-core, que ainda nao
+    // migrou pro Jackson 3 nativo do Spring Boot 4 - ver comentario em
+    // AskProxyService/RateLimitFilter sobre os dois ObjectMapper coexistindo.
+    "com.fasterxml.jackson.core:jackson-core" to "2.22.3",
+    "com.fasterxml.jackson.core:jackson-databind" to "2.22.3",
+    // Jackson 3.x: o ObjectMapper nativo do Spring Boot 4 (tools.jackson.*).
+    "tools.jackson.core:jackson-core" to "3.1.7",
+    "tools.jackson.core:jackson-databind" to "3.1.7",
+)
+
 // Import nativo do BOM do Spring Boot em vez do plugin
 // io.spring.dependency-management - este projeto nunca precisou de override
 // de versao por propriedade, entao nao ha motivo pra carregar um segundo
@@ -25,33 +44,11 @@ repositories {
 dependencies {
     implementation(platform(SpringBootPlugin.BOM_COORDINATES))
 
-    // Overrides pontuais acima do BOM do Spring Boot 4.1.1, pra CVEs com patch
-    // ja publicado mas que o BOM ainda nao absorveu (so existe 4.1.0/4.1.1 no
-    // Maven Central no momento, ver Dependabot alerts #1-18). Remover cada
-    // constraint quando uma versao nova do Spring Boot trouxer o BOM atualizado
-    // pra essas versoes ou mais recente.
     constraints {
-        // Tomcat embutido: Incorrect Authorization (FORM auth), Authentication
-        // Bypass (DIGEST, capture-replay) e Improper Access Control - todos
-        // criticos, corrigidos em 11.0.25 (resolvia em 11.0.24 via BOM).
-        implementation("org.apache.tomcat.embed:tomcat-embed-core:11.0.26") {
-            because("CVEs criticos corrigidos em 11.0.25+ (BOM do Spring Boot 4.1.1 ainda resolve 11.0.24)")
-        }
-        // Jackson 2.x: puxado pelo springdoc-openapi/swagger-core, que ainda
-        // nao migrou pro Jackson 3 nativo do Spring Boot 4 - ver comentario em
-        // AskProxyService/RateLimitFilter sobre os dois ObjectMapper coexistindo.
-        implementation("com.fasterxml.jackson.core:jackson-core:2.22.3") {
-            because("ReDoS/DoS corrigidos em 2.22.3 (BOM resolve 2.22.1)")
-        }
-        implementation("com.fasterxml.jackson.core:jackson-databind:2.22.3") {
-            because("Multiplos CVEs corrigidos em 2.22.2/2.22.3 (BOM resolve 2.22.1)")
-        }
-        // Jackson 3.x: o ObjectMapper nativo do Spring Boot 4 (tools.jackson.*).
-        implementation("tools.jackson.core:jackson-core:3.1.7") {
-            because("ReDoS/DoS corrigidos em 3.1.7 (BOM resolve 3.1.5)")
-        }
-        implementation("tools.jackson.core:jackson-databind:3.1.7") {
-            because("Multiplos CVEs corrigidos em 3.1.6/3.1.7 (BOM resolve 3.1.5)")
+        cveOverrides.forEach { (coordinate, version) ->
+            implementation("$coordinate:$version") {
+                because("CVE com patch publicado rio acima do BOM do Spring Boot 4.1.1 - ver checkCveOverrides")
+            }
         }
     }
 
@@ -105,6 +102,59 @@ dependencies {
     testCompileOnly("org.projectlombok:lombok")
     testAnnotationProcessor(platform(SpringBootPlugin.BOM_COORDINATES))
     testAnnotationProcessor("org.projectlombok:lombok")
+}
+
+// Resolve cada coordenada de cveOverrides numa configuration isolada, so com
+// o BOM do Spring Boot e sem os overrides acima, pra saber que versao o BOM
+// resolveria sozinho hoje - sem isso, nunca ficaria obvio que um override
+// virou redundante depois de um bump no BOM.
+val cveOverridesBomOnly: Configuration = configurations.create("cveOverridesBomOnly") {
+    isCanBeConsumed = false
+}
+
+dependencies {
+    cveOverridesBomOnly(platform(SpringBootPlugin.BOM_COORDINATES))
+    cveOverrides.keys.forEach { coordinate -> cveOverridesBomOnly(coordinate) }
+}
+
+// Falha com instrucao de qual constraint apagar assim que o BOM do Spring
+// Boot alcancar (ou passar) a versao pinada em cveOverrides - ver ADR 0016
+// (mesmo espirito de "nao deixar uma excecao acumular poeira" das outras
+// decisoes de proporcionalidade deste projeto). Rodado semanalmente junto
+// com o CodeQL (.github/workflows/codeql.yml, cron de segunda as 06h) em vez
+// de ganhar um workflow dedicado so pra isso.
+val checkCveOverrides = tasks.register("checkCveOverrides") {
+    group = "verification"
+    description = "Falha se o BOM do Spring Boot ja alcancou a versao de algum override em cveOverrides (pode ser removido)."
+    doLast {
+        val bomResolved = cveOverridesBomOnly.resolvedConfiguration.resolvedArtifacts
+            .associate { "${it.moduleVersion.id.group}:${it.moduleVersion.id.name}" to it.moduleVersion.id.version }
+        val redundant = cveOverrides.filter { (coordinate, pinned) ->
+            val resolved = bomResolved[coordinate] ?: return@filter false
+            compareVersions(resolved, pinned) >= 0
+        }
+        if (redundant.isNotEmpty()) {
+            val detalhe = redundant.entries.joinToString("\n") { (coordinate, pinned) ->
+                "  - $coordinate: BOM ja resolve ${bomResolved[coordinate]} (pinado em $pinned) - remova o override"
+            }
+            throw GradleException("cveOverrides com override redundante, o BOM do Spring Boot ja alcancou:\n$detalhe")
+        }
+    }
+}
+
+// Comparacao numerica simples (1.2.3 vs 1.2.10): suficiente pras versoes
+// puramente numericas do Tomcat/Jackson hoje em cveOverrides; nao trata
+// qualificadores tipo "-RC1" - se um dia aparecer, o parse cai pra 0 e o
+// task so fica mais conservador (prefere nao sinalizar remocao em vez de
+// sinalizar errado).
+fun compareVersions(a: String, b: String): Int {
+    val partsA = a.split(".").map { it.toIntOrNull() ?: 0 }
+    val partsB = b.split(".").map { it.toIntOrNull() ?: 0 }
+    for (i in 0 until maxOf(partsA.size, partsB.size)) {
+        val cmp = (partsA.getOrElse(i) { 0 }).compareTo(partsB.getOrElse(i) { 0 })
+        if (cmp != 0) return cmp
+    }
+    return 0
 }
 
 // Agente do Byte Buddy para o inline-mock-maker do Mockito no Java 21+ - sem

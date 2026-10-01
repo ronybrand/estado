@@ -25,3 +25,18 @@ jobs:
           build-mode: manual
       - run: ./gradlew --no-daemon compileJava
       - uses: github/codeql-action/analyze@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
+
+  check-cve-overrides:
+    # So roda no cron semanal, nao em todo PR/push - o objetivo e detectar um
+    # override esquecido depois que o BOM do Spring Boot avanca, nao travar
+    # desenvolvimento do dia a dia (ver build.gradle.kts, cveOverrides).
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: gradle
+      - run: ./gradlew --no-daemon checkCveOverrides
