@@ -6,6 +6,8 @@ import java.security.MessageDigest;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.apache.commons.lang3.StringUtils;
+
 import br.com.rony.spring.boot.estado.property.RateLimitProperty;
 
 // Extraido do RateLimitFilter (ver ADR 0016) pra ser reutilizado por quem
@@ -42,7 +44,7 @@ public class ClientIpResolver {
 
     private boolean segredoConfere(String segredoRecebido) {
         String segredoEsperado = rateLimitProperty.getProxySecret();
-        if (segredoEsperado == null || segredoEsperado.isBlank() || segredoRecebido == null) {
+        if (StringUtils.isBlank(segredoEsperado) || segredoRecebido == null) {
             return false;
         }
         return MessageDigest.isEqual(
