@@ -28,6 +28,11 @@ val cveOverrideCoordinates = setOf(
     "com.fasterxml.jackson.core:jackson-databind",
     "tools.jackson.core:jackson-core",
     "tools.jackson.core:jackson-databind",
+    // commons-lang3 fica de fora de proposito: o BOM do Spring Boot ja
+    // resolve a versao patcheada sozinho (3.20.0), a constraint dela abaixo
+    // existe so pro Dependabot ter algo literal pra reconhecer, nao porque
+    // o BOM esta atrasado - checkCveOverrides a flagaria como "redundante"
+    // incorretamente se entrasse aqui.
 )
 
 // Import nativo do BOM do Spring Boot em vez do plugin
@@ -72,6 +77,15 @@ dependencies {
         }
         implementation("tools.jackson.core:jackson-databind:3.1.7") {
             because("Multiplos CVEs corrigidos em 3.1.6/3.1.7 (BOM resolve 3.1.5)")
+        }
+        // Uncontrolled Recursion (StackOverflow) processando entrada longa -
+        // o Gradle ja resolvia esta mesma versao via conflict resolution com
+        // outro modulo mesmo antes desta constraint (nao era um gap real de
+        // seguranca), mas sem versao explicita o job de "security update" do
+        // Dependabot nao encontra nada literal pra reconhecer como corrigido
+        // e falha com security_update_dependency_not_found a cada tentativa.
+        implementation("org.apache.commons:commons-lang3:3.20.0") {
+            because("Uncontrolled Recursion corrigido em 3.18.0+ (ja resolvido em 3.20.0 via BOM/conflict resolution, versao explicita so pro Dependabot reconhecer)")
         }
     }
 
