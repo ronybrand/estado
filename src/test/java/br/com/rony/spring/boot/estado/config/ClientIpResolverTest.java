@@ -70,4 +70,16 @@ class ClientIpResolverTest {
 
         assertEquals("76.76.21.21", ip);
     }
+
+    // X-Client-IP presente mas sem X-Proxy-Secret, com um segredo configurado
+    // no backend - branch distinto do "nenhum segredo configurado" acima
+    // (aqui o esperado existe, so o recebido que falta).
+    @Test
+    void ignoraHeaderQuandoSegredoConfiguradoMasNaoEnviado() {
+        ClientIpResolver resolver = resolverComSegredo("s3cret");
+
+        String ip = resolver.resolve(requisicaoViaProxy("76.76.21.21", "203.0.113.1", null));
+
+        assertEquals("76.76.21.21", ip);
+    }
 }
