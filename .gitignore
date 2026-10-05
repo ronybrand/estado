@@ -7,6 +7,7 @@ build/
 # Segredo real nunca vai pro repo (POSTGRES_PASSWORD, tokens do Grafana Cloud
 # etc.) - so o .env.example, template sem valor real, fica versionado.
 .env
+.env.compose
 
 # Conteudo das skills baixado pelo Claude Code a partir do skills-lock.json
 # (hash pinado por skill) - regeneravel, nao precisa ficar versionado, igual

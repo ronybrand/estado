@@ -61,6 +61,16 @@ triggered by a systemd timer every 5min, whenever a new image lands in GHCR
 [`angular_estado`](https://github.com/ronybrand/angular_estado) repo) is
 published independently to S3/CloudFront.
 
+## Running the full ecosystem locally
+
+[`docker-compose.yml`](docker-compose.yml) in this repo spins up the backend,
+Postgres, [`estado-ai-agent`](https://github.com/ronybrand/estado-ai-agent),
+and the Angular frontend (dev server, live-reload) together — see the
+comments at the top of that file for the one-time setup
+(`.env.compose`, sibling-repo paths). This is local-dev only and does not
+reflect the production topology described above (static S3/CloudFront
+frontend, Postgres in its own container, no live-reload dev server).
+
 ## Authentication (JWT)
 
 Single admin user, stateless JWT (see ADR 0017). `AuthController` compares

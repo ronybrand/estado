@@ -1,0 +1,87 @@
+# Sobe o ecossistema completo pra desenvolvimento local: Postgres + backend
+# (este repo) + estado-ai-agent + frontend Angular, cada um no proprio
+# container, se comunicando pela rede interna do Compose.
+#
+# So pra uso local - nao reflete producao. Em producao, o Postgres roda num
+# container separado do app (ver deploy/estado/docker-compose.yml) e o
+# frontend e um build estatico em S3 + CloudFront (ADR 0013), nao um
+# container servindo ng serve.
+#
+# Pre-requisito: clonar angular_estado e estado-ai-agent em algum lugar
+# local. Por padrao, assume os 3 como repos irmaos (mesmo diretorio pai):
+#   github/
+#     estado/            (este repo)
+#     angular_estado/
+#     estado-ai-agent/
+# Se os seus clones vivem em outro lugar, aponte ANGULAR_ESTADO_PATH e
+# ESTADO_AI_AGENT_PATH no .env.compose (ver .env.compose.example) - nao
+# e garantido que os 3 fiquem sob o mesmo pai numa maquina de verdade.
+#
+# Uso:
+#   cp .env.compose.example .env.compose
+#   # preencher .env.compose (ver comentarios no arquivo)
+#   docker compose --env-file .env.compose up --build
+#
+# URLs depois de subir:
+#   Frontend (Angular, live-reload): http://localhost:4200
+#   Backend (API + Swagger UI):      http://localhost:8080/swagger-ui.html
+#   estado-ai-agent:                 http://localhost:8081 (nao exposto em producao - so acessivel via /ask do backend)
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: estado
+      POSTGRES_USER: estado
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U estado"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  estado-ai-agent:
+    build:
+      context: ${ESTADO_AI_AGENT_PATH:-../estado-ai-agent}
+    environment:
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      ESTADO_API_BASE_URL: http://backend:8080
+      ASK_API_KEY: ${ASK_API_KEY}
+    ports:
+      - "8081:8080"
+
+  backend:
+    build:
+      context: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      JDBC_DATABASE_URL: jdbc:postgresql://postgres:5432/estado
+      JDBC_DATABASE_USERNAME: estado
+      JDBC_DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH}
+      JWT_SECRET: ${JWT_SECRET}
+      API_ORIGIN_PERMITIDA: http://localhost:4200
+      ASK_API_BASE_URL: http://estado-ai-agent:8080
+      ASK_API_KEY: ${ASK_API_KEY}
+    ports:
+      - "8080:8080"
+
+  angular:
+    build:
+      context: ${ANGULAR_ESTADO_PATH:-../angular_estado}
+      dockerfile: Dockerfile.dev
+    environment:
+      BACKEND_URL: http://backend:8080
+    depends_on:
+      - backend
+    ports:
+      - "4200:4200"
+
+volumes:
+  postgres-data:
