@@ -11,6 +11,12 @@
 # ADMIN_PASSWORD_HASH, JWT_SECRET, ASK_API_KEY, ASK_API_BASE_URL (via .env,
 # carregado com "set -a" pelo chamador). RATE_LIMIT_PROXY_SECRET e opcional.
 
+# A instancia e pequena (t3.micro, 1 GB) e a JVM padrao (G1, heap = 1/4 da RAM)
+# ocupava ~360 MB aqui. Durante o rolling swap dois containers coexistem, entao
+# o teto de heap/memoria precisa caber duas vezes. Sobrescreve-se via .env.
+APP_JAVA_OPTS="${APP_JAVA_OPTS:--XX:+UseSerialGC -Xmx192m -Xss512k -XX:TieredStopAtLevel=1 -XX:MaxMetaspaceSize=96m -XX:ReservedCodeCacheSize=48m}"
+APP_MEMORY_LIMIT="${APP_MEMORY_LIMIT:-384m}"
+
 swap_to() {
     local image="$1"
 
@@ -19,6 +25,8 @@ swap_to() {
     docker run -d --name "$NEXT" \
         --restart unless-stopped \
         --network estado_internal \
+        --memory "$APP_MEMORY_LIMIT" \
+        -e JAVA_TOOL_OPTIONS="$APP_JAVA_OPTS" \
         -e JDBC_DATABASE_URL="jdbc:postgresql://postgres:5432/estado" \
         -e JDBC_DATABASE_USERNAME=estado \
         -e JDBC_DATABASE_PASSWORD="$POSTGRES_PASSWORD" \
