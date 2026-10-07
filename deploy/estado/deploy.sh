@@ -44,7 +44,14 @@ if swap_to "$IMAGE"; then
 
     NEW_TAG="$(image_revision "$NEW_ID")"
     annotate_deploy "Deploy: estado-app -> ${NEW_TAG:-$NEW_ID}" '["deploy","estado"]'
+    notify_github_deployment "$NEW_TAG" success "Deploy concluido"
 else
     echo "Health check falhou, mantendo versao anterior no ar." >&2
+    # O timer repete a cada 5 min enquanto :latest continuar quebrada; sem
+    # isto, cada tick criaria um deployment "failure" novo pra mesma imagem.
+    if [ "$(cat last-failed-image 2>/dev/null || true)" != "$NEW_ID" ]; then
+        echo "$NEW_ID" > last-failed-image
+        notify_github_deployment "$(image_revision "$NEW_ID")" failure "Health check falhou, versao anterior mantida"
+    fi
     exit 1
 fi
