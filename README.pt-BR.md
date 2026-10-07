@@ -66,7 +66,7 @@ Postgres, o [`estado-ai-agent`](https://github.com/ronybrand/estado-ai-agent)
 e o frontend Angular (dev server, live-reload) — ver os comentários no topo
 desse arquivo pra configuração inicial (`.env.compose`, caminhos dos repos
 irmãos). É só pra uso local e não reflete a topologia de produção descrita
-acima (frontend estático em S3/CloudFront, Postgres em container próprio,
+acima (frontend estático em S3/CloudFront,
 sem dev server com live-reload).
 
 ## Autenticação (JWT)

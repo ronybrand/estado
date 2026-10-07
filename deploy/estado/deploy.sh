@@ -42,6 +42,7 @@ if swap_to "$IMAGE"; then
         echo "Tag anterior registrada em last-good-tag: $PREVIOUS_TAG"
     fi
 
+    rm -f last-failed-image
     NEW_TAG="$(image_revision "$NEW_ID")"
     annotate_deploy "Deploy: estado-app -> ${NEW_TAG:-$NEW_ID}" '["deploy","estado"]'
     notify_github_deployment "$NEW_TAG" success "Deploy concluido"
