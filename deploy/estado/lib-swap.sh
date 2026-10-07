@@ -61,6 +61,38 @@ promote() {
     docker rename "$NEXT" "$CURRENT"
 }
 
+# Registra o resultado do swap na aba Deployments do GitHub. O workflow so
+# publica a imagem; quem sabe se o deploy deu certo e esta instancia (pull
+# via timer, ADR 0004), entao ela mesma avisa. Melhor esforco, como
+# annotate_deploy: sem GITHUB_DEPLOY_TOKEN, ou com a API fora do ar, o
+# deploy nao falha. Token fine-grained so com "Deployments: write" no repo.
+# Uso: notify_github_deployment <sha-completo> <success|failure> <descricao>
+notify_github_deployment() {
+    local sha="$1"
+    local state="$2"
+    local descricao="$3"
+    local api="https://api.github.com/repos/ronybrand/estado/deployments"
+
+    if [ -z "${GITHUB_DEPLOY_TOKEN:-}" ] || [ -z "$sha" ]; then
+        return 0
+    fi
+
+    local resposta id
+    resposta="$(curl -sf --max-time 10 -X POST "$api" \
+        -H "Authorization: Bearer ${GITHUB_DEPLOY_TOKEN}" \
+        -H "Accept: application/vnd.github+json" \
+        -d "{\"ref\":\"${sha}\",\"environment\":\"production\",\"auto_merge\":false,\"required_contexts\":[],\"description\":\"${descricao}\"}" \
+        2>/dev/null)" || return 0
+    id="$(echo "$resposta" | sed -n 's/^  "id": *\([0-9][0-9]*\),.*/\1/p' | head -1)"
+    [ -n "$id" ] || return 0
+
+    curl -sf --max-time 10 -X POST "${api}/${id}/statuses" \
+        -H "Authorization: Bearer ${GITHUB_DEPLOY_TOKEN}" \
+        -H "Accept: application/vnd.github+json" \
+        -d "{\"state\":\"${state}\",\"environment_url\":\"https://54.94.231.248.sslip.io/estado\",\"description\":\"${descricao}\"}" \
+        >/dev/null 2>&1 || true
+}
+
 # Marca no Grafana quando um deploy/rollback aconteceu, pra correlacionar
 # visualmente com mudanca de latencia/erro no dashboard (ver ADR 0012).
 # Melhor esforco de proposito: GRAFANA_CLOUD_URL/GRAFANA_CLOUD_ANNOTATIONS_TOKEN

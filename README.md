@@ -69,7 +69,7 @@ and the Angular frontend (dev server, live-reload) together — see the
 comments at the top of that file for the one-time setup
 (`.env.compose`, sibling-repo paths). This is local-dev only and does not
 reflect the production topology described above (static S3/CloudFront
-frontend, Postgres in its own container, no live-reload dev server).
+frontend, no live-reload dev server).
 
 ## Authentication (JWT)
 

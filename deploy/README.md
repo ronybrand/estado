@@ -117,6 +117,11 @@ Account token do Grafana, papel Editor, escopo diferente do token de métrica/lo
 deploy — feito via `sudo tee -a /home/ec2-user/estado/.env` (caminho absoluto, não `~`, se o acesso
 for por SSM — usuário `ssm-user` não tem permissão de escrita no `.env` do `ec2-user` sem `sudo`).
 
+Preencher `GITHUB_DEPLOY_TOKEN` no mesmo `.env` (fine-grained, só o repo `estado`, só *Deployments:
+Read and write*) faz `deploy.sh`/`rollback.sh` registrarem `success`/`failure` na aba Deployments do
+GitHub. Sem o token, ou com a API fora do ar, o deploy segue normalmente. Falha repetida da mesma
+imagem só é registrada uma vez (`last-failed-image`), já que o timer reexecuta a cada 5 min.
+
 Isso também significa que uma mudança feita direto no servidor por SSH, sem passar por aqui, faz este
 diretório divergir sem aviso. Pra conferir se ainda bate com a realidade:
 

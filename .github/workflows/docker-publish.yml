@@ -21,11 +21,6 @@ jobs:
        github.event.workflow_run.event == 'push' &&
        github.event.workflow_run.head_repository.full_name == github.repository)
     runs-on: ubuntu-latest
-    # A EC2 puxa a imagem por conta propria (ADR 0004), entao isto marca a
-    # publicacao da imagem, nao o swap em si, que acontece ate 5 min depois.
-    environment:
-      name: production
-      url: https://54.94.231.248.sslip.io/estado
     permissions:
       contents: read
       packages: write
