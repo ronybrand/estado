@@ -6,3 +6,7 @@ crash.log
 crash.*.log
 .terraform.lock.hcl.bak
 terraform.tfvars
+
+# O lock do Terraform vive em terraform/ (raiz do init); um terraform init rodado
+# dentro de um modulo gera um lock solto que nao deve ser versionado.
+modules/**/.terraform.lock.hcl
