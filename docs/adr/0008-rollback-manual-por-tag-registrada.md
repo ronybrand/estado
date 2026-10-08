@@ -57,3 +57,9 @@ com o tempo.
   (ou algum monitoramento que este projeto não tem) precisa perceber o bug e decidir rodar o
   rollback. Não é um mecanismo de auto-recuperação, é um atalho pra quando o problema já foi
   identificado.
+
+## Atualização (2026-10-08)
+Desde o [0022](0022-native-image-graalvm.md) a `latest` é a imagem native, e a JVM é publicada em
+paralelo como `jvm-latest` e `jvm-<sha>`. `./rollback.sh jvm-<sha>` volta à JVM; com o
+`estado-deploy.timer` ativo, é preciso desabilitá-lo antes (`systemctl disable --now`), senão ele
+troca de volta para a `latest` no próximo tick.

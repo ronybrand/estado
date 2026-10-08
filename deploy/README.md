@@ -145,9 +145,16 @@ default no próprio script e podem ser sobrescritos no `.env` do servidor:
 | `APP_JAVA_OPTS` | SerialGC, `-Xmx192m`, Metaspace 128m, heap free ratio 10/20 | `JAVA_TOOL_OPTIONS` do backend (ignorado pela imagem native) |
 | `APP_MEMORY_LIMIT` | `384m` | `--memory` do container |
 | `DB_POOL_MAX` / `DB_POOL_MIN_IDLE` | `4` / `2` | Pool do Hikari (o padrão do Spring mantém 10 conexões abertas) |
+| `DRAIN_SECONDS` | `60` | Quanto o container antigo continua no ar depois do swap (ver abaixo) |
 
 O health check do swap espera até 180 s (90 x 2 s), porque sob pressão de memória a JVM nova sobe
 mais devagar.
+
+**Drenagem do container antigo** ([ADR 0023](../docs/adr/0023-drenar-container-antigo-no-swap.md)):
+depois do swap, o container antigo fica renomeado como `<nome>-antigo` por `DRAIN_SECONDS` antes de
+ser parado e removido, para não dar 502 em quem ainda tem o IP dele em cache. Por isso um deploy
+leva ~60 s a mais, e um `docker ps` durante esse tempo mostra os dois. Um `-antigo` que sobrar de
+uma execução interrompida é removido no início do próximo swap.
 
 **Imagem native e volta para a JVM** (ver [ADR 0022](../docs/adr/0022-native-image-graalvm.md)): a
 `latest` é a imagem native e o `estado-deploy.timer` a puxa sozinho. O `docker-publish` publica a JVM
