@@ -135,6 +135,27 @@ O padrão pra replicar (`<app>/docker-compose.yml`, bloco novo no `Caddyfile`, t
 descrito na seção "Como adicionar um novo app de portfólio depois" do plano de deploy — não duplicado
 aqui pra não ter duas fontes divergindo.
 
+## Memória, native image e variáveis do `lib-swap.sh`
+
+O `lib-swap.sh` aplica limites de memória ao backend (e o do agent, ao agent). Os valores têm
+default no próprio script e podem ser sobrescritos no `.env` do servidor:
+
+| Variável | Default | Efeito |
+|---|---|---|
+| `APP_JAVA_OPTS` | SerialGC, `-Xmx192m`, Metaspace 128m, heap free ratio 10/20 | `JAVA_TOOL_OPTIONS` do backend (ignorado pela imagem native) |
+| `APP_MEMORY_LIMIT` | `384m` | `--memory` do container |
+| `DB_POOL_MAX` / `DB_POOL_MIN_IDLE` | `4` / `2` | Pool do Hikari (o padrão do Spring mantém 10 conexões abertas) |
+
+O health check do swap espera até 180 s (90 x 2 s), porque sob pressão de memória a JVM nova sobe
+mais devagar.
+
+**Trocar o backend para a imagem native** (ver [ADR 0022](../docs/adr/0022-native-image-graalvm.md)):
+publicar com o workflow `Native Publish`, que gera só `ghcr.io/ronybrand/estado:native-<sha>`, e
+trocar à mão com `./rollback.sh native-<sha>`. Enquanto o container rodar uma imagem diferente da
+`latest`, o `estado-deploy.timer` precisa ficar **parado**: ele compara a imagem em execução com a
+`latest` e voltaria para a JVM no próximo tick. Para voltar à JVM: `./rollback.sh <sha-da-jvm>` e
+`systemctl start estado-deploy.timer`.
+
 ## Histórico
 
 A primeira versão deste diretório foi escrita a partir da documentação (não do servidor real) e tinha

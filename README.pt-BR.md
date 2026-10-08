@@ -69,6 +69,18 @@ irmãos). É só pra uso local e não reflete a topologia de produção descrita
 acima (frontend estático em S3/CloudFront,
 sem dev server com live-reload).
 
+## Native image (GraalVM)
+
+O backend também pode ser buildado como native image do GraalVM
+([`Dockerfile.native`](Dockerfile.native)): cerca de 77 MB de memória e ~1 s de
+subida, contra ~210 MB e 12 a 21 s na JVM. Ele é publicado só pelo workflow
+manual `Native Publish`, como `native-<sha>` (nunca `latest`), e o check
+`Native Image` builda a imagem e roda um smoke contra um Postgres real em cada
+PR relevante. O metadata de reflexão é gerado pelo agente de rastreamento do
+GraalVM (workflow `Native Metadata`) e precisa ser regerado quando o código ou
+as dependências mudam. Detalhes e medições no
+[ADR 0022](docs/adr/0022-native-image-graalvm.md).
+
 ## Autenticação (JWT)
 
 Admin único, JWT stateless (ver ADR 0017). O `AuthController` compara usuário
