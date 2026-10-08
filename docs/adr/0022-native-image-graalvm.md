@@ -21,9 +21,12 @@ caminho de volta. Medido no GitHub Actions e depois em produção:
 | Pico do swap na EC2 | 942 MB | 838 MB |
 
 **Regras que ficaram**
-- A imagem native é publicada só por um workflow manual (`native-publish.yml`), com a tag
-  `native-<sha>`, nunca como `latest`: o timer da EC2 puxa `latest` sozinho (ADR 0004). A troca é
-  explícita, via `rollback.sh native-<sha>`.
+- A imagem native é a `latest` publicada pelo `docker-publish.yml` a cada merge no `master`, e o
+  timer da EC2 a puxa sozinho (ADR 0004). A imagem JVM continua sendo publicada em paralelo, como
+  `jvm-latest` e `jvm-<sha>`, para ter volta imediata: `rollback.sh jvm-<sha>`. Se o build native
+  falhar (por exemplo, metadata de reflexão desatualizado), a `latest` não muda e a EC2 segue na
+  imagem atual. Até 2026-10-08 a publicação era manual (`native-<sha>`), durante a observação em
+  produção.
 - O `reachability-metadata.json` (reflexão, recursos) é gerado pelo agente de rastreamento do
   GraalVM exercitando a API real (`.github/native-smoke.sh`, workflow `native-metadata.yml`) e
   fica versionado em `src/main/resources/META-INF/native-image/`. Regerar quando o código ou as

@@ -149,12 +149,12 @@ default no próprio script e podem ser sobrescritos no `.env` do servidor:
 O health check do swap espera até 180 s (90 x 2 s), porque sob pressão de memória a JVM nova sobe
 mais devagar.
 
-**Trocar o backend para a imagem native** (ver [ADR 0022](../docs/adr/0022-native-image-graalvm.md)):
-publicar com o workflow `Native Publish`, que gera só `ghcr.io/ronybrand/estado:native-<sha>`, e
-trocar à mão com `./rollback.sh native-<sha>`. Enquanto o container rodar uma imagem diferente da
-`latest`, o `estado-deploy.timer` precisa ficar **parado**: ele compara a imagem em execução com a
-`latest` e voltaria para a JVM no próximo tick. Para voltar à JVM: `./rollback.sh <sha-da-jvm>` e
-`systemctl start estado-deploy.timer`.
+**Imagem native e volta para a JVM** (ver [ADR 0022](../docs/adr/0022-native-image-graalvm.md)): a
+`latest` é a imagem native e o `estado-deploy.timer` a puxa sozinho. O `docker-publish` publica a JVM
+em paralelo como `jvm-<sha>` e `jvm-latest`. Para voltar à JVM: **parar e desabilitar o timer**
+(`systemctl disable --now estado-deploy.timer`, senão ele troca de volta para a `latest` native no
+próximo tick, e `disable` é necessário para sobreviver a um reboot) e `./rollback.sh jvm-<sha>`. Para
+retomar o fluxo automático: `systemctl enable --now estado-deploy.timer`.
 
 ## Histórico
 

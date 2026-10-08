@@ -1,6 +1,7 @@
-# Imagem native (GraalVM). NAO e a imagem de producao ainda: o docker-publish
-# continua usando o Dockerfile (JVM). Pre-requisito: o reachability-metadata.json
-# gerado pelo workflow native-metadata.yml versionado em src/main/resources.
+# Imagem de producao (GraalVM native, ADR 0022), publicada como latest pelo
+# docker-publish; o Dockerfile (JVM) vira jvm-latest. Pre-requisito: o
+# reachability-metadata.json gerado pelo workflow native-metadata.yml e
+# versionado em src/main/resources.
 FROM ghcr.io/graalvm/native-image-community:25 AS build
 ARG GIT_COMMIT=""
 WORKDIR /app
