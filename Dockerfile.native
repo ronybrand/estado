@@ -7,8 +7,13 @@ WORKDIR /app
 COPY gradlew gradlew.bat ./
 COPY gradle ./gradle
 COPY build.gradle.kts settings.gradle.kts ./
+# Camada propria pras dependencias: so e refeita quando o build.gradle.kts muda
+# (cache de camadas do Buildx no CI), nao a cada mudanca em src/.
+RUN ./gradlew --no-daemon dependencies
 COPY src ./src
-RUN ./gradlew --no-daemon nativeCompile -x test -PgitCommit=${GIT_COMMIT}
+# NATIVE_ARGS=-PnativeQuick (-Ob) so no check de PR; a publicacao compila completo.
+ARG NATIVE_ARGS=""
+RUN ./gradlew --no-daemon nativeCompile -x test -PgitCommit=${GIT_COMMIT} ${NATIVE_ARGS}
 
 FROM debian:bookworm-slim
 RUN useradd --create-home --shell /bin/bash appuser
