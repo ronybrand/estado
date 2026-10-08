@@ -70,9 +70,28 @@ image_revision() {
     docker inspect "$1" --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' 2>/dev/null || true
 }
 
+# O container antigo continua no ar (renomeado) ate drenar_antigo: quem ainda
+# tem o IP dele em cache (DNS da JVM, 30 s) ou uma conexao keep-alive aberta
+# com ele seria atendido por um container ja removido (connect timeout / EOF).
+# restart=no pro antigo nao voltar sozinho se o host reiniciar durante a espera.
 promote() {
-    docker rm -f "$CURRENT" >/dev/null 2>&1 || true
+    local antigo="${CURRENT}-antigo"
+    docker rm -f "$antigo" >/dev/null 2>&1 || true
+    if docker rename "$CURRENT" "$antigo" >/dev/null 2>&1; then
+        docker update --restart=no "$antigo" >/dev/null 2>&1 || true
+    fi
     docker rename "$NEXT" "$CURRENT"
+}
+
+# Sincrona de proposito: o systemd mata processos em segundo plano quando o
+# oneshot termina. Chamar por ultimo no deploy/rollback.
+drenar_antigo() {
+    local antigo="${CURRENT}-antigo"
+    docker container inspect "$antigo" >/dev/null 2>&1 || return 0
+    echo "Drenando $antigo por ${DRAIN_SECONDS:-60}s antes de remove-lo..."
+    sleep "${DRAIN_SECONDS:-60}"
+    docker stop -t 30 "$antigo" >/dev/null 2>&1 || true
+    docker rm -f "$antigo" >/dev/null 2>&1 || true
 }
 
 # Registra o resultado do swap na aba Deployments do GitHub. O workflow so
