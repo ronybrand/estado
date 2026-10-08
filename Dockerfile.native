@@ -1,0 +1,19 @@
+# Imagem native (GraalVM). NAO e a imagem de producao ainda: o docker-publish
+# continua usando o Dockerfile (JVM). Pre-requisito: o reachability-metadata.json
+# gerado pelo workflow native-metadata.yml versionado em src/main/resources.
+FROM ghcr.io/graalvm/native-image-community:25 AS build
+ARG GIT_COMMIT=""
+WORKDIR /app
+COPY gradlew gradlew.bat ./
+COPY gradle ./gradle
+COPY build.gradle.kts settings.gradle.kts ./
+COPY src ./src
+RUN ./gradlew --no-daemon nativeCompile -x test -PgitCommit=${GIT_COMMIT}
+
+FROM debian:bookworm-slim
+RUN useradd --create-home --shell /bin/bash appuser
+WORKDIR /app
+COPY --from=build /app/build/native/nativeCompile/estado ./estado
+USER appuser
+EXPOSE 8080
+ENTRYPOINT ["/app/estado", "-Xmx192m"]

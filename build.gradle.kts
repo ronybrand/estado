@@ -5,6 +5,7 @@ plugins {
     java
     id("org.springframework.boot") version "4.1.1"
     id("jacoco")
+    id("org.graalvm.buildtools.native") version "0.11.0"
 }
 
 group = "br.com.rony.spring.boot"
@@ -278,6 +279,18 @@ springBoot {
             additional.set(
                 mapOf("commit" to (project.findProperty("gitCommit") as String? ?: "unknown"))
             )
+        }
+    }
+}
+
+// Native image (Dockerfile.native): so a task nativeCompile usa isto. -Ob
+// (compilacao rapida, binario menos otimizado) so quando pedido, pra CI.
+graalvmNative {
+    binaries {
+        named("main") {
+            if (project.hasProperty("nativeQuick")) {
+                buildArgs.add("-Ob")
+            }
         }
     }
 }

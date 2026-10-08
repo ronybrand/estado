@@ -1,0 +1,66 @@
+# Valida a imagem native (Dockerfile.native) com o metadata versionado: builda,
+# sobe o container contra um Postgres de servico e roda o smoke. So dispara
+# quando algo que afeta o native muda. A imagem de producao continua sendo a
+# do Dockerfile (JVM); este workflow nao publica nada.
+name: Native Image
+
+on:
+  pull_request:
+    paths:
+      - "Dockerfile.native"
+      - "build.gradle.kts"
+      - "src/main/**"
+      - ".github/native-smoke.sh"
+      - ".github/workflows/native-image.yml"
+  push:
+    branches: [master]
+    paths:
+      - "Dockerfile.native"
+      - "build.gradle.kts"
+      - "src/main/**"
+  workflow_dispatch:
+
+jobs:
+  native-smoke:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: estado
+          POSTGRES_USER: estado
+          POSTGRES_PASSWORD: x
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U estado" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Build da imagem native
+        run: docker build -f Dockerfile.native -t estado:native .
+
+      - name: Sobe o container e roda o smoke
+        run: |
+          HASH=$(htpasswd -nbBC 10 admin admin123 | cut -d: -f2)
+          docker run -d --name app --network host --memory 384m \
+            -e JDBC_DATABASE_URL=jdbc:postgresql://localhost:5432/estado \
+            -e JDBC_DATABASE_USERNAME=estado -e JDBC_DATABASE_PASSWORD=x \
+            -e API_ORIGIN_PERMITIDA=http://localhost:4200 -e ADMIN_USERNAME=admin \
+            -e "ADMIN_PASSWORD_HASH=$HASH" \
+            -e JWT_SECRET=c3Bpa2Utand0LXNlY3JldC1zcGlrZS1qd3Qtc2VjcmV0LTEyMzQ1Ng== \
+            -e ASK_API_KEY=k -e ASK_API_BASE_URL=http://localhost:9 \
+            -e SPRINGDOC_API_DOCS_ENABLED=false -e SPRINGDOC_SWAGGER_UI_ENABLED=false \
+            estado:native
+          RESULT=$(bash .github/native-smoke.sh)
+          echo "$RESULT"
+          sleep 10
+          PID=$(docker inspect app --format '{{.State.Pid}}')
+          {
+            echo "### Native image"
+            echo "- smoke: \`$RESULT\`"
+            echo "- subida: $(docker logs app 2>&1 | grep -oE 'Started [A-Za-z]+ in [0-9.]+ seconds' | tail -1)"
+            echo "- memoria: $(grep -E 'RssAnon|RssFile' /proc/$PID/status | tr -s ' \t' ' ' | tr '\n' ' ')"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+          for esperado in health=200 login_errado=401 login_ok=200 post=201 paginado=200 get=200 put=200 invalido=400 inexistente=404 sem_auth=401 delete=204 prom=200; do
+            echo "$RESULT" | grep -qw "$esperado" || { echo "FALHOU: esperado $esperado"; docker logs app 2>&1 | tail -40; exit 1; }
+          done
