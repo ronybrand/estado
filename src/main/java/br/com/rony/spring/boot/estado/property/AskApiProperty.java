@@ -27,13 +27,14 @@ public class AskApiProperty {
     // puro) - uma resposta lenta do estado-ai-agent ficava presa indefinidamente,
     // prendendo uma thread do servlet que tambem serve o CRUD /estado (achado
     // de revisao integrada entre os 3 repos do ecossistema). read-timeout-ms
-    // maior que o timeout do ai-agent pro Gemini (20s, ver ChatClientConfig de
-    // la) de proposito: da tempo do ai-agent falhar e responder um erro
-    // tratavel antes deste backend desistir primeiro.
+    // maior que o pior caso do ai-agent (ate duas tentativas de 15s ao Gemini,
+    // principal e reserva) de proposito: da tempo do ai-agent falhar e
+    // responder um erro tratavel antes deste backend desistir primeiro, e
+    // menor que os 60s do Angular.
     @Positive
     private long connectTimeoutMs = 3000;
 
     @Positive
-    private long readTimeoutMs = 25000;
+    private long readTimeoutMs = 45000;
 
 }
