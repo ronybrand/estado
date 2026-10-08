@@ -9,6 +9,22 @@ on:
 
 jobs:
   build-and-push:
+    # latest = imagem native (ADR 0022); a JVM continua sendo publicada como
+    # jvm-latest / jvm-<sha> pra ter volta imediata (rollback.sh jvm-<sha>).
+    # fail-fast desligado: se o native falhar (ex.: metadata de reflexao
+    # desatualizado), a latest nao muda e o timer da EC2 segue na imagem atual.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variante: native
+            arquivo: Dockerfile.native
+            tag_latest: latest
+            prefixo: ""
+          - variante: jvm
+            arquivo: Dockerfile
+            tag_latest: jvm-latest
+            prefixo: "jvm-"
     # workflow_run inclui PRs de fora (inclusive forks), ja que o CI roda em
     # pull_request - so builda/publica se o CI que passou foi disparado por um
     # push (codigo ja mergeado em master), nunca pelo head de um PR nao
@@ -45,16 +61,17 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            type=raw,value=latest
-            type=sha,prefix=,format=long
+            type=raw,value=${{ matrix.tag_latest }}
+            type=sha,prefix=${{ matrix.prefixo }},format=long
 
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
         with:
           context: .
+          file: ${{ matrix.arquivo }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             GIT_COMMIT=${{ steps.sha.outputs.short }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.variante }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.variante }}
