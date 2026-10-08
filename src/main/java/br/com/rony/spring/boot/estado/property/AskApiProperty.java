@@ -4,6 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -21,5 +22,18 @@ public class AskApiProperty {
 
     @NotBlank
     private String apiKey;
+
+    // AskProxyClientConfig nao tinha NENHUM timeout antes (RestClient.builder()
+    // puro) - uma resposta lenta do estado-ai-agent ficava presa indefinidamente,
+    // prendendo uma thread do servlet que tambem serve o CRUD /estado (achado
+    // de revisao integrada entre os 3 repos do ecossistema). read-timeout-ms
+    // maior que o timeout do ai-agent pro Gemini (20s, ver ChatClientConfig de
+    // la) de proposito: da tempo do ai-agent falhar e responder um erro
+    // tratavel antes deste backend desistir primeiro.
+    @Positive
+    private long connectTimeoutMs = 3000;
+
+    @Positive
+    private long readTimeoutMs = 25000;
 
 }
