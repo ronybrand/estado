@@ -60,10 +60,9 @@ ask-api:
   base-url: ${ASK_API_BASE_URL}
   api-key: ${ASK_API_KEY}
   connect-timeout-ms: 3000
-  # Maior que o timeout do estado-ai-agent pro Gemini (20s) de proposito -
-  # da tempo do ai-agent falhar e responder um erro tratavel antes deste
-  # backend desistir primeiro (ver AskApiProperty).
-  read-timeout-ms: 25000
+  # Maior que o pior caso do estado-ai-agent (duas tentativas de 15s ao
+  # Gemini) e menor que o timeout do Angular (60s) - ver AskApiProperty.
+  read-timeout-ms: 45000
 springdoc:
   # Habilitado por padrao (dev-friendly) - lib-swap.sh desliga explicitamente
   # em producao via env var, pra nao expor o Swagger UI publicamente.
