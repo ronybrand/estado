@@ -1,8 +1,13 @@
 package br.com.rony.spring.boot.estado.ask;
 
+import java.time.Duration;
+
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.http.client.ClientHttpRequestFactoryBuilder;
+import org.springframework.boot.http.client.HttpClientSettings;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
 import br.com.rony.spring.boot.estado.property.AskApiProperty;
@@ -11,9 +16,7 @@ import br.com.rony.spring.boot.estado.property.AskApiProperty;
 // nao estava disponibilizando um RestClient.Builder neste projeto (achado em
 // producao - AskProxyService falhava no boot com UnsatisfiedDependencyException,
 // "No qualifying bean of type RestClient$Builder"), provavelmente por faltar
-// um starter de connector HTTP explicito no classpath. RestClient.builder()
-// sem customizacao usa o connector default da JDK, suficiente pro proxy do
-// /ask - nao precisamos de nenhum connector especifico (Apache/Reactor Netty).
+// um starter de connector HTTP explicito no classpath.
 //
 // @EnableConfigurationProperties(AskApiProperty.class): sem @ConfigurationPropertiesScan
 // global no projeto (mesmo padrao de ApiProperty/JwtProperty, habilitadas em
@@ -24,8 +27,17 @@ import br.com.rony.spring.boot.estado.property.AskApiProperty;
 @EnableConfigurationProperties(AskApiProperty.class)
 public class AskProxyClientConfig {
 
+    // Timeout explicito (ver AskApiProperty) - sem isso, uma resposta lenta do
+    // estado-ai-agent ficava presa indefinidamente, prendendo uma thread do
+    // servlet deste backend (que tambem serve o CRUD /estado), achado numa
+    // revisao integrada entre os 3 repos do ecossistema.
     @Bean
-    public RestClient.Builder restClientBuilder() {
-        return RestClient.builder();
+    public RestClient.Builder restClientBuilder(AskApiProperty askApiProperty) {
+        HttpClientSettings settings = HttpClientSettings.defaults().withTimeouts(
+                Duration.ofMillis(askApiProperty.getConnectTimeoutMs()),
+                Duration.ofMillis(askApiProperty.getReadTimeoutMs()));
+        ClientHttpRequestFactory requestFactory = ClientHttpRequestFactoryBuilder.detect().build(settings);
+
+        return RestClient.builder().requestFactory(requestFactory);
     }
 }

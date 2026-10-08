@@ -93,6 +93,10 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("io.micrometer:micrometer-registry-prometheus")
     implementation("org.springframework.boot:spring-boot-starter-web")
+    // Traz HttpClientSettings/ClientHttpRequestFactoryBuilder (modulo
+    // spring-boot-http-client, Boot 4) - usado em AskProxyClientConfig pra
+    // configurar timeout no RestClient que chama o estado-ai-agent.
+    implementation("org.springframework.boot:spring-boot-starter-restclient")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     // Schema versionado por migration (db/changelog/) em vez de
     // hibernate.ddl-auto:update - ver ADR 0014.
