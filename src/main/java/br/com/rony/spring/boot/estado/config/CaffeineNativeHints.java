@@ -1,6 +1,7 @@
 package br.com.rony.spring.boot.estado.config;
 
 import java.io.IOException;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 import org.springframework.aot.hint.MemberCategory;
@@ -14,23 +15,20 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 // combinacao de opcoes do builder. O native image nao enxerga isso sozinho.
 class CaffeineNativeHints implements RuntimeHintsRegistrar {
 
-    private static final Pattern GERADA = Pattern.compile("^[A-Z]+$");
+    private static final String PACOTE = "com.github.benmanes.caffeine.cache.";
+
+    private static final Pattern CLASSE_GERADA = Pattern.compile("^([A-Z]+)\\.class$");
 
     @Override
     public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
         try {
             var recursos = new PathMatchingResourcePatternResolver(classLoader)
-                    .getResources("classpath*:com/github/benmanes/caffeine/cache/*.class");
+                    .getResources("classpath*:" + PACOTE.replace('.', '/') + "*.class");
             for (var recurso : recursos) {
-                String arquivo = recurso.getFilename();
-                if (arquivo == null) {
-                    continue;
-                }
-                String nome = arquivo.substring(0, arquivo.length() - ".class".length());
-                if (GERADA.matcher(nome).matches()) {
+                var classe = CLASSE_GERADA.matcher(Objects.toString(recurso.getFilename(), ""));
+                if (classe.matches()) {
                     hints.reflection().registerType(
-                            TypeReference.of("com.github.benmanes.caffeine.cache." + nome),
-                            MemberCategory.values());
+                            TypeReference.of(PACOTE + classe.group(1)), MemberCategory.values());
                 }
             }
         } catch (IOException e) {

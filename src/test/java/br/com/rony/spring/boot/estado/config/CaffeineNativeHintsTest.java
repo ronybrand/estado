@@ -1,6 +1,11 @@
 package br.com.rony.spring.boot.estado.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.io.IOException;
+import java.net.URL;
+import java.util.Enumeration;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.aot.hint.RuntimeHints;
@@ -27,5 +32,19 @@ class CaffeineNativeHintsTest {
     void naoRegistraClassesComunsDoCaffeine() {
         assertThat(RuntimeHintsPredicates.reflection().onType(TypeReference.of(PACOTE + "Caffeine")))
                 .rejects(hints);
+    }
+
+    @Test
+    void propagaAFalhaAoVarrerAsClasses() {
+        ClassLoader quebrado = new ClassLoader() {
+            @Override
+            public Enumeration<URL> getResources(String name) throws IOException {
+                throw new IOException("sem acesso");
+            }
+        };
+
+        assertThatThrownBy(() -> new CaffeineNativeHints().registerHints(new RuntimeHints(), quebrado))
+                .isInstanceOf(IllegalStateException.class)
+                .hasCauseInstanceOf(IOException.class);
     }
 }
