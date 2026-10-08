@@ -14,8 +14,12 @@
 # A instancia e pequena (t3.micro, 1 GB) e a JVM padrao (G1, heap = 1/4 da RAM)
 # ocupava ~360 MB aqui. Durante o rolling swap dois containers coexistem, entao
 # o teto de heap/memoria precisa caber duas vezes. Sobrescreve-se via .env.
-APP_JAVA_OPTS="${APP_JAVA_OPTS:--XX:+UseSerialGC -Xmx192m -Xss512k -XX:TieredStopAtLevel=1 -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=48m}"
+# Health check espera ate 180 s (90 x 2 s): sob pressao de memoria a JVM nova
+# sobe mais devagar, e abortar o swap por isso seria um falso negativo.
+APP_JAVA_OPTS="${APP_JAVA_OPTS:--XX:+UseSerialGC -Xmx192m -Xss512k -XX:TieredStopAtLevel=1 -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=48m -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20}"
 APP_MEMORY_LIMIT="${APP_MEMORY_LIMIT:-384m}"
+# Pool padrao do Hikari mantem 10 conexoes abertas (~3 MB de RAM cada no Postgres);
+# o trafego aqui nao precisa disso. Sobrescreve-se via .env.
 
 swap_to() {
     local image="$1"
@@ -37,13 +41,15 @@ swap_to() {
         -e ASK_API_KEY="$ASK_API_KEY" \
         -e ASK_API_BASE_URL="$ASK_API_BASE_URL" \
         -e RATE_LIMIT_PROXY_SECRET="${RATE_LIMIT_PROXY_SECRET:-}" \
+        -e SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE="${DB_POOL_MAX:-4}" \
+        -e SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE="${DB_POOL_MIN_IDLE:-2}" \
         -e SPRINGDOC_API_DOCS_ENABLED=false \
         -e SPRINGDOC_SWAGGER_UI_ENABLED=false \
         "$image" >/dev/null
     docker network connect portfolio "$NEXT"
 
     if docker run --rm --network portfolio curlimages/curl:8.11.1 sh -c "
-        for i in \$(seq 1 30); do
+        for i in \$(seq 1 90); do
             curl -sf http://${NEXT}:8080/actuator/health >/dev/null 2>&1 && exit 0
             sleep 2
         done
