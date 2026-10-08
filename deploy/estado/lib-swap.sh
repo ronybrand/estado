@@ -14,7 +14,9 @@
 # A instancia e pequena (t3.micro, 1 GB) e a JVM padrao (G1, heap = 1/4 da RAM)
 # ocupava ~360 MB aqui. Durante o rolling swap dois containers coexistem, entao
 # o teto de heap/memoria precisa caber duas vezes. Sobrescreve-se via .env.
-APP_JAVA_OPTS="${APP_JAVA_OPTS:--XX:+UseSerialGC -Xmx192m -Xss512k -XX:TieredStopAtLevel=1 -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=48m}"
+# Health check espera ate 180 s (90 x 2 s): sob pressao de memoria a JVM nova
+# sobe mais devagar, e abortar o swap por isso seria um falso negativo.
+APP_JAVA_OPTS="${APP_JAVA_OPTS:--XX:+UseSerialGC -Xmx192m -Xss512k -XX:TieredStopAtLevel=1 -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=48m -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20}"
 APP_MEMORY_LIMIT="${APP_MEMORY_LIMIT:-384m}"
 
 swap_to() {
@@ -43,7 +45,7 @@ swap_to() {
     docker network connect portfolio "$NEXT"
 
     if docker run --rm --network portfolio curlimages/curl:8.11.1 sh -c "
-        for i in \$(seq 1 30); do
+        for i in \$(seq 1 90); do
             curl -sf http://${NEXT}:8080/actuator/health >/dev/null 2>&1 && exit 0
             sleep 2
         done
