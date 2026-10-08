@@ -33,11 +33,19 @@ public class AskProxyClientConfig {
     // revisao integrada entre os 3 repos do ecossistema.
     @Bean
     public RestClient.Builder restClientBuilder(AskApiProperty askApiProperty) {
-        HttpClientSettings settings = HttpClientSettings.defaults().withTimeouts(
-                Duration.ofMillis(askApiProperty.getConnectTimeoutMs()),
-                Duration.ofMillis(askApiProperty.getReadTimeoutMs()));
-        ClientHttpRequestFactory requestFactory = ClientHttpRequestFactoryBuilder.detect().build(settings);
+        ClientHttpRequestFactory requestFactory =
+                ClientHttpRequestFactoryBuilder.detect().build(httpClientSettings(askApiProperty));
 
         return RestClient.builder().requestFactory(requestFactory);
+    }
+
+    // Extraido do bean acima pra ser testavel sem precisar inspecionar o
+    // ClientHttpRequestFactory concreto (nao expoe os timeouts de volta de
+    // forma estavel) - mesma tecnica usada em ChatClientConfig no repo
+    // estado-ai-agent.
+    static HttpClientSettings httpClientSettings(AskApiProperty askApiProperty) {
+        return HttpClientSettings.defaults().withTimeouts(
+                Duration.ofMillis(askApiProperty.getConnectTimeoutMs()),
+                Duration.ofMillis(askApiProperty.getReadTimeoutMs()));
     }
 }
