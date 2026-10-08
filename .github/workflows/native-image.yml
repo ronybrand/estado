@@ -61,6 +61,17 @@ jobs:
             echo "- subida: $(docker logs app 2>&1 | grep -oE 'Started [A-Za-z]+ in [0-9.]+ seconds' | tail -1)"
             echo "- memoria: $(grep -E 'RssAnon|RssFile' /proc/$PID/status | tr -s ' \t' ' ' | tr '\n' ' ')"
           } | tee -a "$GITHUB_STEP_SUMMARY"
+
+          # Metricas que o dashboard e os alertas do ADR 0012 consomem. O native expoe
+          # menos metricas jvm_*, mas nenhuma delas e usada la.
+          curl -s http://localhost:8080/actuator/prometheus > prom.txt
+          for serie in \
+            'http_server_requests_seconds_bucket{[^}]*application="estado"' \
+            'http_server_requests_seconds_count{[^}]*outcome="SERVER_ERROR"' \
+            'hikaricp_connections_active{[^}]*application="estado"'; do
+            grep -q "$serie" prom.txt || { echo "FALTA metrica do dashboard: $serie"; exit 1; }
+          done
+          echo "- metricas do dashboard: ok (jvm_*: $(grep -c '^jvm_' prom.txt) series, process_*: $(grep -c '^process_' prom.txt))" | tee -a "$GITHUB_STEP_SUMMARY"
           for esperado in health=200 login_errado=401 login_ok=200 post=201 paginado=200 get=200 put=200 invalido=400 inexistente=404 sem_auth=401 delete=204 prom=200; do
             echo "$RESULT" | grep -qw "$esperado" || { echo "FALHOU: esperado $esperado"; docker logs app 2>&1 | tail -40; exit 1; }
           done
