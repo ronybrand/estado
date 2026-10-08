@@ -51,3 +51,8 @@ imagem quebrada, não só contra a janela de downtime.
   mais barata (backup de banco, EC2 Auto Recovery) que ainda não foi
   implementada — registrado aqui em vez de deixado implícito, justamente pra
   não passar a impressão de que a lacuna não foi percebida.
+
+## Atualização (2026-10-08)
+O `promote` deixou de remover o container antigo na hora: ele é renomeado e mantido por 60 s, para
+não derrubar quem ainda tem o IP dele em cache (DNS da JVM) ou uma conexão keep-alive aberta. O
+resto da decisão segue valendo. Ver [0023](0023-drenar-container-antigo-no-swap.md).

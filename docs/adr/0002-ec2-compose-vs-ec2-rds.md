@@ -32,3 +32,7 @@ lado da aplicação — sem usar RDS (banco gerenciado da AWS).
   instância + Multi-AZ resolveria isso, mas custaria mais por mês do que a
   instância atual inteira, e é complexidade desproporcional pro estágio deste
   projeto.
+
+## Atualização (2026-10-08)
+A instância hoje é `t3.micro`, não `t3.small`, depois da imagem native (ver
+[0022](0022-native-image-graalvm.md)). A decisão (uma EC2 com Postgres em container, sem RDS) segue.
