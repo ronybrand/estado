@@ -18,6 +18,8 @@
 # sobe mais devagar, e abortar o swap por isso seria um falso negativo.
 APP_JAVA_OPTS="${APP_JAVA_OPTS:--XX:+UseSerialGC -Xmx192m -Xss512k -XX:TieredStopAtLevel=1 -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=48m -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20}"
 APP_MEMORY_LIMIT="${APP_MEMORY_LIMIT:-384m}"
+# Pool padrao do Hikari mantem 10 conexoes abertas (~3 MB de RAM cada no Postgres);
+# o trafego aqui nao precisa disso. Sobrescreve-se via .env.
 
 swap_to() {
     local image="$1"
@@ -39,6 +41,8 @@ swap_to() {
         -e ASK_API_KEY="$ASK_API_KEY" \
         -e ASK_API_BASE_URL="$ASK_API_BASE_URL" \
         -e RATE_LIMIT_PROXY_SECRET="${RATE_LIMIT_PROXY_SECRET:-}" \
+        -e SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE="${DB_POOL_MAX:-4}" \
+        -e SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE="${DB_POOL_MIN_IDLE:-2}" \
         -e SPRINGDOC_API_DOCS_ENABLED=false \
         -e SPRINGDOC_SWAGGER_UI_ENABLED=false \
         "$image" >/dev/null
