@@ -58,6 +58,12 @@ filtro, nenhuma combinação de variável de ambiente, argumento ou `-D` resolve
   código ou as dependências mudam. Um hint faltando só aparece em runtime, por isso o smoke
   cobre login, CRUD, validação, 404 e `/ask`.
 - Negativo aceito: o native expõe menos métricas `jvm_*` (nenhuma é usada no dashboard).
+- Negativo aceito: perda de ferramentas de debug ad-hoc da JVM (`jstack`, heap dump,
+  Java Flight Recorder) — o binário native não roda sob a JVM, então essas ferramentas não se
+  aplicam. Diagnóstico em produção passa a depender dos logs (Alloy/Grafana) e do smoke
+  (`.github/native-smoke.sh`); um caso que hoje pediria `jstack`/heap dump exige reproduzir local
+  com a imagem `jvm-<sha>` equivalente (mantida publicada em paralelo, ver regra acima) ou
+  `rollback.sh jvm-<sha>` para investigar sob JVM normalmente.
 - O `estado-ai-agent` continua em JVM (Spring AI em native não foi avaliado).
 - O cache de camadas do Buildx no GitHub Actions compete com os demais caches do repositório
   (teto de 10 GB, apagados após 7 dias sem uso e não ajustáveis sem método de pagamento): o

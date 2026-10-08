@@ -1,7 +1,8 @@
 # Valida a imagem native (Dockerfile.native) com o metadata versionado: builda,
 # sobe o container contra um Postgres de servico e roda o smoke. So dispara
-# quando algo que afeta o native muda. A imagem de producao continua sendo a
-# do Dockerfile (JVM); este workflow nao publica nada.
+# quando algo que afeta o native muda. A imagem de producao e essa mesma
+# (publicada como latest pelo docker-publish, ver ADR 0022); este workflow
+# so valida, nao publica nada.
 name: Native Image
 
 on:
