@@ -43,7 +43,10 @@ class CaffeineNativeHintsTest {
             }
         };
 
-        assertThatThrownBy(() -> new CaffeineNativeHints().registerHints(new RuntimeHints(), quebrado))
+        var registrador = new CaffeineNativeHints();
+        var hintsVazios = new RuntimeHints();
+
+        assertThatThrownBy(() -> registrador.registerHints(hintsVazios, quebrado))
                 .isInstanceOf(IllegalStateException.class)
                 .hasCauseInstanceOf(IOException.class);
     }
