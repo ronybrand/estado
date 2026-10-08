@@ -25,3 +25,4 @@ consequências (incluindo as que ficaram conscientemente sem mitigação).
 - [0019 — Migração de Maven para Gradle](0019-migracao-maven-para-gradle.md)
 - [0020 — hibernate.ddl-auto=validate só em teste, não em produção](0020-ddl-auto-validate-so-em-teste.md)
 - [0021 — SonarQube Cloud como análise estática, não PMD/Checkstyle/SpotBugs](0021-sonarqube-cloud-analise-estatica.md)
+- [0022 — Backend em native image (GraalVM) para caber em instância menor](0022-native-image-graalvm.md)
