@@ -25,6 +25,7 @@ import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Refill;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.ImportRuntimeHints;
 
 // Rate limiting por IP, em memoria (sem Redis - uma unica instancia EC2, ver
 // ADR 0016). Depende de server.forward-headers-strategy: framework
@@ -37,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 // header.
 @Slf4j
 @Component
+@ImportRuntimeHints(CaffeineNativeHints.class)
 public class RateLimitFilter extends OncePerRequestFilter implements Ordered {
 
     private final RateLimitProperty rateLimitProperty;
