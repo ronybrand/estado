@@ -14,7 +14,7 @@
 # A instancia e pequena (t3.micro, 1 GB) e a JVM padrao (G1, heap = 1/4 da RAM)
 # ocupava ~360 MB aqui. Durante o rolling swap dois containers coexistem, entao
 # o teto de heap/memoria precisa caber duas vezes. Sobrescreve-se via .env.
-APP_JAVA_OPTS="${APP_JAVA_OPTS:--XX:+UseSerialGC -Xmx192m -Xss512k -XX:TieredStopAtLevel=1 -XX:MaxMetaspaceSize=96m -XX:ReservedCodeCacheSize=48m}"
+APP_JAVA_OPTS="${APP_JAVA_OPTS:--XX:+UseSerialGC -Xmx192m -Xss512k -XX:TieredStopAtLevel=1 -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=48m}"
 APP_MEMORY_LIMIT="${APP_MEMORY_LIMIT:-384m}"
 
 swap_to() {
