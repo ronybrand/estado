@@ -23,3 +23,13 @@ build/
 # valor compartilhado num projeto sem outros colaboradores.
 .vscode/
 .idea/
+
+# Saidas de build/IDE que nao sao do Gradle: bin/ (Eclipse) e target/ (resto do
+# tempo em que o build era Maven, ADR 0019). O build real vai em build/.
+/bin/
+/target/
+
+# Rascunhos locais (scripts descartaveis, testes de ferramenta) - nao fazem parte
+# do projeto.
+/.scratch-*/
+/scratch_*
