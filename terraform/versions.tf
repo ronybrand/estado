@@ -24,3 +24,9 @@ terraform {
 provider "aws" {
   region = "sa-east-1"
 }
+
+# Certificados do CloudFront so podem estar no ACM de us-east-1.
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+}

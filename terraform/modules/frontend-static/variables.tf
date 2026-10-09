@@ -20,3 +20,15 @@ variable "price_class" {
   type        = string
   default     = "PriceClass_100"
 }
+
+variable "aliases" {
+  description = "Dominios proprios que apontam pra esta distribuicao (alternate domain names); vazio mantem so o *.cloudfront.net"
+  type        = list(string)
+  default     = []
+}
+
+variable "acm_certificate_arn" {
+  description = "ARN do certificado ACM (us-east-1) que cobre os aliases; obrigatorio quando aliases nao e vazio"
+  type        = string
+  default     = ""
+}

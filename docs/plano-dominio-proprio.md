@@ -140,5 +140,6 @@ Fases 1 a 4: uma tarde. Fase 5: mais meio dia, com uma janela curta fora do ar n
 - [x] Fase 2: Caddy com os dois hostnames, `curl` com certificado válido
 - [ ] Fase 3: CloudFront, CSP, `lib-swap.sh`, READMEs e ADR 0024 (PR aberta; `apply` após o merge)
 - [ ] Antes da fase 4: `BACKEND_API_URL` na Vercel apontando para o nome novo
+- [ ] Extra: domínio raiz e `www` servindo o Angular (certificado ACM, aliases, CORS do backend e `og:url` do Angular)
 - [ ] Fase 4: `sslip.io` removido do Caddy
 - [ ] Fase 5, se escolhida

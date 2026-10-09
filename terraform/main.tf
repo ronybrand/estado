@@ -22,9 +22,11 @@ module "portfolio" {
 module "estado_frontend" {
   source = "./modules/frontend-static"
 
-  bucket_name       = var.frontend_bucket_name
-  api_origin_domain = "api.${var.domain_name}" # ADR 0024; o Caddy atende este nome (deploy/proxy/Caddyfile)
-  proxy_secret      = var.proxy_secret
+  bucket_name         = var.frontend_bucket_name
+  api_origin_domain   = "api.${var.domain_name}" # ADR 0024; o Caddy atende este nome (deploy/proxy/Caddyfile)
+  aliases             = local.frontend_domains
+  acm_certificate_arn = aws_acm_certificate_validation.frontend.certificate_arn
+  proxy_secret        = var.proxy_secret
 }
 
 module "estado_frontend_deploy" {
