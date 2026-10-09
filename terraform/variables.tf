@@ -37,3 +37,9 @@ variable "backend_github_repo" {
   type        = string
   default     = "ronybrand/estado"
 }
+
+variable "domain_name" {
+  type        = string
+  description = "Dominio proprio registrado no Route 53 (a zona hospedada precisa existir)."
+  default     = "ronybrand.click"
+}
