@@ -8,12 +8,18 @@ data "aws_route53_zone" "dominio" {
 
 # TTL baixo de proposito: a troca de IP (ou de instancia) vira uma edicao de
 # DNS que propaga em minutos.
+#
+# Fase 5.3 do plano de migracao (docs/plano-dominio-proprio.md): corte real
+# pra instancia nova (us-east-1, t4g.micro/12GB, native arm64 ja validado
+# rodando de verdade - ver fase 5.2). A instancia antiga (sa-east-1)
+# continua no ar em paralelo, sem nenhum module removido, pra rollback
+# imediato (reverter este registro pro IP antigo) se algo der errado.
 resource "aws_route53_record" "api" {
   zone_id = data.aws_route53_zone.dominio.zone_id
   name    = "api.${var.domain_name}"
   type    = "A"
   ttl     = 300
-  records = [module.portfolio.public_ip]
+  records = [module.portfolio_us_east_1.public_ip]
 }
 
 # Frontend Angular no dominio raiz (e no www): o CloudFront serve os dois, e o
