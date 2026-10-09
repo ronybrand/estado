@@ -140,7 +140,10 @@ resource "aws_cloudfront_response_headers_policy" "frontend" {
       # connect-src 'self': o frontend so chama o proprio dominio do CloudFront
       # (/api/* e repassado ao backend). O estado-ai-agent nao e alcancavel de fora,
       # so pelo /ask do backend, entao nao entra aqui.
-      content_security_policy = "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; base-uri 'self'; frame-ancestors 'none'"
+      # object-src/form-action: achado de scan DAST (OWASP ZAP) - essas duas
+      # diretivas nao herdam de default-src pela spec do CSP3, entao ficavam
+      # efetivamente sem restricao mesmo com default-src 'self' definido.
+      content_security_policy = "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'"
       override                = true
     }
   }
