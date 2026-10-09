@@ -156,6 +156,13 @@ ser parado e removido, para não dar 502 em quem ainda tem o IP dele em cache. P
 leva ~60 s a mais, e um `docker ps` durante esse tempo mostra os dois. Um `-antigo` que sobrar de
 uma execução interrompida é removido no início do próximo swap.
 
+**Limpeza de imagens a cada deploy:** no fim da drenagem o script roda `docker image prune -f`, e a
+imagem que acabou de sair ganha antes a tag local `anterior` (`marcar_anterior`), para não ser apagada.
+Isso mantém o disco perto de ~7 GB, em vez de crescer uma imagem por deploy até o prune semanal. E dá
+uma volta que não depende do registry: `./rollback.sh anterior` usa a imagem local. Sem argumento, o
+`rollback.sh` baixa a revisão de `last-good-tag` do GHCR; se o registry não responder, usa a `anterior`
+só quando ela for exatamente essa revisão (depois de um rollback ela aponta para a versão ruim).
+
 **Imagem native e volta para a JVM** (ver [ADR 0022](../docs/adr/0022-native-image-graalvm.md)): a
 `latest` é a imagem native e o `estado-deploy.timer` a puxa sozinho. O `docker-publish` publica a JVM
 em paralelo como `jvm-<sha>` e `jvm-latest`. Para voltar à JVM: **parar e desabilitar o timer**

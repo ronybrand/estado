@@ -35,3 +35,9 @@ Um `systemd timer` semanal (`estado-prune.timer`) roda `docker image prune -f` �
   momento da execução, inclusive uma que tenha ficado sem tag há poucos minutos — sem consequência
   prática aqui (nada depende de uma imagem sem tag por definição), mas vale registrar que não há
   período de carência.
+
+## Atualização (2026-10-09)
+O `docker image prune -f` passou a rodar também no fim de cada deploy (`drenar_antigo`), porque com
+deploys automáticos frequentes o disco chegava a ~11 GB antes do prune de segunda-feira (cada deploy
+deixa uma imagem de ~300 a 400 MB). A imagem anterior é preservada pela tag local `anterior`, e o timer
+semanal segue como rede de segurança. Ver [0008](0008-rollback-manual-por-tag-registrada.md).
