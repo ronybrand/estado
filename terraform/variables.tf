@@ -43,3 +43,9 @@ variable "domain_name" {
   description = "Dominio proprio registrado no Route 53 (a zona hospedada precisa existir)."
   default     = "ronybrand.click"
 }
+
+variable "ami_id_us_east_1" {
+  description = "AMI arm64 (Amazon Linux 2023) da instancia nova em us-east-1 - fase 5 de docs/plano-dominio-proprio.md. Fixada explicitamente, mesmo raciocinio do ami_id original: resolver a AMI mais recente a cada apply arriscaria substituir a instancia sem isso ser uma decisao deliberada."
+  type        = string
+  default     = "ami-0ae8605ed708e3c3e" # al2023-ami-2023.12.20260930.0-kernel-6.1-arm64
+}

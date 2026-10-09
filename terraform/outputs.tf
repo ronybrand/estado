@@ -2,6 +2,16 @@ output "public_ip" {
   value = module.portfolio.public_ip
 }
 
+# Fase 5.1 do plano de migracao (docs/plano-dominio-proprio.md) - instancia
+# nova em us-east-1, sem trafego ainda.
+output "public_ip_us_east_1" {
+  value = module.portfolio_us_east_1.public_ip
+}
+
+output "instance_id_us_east_1" {
+  value = module.portfolio_us_east_1.instance_id
+}
+
 output "backup_bucket" {
   value = module.estado_backup.bucket_name
 }
