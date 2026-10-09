@@ -142,6 +142,38 @@ A máquina velha continua intacta até o corte ser validado; o rollback do corte
 12. Parar, tirar um snapshot final, remover o módulo antigo do Terraform (instância, EIP, security group,
     alarme) e liberar o IPv4 antigo. A zona, o CloudFront, o ACM e o bucket de backup (`sa-east-1`) não mudam.
 
+**Dimensionamento do disco (medido em 2026-10-09 na `t3.micro` atual)**
+
+Uso estável de 7,0 GB, depois de limpar as imagens de teste:
+
+| Área | Tamanho | Reduzível? |
+|---|---|---|
+| `/usr` (sistema) | 2,0 GB | não |
+| `/swapfile` | 2,0 GB | sim, para 1 GB (a swap usada nunca passou de ~160 MB em dias de observação) |
+| `/var/lib/docker` | 1,9 GB | um pouco: o `jvm-latest` (420 MB) só está lá por testes; os timers baixam só a `latest` |
+| `/var/cache` | 0,4 GB | sim, com `dnf clean all` |
+| Logs e `/boot` | ~0,16 GB | não |
+
+Com swap de 1 GB, sem o `jvm-latest` e com o cache limpo, o uso estável cai para ~5 GB; um deploy com
+sobreposição soma ~0,7 GB (imagem nova baixada antes do prune).
+
+- **Piso técnico: 8 GB**, o tamanho do snapshot da AMI do Amazon Linux 2023 padrão (a ECS-optimized atual
+  tem 30 GB, então a máquina nova usa a padrão). **Piso prático: 10 a 12 GB.**
+- Preço em `us-east-1`: 16 GB = US$ 1,28 por mês, 12 GB = 0,96, 10 GB = 0,80, 8 GB = 0,64. Ir de 16 para 12 GB
+  economiza **US$ 0,32 por mês (~US$ 4 por ano)**, pouco para o risco de disco cheio (derruba o banco e os
+  containers).
+- **Decisão: 16 GB** (uso previsto ~36%). O EBS cresce online, sem reboot, mas não encolhe; por isso 12 GB só
+  se justificaria com os itens abaixo e um alerta de disco.
+
+Medidas que entram no bootstrap, qualquer que seja o tamanho do disco:
+1. `/etc/docker/daemon.json` com `log-driver: json-file`, `max-size: 10m`, `max-file: 3`. Hoje os containers
+   usam `json-file` **sem rotação** (nenhum `daemon.json`); os logs são de poucos KB, mas nada os limita.
+2. `dnf clean all` ao fim da instalação.
+3. Swap de 1 GB (`vm.swappiness=10`, como hoje).
+4. Não baixar o `jvm-latest` na máquina; ele existe no GHCR para um rollback pontual.
+5. **Alerta de disco em 80%** no Grafana (o dashboard já tem o painel de disco, mas não há alerta). Sem ele,
+   não reduzir abaixo de 16 GB.
+
 **Custo durante a sobreposição:** as duas máquinas ligadas por 1 a 2 dias, uns US$ 0,7 por dia a mais.
 
 **Riscos específicos desta fase**
@@ -190,7 +222,8 @@ Fases 1 a 4: uma tarde. Fase 5: mais meio dia, com uma janela curta fora do ar n
 - [ ] Fase 4: `sslip.io` removido do Caddy
 - [ ] Fase 5.0: imagens multi-arch no CI (estado e agent)
 - [ ] Fase 5.0: módulo da instância sem região fixa
-- [ ] Fase 5.0: script de bootstrap versionado
+- [ ] Fase 5.0: script de bootstrap versionado (com rotação de logs do Docker, swap de 1 GB e `dnf clean all`)
+- [ ] Fase 5.0: alerta de disco em 80% no Grafana
 - [ ] Fase 5.1: instância nova provisionada e configurada, segredos transferidos
 - [ ] Fase 5.2: banco restaurado e máquina nova validada com `--resolve`
 - [ ] Fase 5.3: corte do registro `A` e observação de 24 a 48 h
