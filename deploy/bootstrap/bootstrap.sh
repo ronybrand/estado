@@ -68,15 +68,21 @@ else
   echo "==> ${DAEMON_JSON} ja existe, pulando (conferir manualmente se bate com o esperado)"
 fi
 
-# --- Redes Docker compartilhadas ------------------------------------------
-for rede in portfolio estado_internal; do
-  if ! docker network inspect "$rede" >/dev/null 2>&1; then
-    echo "==> Criando rede Docker ${rede}"
-    docker network create "$rede"
-  else
-    echo "==> Rede ${rede} ja existe, pulando"
-  fi
-done
+# --- Rede Docker compartilhada do proxy (Caddy) ---------------------------
+# So "portfolio": e a unica que o Compose declara "external: true"
+# (deploy/proxy/docker-compose.yml) - precisa existir antes do primeiro
+# "docker compose up". "estado_internal" (deploy/estado/docker-compose.yml)
+# NAO e external - o proprio Compose cria ela no primeiro "up"; pre-criar
+# aqui (como uma versao anterior deste script fazia) da um label errado
+# (com.docker.compose.network vazio em vez de "internal") que faz o Compose
+# recusar usar a rede - achado rodando este script pela primeira vez,
+# 2026-10-09 (ver docs/plano-dominio-proprio.md).
+if ! docker network inspect portfolio >/dev/null 2>&1; then
+  echo "==> Criando rede Docker portfolio"
+  docker network create portfolio
+else
+  echo "==> Rede portfolio ja existe, pulando"
+fi
 
 # --- Swap de 1 GB (metade do atual - ver dimensionamento do disco) --------
 # vm.swappiness=10 ja usado na instancia atual (uso de swap nunca passou de
