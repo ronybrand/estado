@@ -122,7 +122,7 @@ notify_github_deployment() {
     curl -sf --max-time 10 -X POST "${api}/${id}/statuses" \
         -H "Authorization: Bearer ${GITHUB_DEPLOY_TOKEN}" \
         -H "Accept: application/vnd.github+json" \
-        -d "{\"state\":\"${state}\",\"environment_url\":\"https://54.94.231.248.sslip.io/estado\",\"description\":\"${descricao}\"}" \
+        -d "{\"state\":\"${state}\",\"environment_url\":\"https://api.ronybrand.click/estado\",\"description\":\"${descricao}\"}" \
         >/dev/null 2>&1 || true
 }
 

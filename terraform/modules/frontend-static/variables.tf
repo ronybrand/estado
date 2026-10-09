@@ -4,7 +4,7 @@ variable "bucket_name" {
 }
 
 variable "api_origin_domain" {
-  description = "Dominio do backend (Caddy) que recebe o trafego de /api/* - hoje o <elastic-ip>.sslip.io da ADR 0003"
+  description = "Dominio do backend (Caddy) que recebe o trafego de /api/* - hoje api.<dominio proprio>, ver ADR 0024"
   type        = string
 }
 

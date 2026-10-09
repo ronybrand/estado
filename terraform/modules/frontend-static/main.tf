@@ -137,11 +137,10 @@ resource "aws_cloudfront_response_headers_policy" "frontend" {
     }
 
     content_security_policy {
-      # connect-src inclui o subdominio do estado-ai-agent (app de
-      # portfolio novo, deploy proprio na mesma EC2 via subdominio
-      # sslip.io) - sem isso o navegador bloqueia a chamada por CSP
-      # mesmo com o CORS do backend configurado corretamente.
-      content_security_policy = "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' https://ai-agent.54.94.231.248.sslip.io; base-uri 'self'; frame-ancestors 'none'"
+      # connect-src 'self': o frontend so chama o proprio dominio do CloudFront
+      # (/api/* e repassado ao backend). O estado-ai-agent nao e alcancavel de fora,
+      # so pelo /ask do backend, entao nao entra aqui.
+      content_security_policy = "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; base-uri 'self'; frame-ancestors 'none'"
       override                = true
     }
   }
@@ -182,7 +181,7 @@ data "aws_cloudfront_cache_policy" "caching_disabled" {
 
 data "aws_cloudfront_origin_request_policy" "all_viewer" {
   # ExceptHostHeader (nao AllViewer puro): o Caddyfile roteia por virtualhost
-  # no dominio sslip.io (ver deploy/proxy/Caddyfile) - se o CloudFront
+  # no dominio do origin (ver deploy/proxy/Caddyfile) - se o CloudFront
   # encaminhasse o Host do viewer (dominio *.cloudfront.net), o Caddy nao
   # reconheceria o site e o proxy quebraria. Com esta policy, o CloudFront
   # sobrescreve o Host pro dominio do origin (api_origin_domain) antes de

@@ -12,7 +12,7 @@ CRUD project for Brazilian federative units (states).
 The Estado project is a system built on Java 25/Spring Boot 4, with Gradle for dependency management and PostgreSQL as the database, exposing an HTTP service. The frontend (Angular, separate [`angular_estado`](https://github.com/ronybrand/angular_estado) repo) is served as a static bundle via S3 + CloudFront, with the API reachable at `/api/*` under the same domain (see ADR 0013). A second, alternate frontend for the same API exists in React: [`react_state`](https://github.com/ronybrand/react_state). `/ask` proxies (`AskProxyService`) to a separate LLM agent, [`estado-ai-agent`](https://github.com/ronybrand/estado-ai-agent) (Spring AI + Gemini, tool calling against this same API), so the Angular frontend never talks to it directly.
 
 **Live**: https://d3bqbg07tehy1h.cloudfront.net/ (frontend, S3 + CloudFront) · API at
-https://54.94.231.248.sslip.io/estado (also reachable via `/api/estado` under the same
+https://api.ronybrand.click/estado (also reachable via `/api/estado` under the same
 CloudFront domain) — self-managed AWS deployment (EC2 + Docker + Caddy for the backend, S3 +
 CloudFront for the frontend), with CI/CD, automated backups and failure recovery.
 Infrastructure is provisioned via Terraform (imported from the real account, not written from
@@ -238,7 +238,7 @@ The image published to production lives at `ghcr.io/ronybrand/estado` (published
 on every push to `master`, see [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml)).
 
 # 4 - Production
-https://d3bqbg07tehy1h.cloudfront.net/ (frontend) — API at https://54.94.231.248.sslip.io/estado or
+https://d3bqbg07tehy1h.cloudfront.net/ (frontend) — API at https://api.ronybrand.click/estado or
 via `/api/estado` under the same CloudFront domain. Deployment details in [`CASE_STUDY.md`](CASE_STUDY.md).
 
 Log in with the demo credentials above to try create/update/delete on the live instance.
