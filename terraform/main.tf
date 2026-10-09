@@ -22,6 +22,28 @@ module "portfolio" {
   key_name = "estado-key"
 }
 
+# Fase 5.1 do plano de migracao (docs/plano-dominio-proprio.md): instancia
+# nova em paralelo, sem trafego ainda (nenhum DNS aponta pra ela). Reusa o
+# mesmo instance_profile do estado_backup (role global, ja tem
+# AmazonSSMManagedInstanceCore via ssm.tf + permissao de escrita no bucket de
+# backup) - nao precisa de IAM novo so por causa da regiao. key_name nulo
+# (default do modulo): acesso so por SSM, sem key pair proprio nesta regiao.
+module "portfolio_us_east_1" {
+  source = "./modules/portfolio-instance"
+  providers = {
+    aws = aws.us_east_1
+  }
+
+  instance_name         = "estado-portfolio-us-east-1"
+  ami_id                = var.ami_id_us_east_1
+  instance_type         = "t4g.micro"
+  root_volume_size      = 12
+  availability_zone     = "us-east-1a"
+  alarm_region          = "us-east-1"
+  admin_cidr            = var.admin_cidr
+  instance_profile_name = module.estado_backup.instance_profile_name
+}
+
 # Frontend Angular estatico (S3 + CloudFront) na frente do mesmo backend
 # EC2/Caddy - ver ADR 0013.
 module "estado_frontend" {

@@ -13,9 +13,16 @@ if [ "$(id -u)" -ne 0 ]; then
   exit 1
 fi
 
-# Usuario real por tras do sudo (ssm-user ou ec2-user) - os diretorios de
-# app ficam no HOME dele, nao em /root.
-REAL_USER="${SUDO_USER:-ec2-user}"
+# Sempre ec2-user, nunca derivado de $SUDO_USER: as units do systemd ja
+# versionadas (deploy/systemd/*.service) tem User=ec2-user e
+# WorkingDirectory=/home/ec2-user/... fixos - usar outro usuario aqui
+# deixaria os diretorios criados por este script sem bater com o que as
+# units esperam. $SUDO_USER e enganoso neste contexto: via SSM
+# (AWS-RunShellScript ja roda como root) um "sudo ./bootstrap.sh" extra
+# so define SUDO_USER=root, nao o usuario de login real (achado rodando
+# este script pela primeira vez, 2026-10-09 - ver docs/plano-dominio-
+# proprio.md).
+REAL_USER="ec2-user"
 REAL_HOME="$(getent passwd "$REAL_USER" | cut -d: -f6)"
 
 echo "==> Usuario alvo: ${REAL_USER} (${REAL_HOME})"
