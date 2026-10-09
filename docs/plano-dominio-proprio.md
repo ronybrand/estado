@@ -221,11 +221,11 @@ Fases 1 a 4: uma tarde. Fase 5: mais meio dia, com uma janela curta fora do ar n
 - [ ] Antes da fase 4: `BACKEND_API_URL` na Vercel apontando para o nome novo
 - [ ] Extra: domínio raiz e `www` servindo o Angular (certificado ACM, aliases, CORS do backend e `og:url` do Angular)
 - [ ] Fase 4: `sslip.io` removido do Caddy
-- [ ] Fase 5.0: imagens multi-arch no CI (estado e agent)
+- [x] Fase 5.0: imagens multi-arch no CI (estado — PR #126; agent — estado-ai-agent#50, validado via `workflow_dispatch` antes de mergear)
 - [x] Fase 5.0: módulo da instância sem região fixa (`availability_zone`, `alarm_region`, `key_name` opcional — `terraform plan` real confirma zero drift contra a instância atual)
-- [x] Fase 5.0: script de bootstrap versionado (`deploy/bootstrap/bootstrap.sh` — Docker/Compose, rotação de logs, swap de 1 GB, `dnf clean all`, journald, redes, diretórios, Alloy; ainda não executado numa instância real)
+- [x] Fase 5.0: script de bootstrap versionado (`deploy/bootstrap/bootstrap.sh` — Docker/Compose, rotação de logs, swap de 1 GB, `dnf clean all`, journald, redes, diretórios, Alloy; executado e corrigido 2x na instância real, ver PR #128)
 - [x] Fase 5.0: alerta de disco em 80% especificado na ADR 0012 (mesmo padrão manual na UI dos outros dois alertas — ainda não criado de fato no Grafana Cloud, pendente de Rony)
-- [ ] Fase 5.1: instância nova provisionada e configurada, segredos transferidos
-- [ ] Fase 5.2: banco restaurado e máquina nova validada com `--resolve`
-- [ ] Fase 5.3: corte do registro `A` e observação de 24 a 48 h
+- [x] Fase 5.1: instância nova provisionada e configurada, segredos transferidos (PR #127; configs/segredos do backend E do agent já instalados)
+- [x] Fase 5.2: banco restaurado e máquina nova validada — `pg_dump`/restore com contagem de linhas conferida, smoke completo, native arm64 confirmado rodando de verdade (PR #128). `/ask` fim-a-fim validado depois do corte (backend→agent→Gemini, agent também em arm64 real)
+- [x] Fase 5.3: corte do registro `A` executado (PR #131) e confirmado com tráfego real; observação de 24-48h em andamento desde 2026-10-09 ~16:36 UTC
 - [ ] Fase 5.4: máquina velha desativada e removida do Terraform
