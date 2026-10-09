@@ -3,7 +3,7 @@
 Status em 2026-10-09: domínio **`ronybrand.click` registrado pela CLI** (1 ano, US$ 3, renovação
 automática e proteção de WHOIS ligadas; operação `a354caf6-bce7-49c3-a8fd-0935030841f1`) e zona
 hospedada `Z1023450XBS9WJ1974JR` criada pelo registro. Fases 0 e 1 em andamento; as demais ainda não
-foram executadas. O escopo (fase 5) segue em aberto.
+foram executadas. Escopo da fase 5 decidido: `t4g.micro` em `us-east-1`, 16 GB (detalhe na fase 5).
 
 Progresso: fases 0, 1 e 2 concluídas (DNS aplicado, Caddy com certificado do Let's Encrypt para
 `api.ronybrand.click`); fase 3 em PR, com o `terraform apply` previsto para depois do merge.
@@ -24,7 +24,7 @@ máquina como etapa opcional, que só então fica barata.
 |---|---|---|
 | 1 | Nome do domínio | Disponíveis em 2026-10-09: `ronybrand.click`, `rony-brand.click`, `estado-ronybrand.click`, `estados-do-brasil.click`, `brazilian-states.click`, `ronybrand-portfolio.click`. Sugestão: `ronybrand.click`, com subdomínios por app (`api.`, `estado.`, ...), já que a instância foi pensada para hospedar mais apps. |
 | 2 | Quem registra | O registro pede dados de contato (nome, endereço, telefone, e-mail). Registrar no console (Route 53, *Registered domains*) com *Privacy protection* ligada. |
-| 3 | Escopo | (a) só domínio e troca de hostname; (b) também recriar a instância com disco de 16 GB em `sa-east-1`; (c) idem em `us-east-1` e/ou ARM (`t4g.micro`). |
+| 3 | Escopo | (a) só domínio e troca de hostname; (b) também recriar a instância com disco de 16 GB em `sa-east-1`; (c) idem em `us-east-1` e/ou ARM (`t4g.micro`). **Decidido em 2026-10-09: (c) com `t4g.micro` em `us-east-1`, 16 GB.** |
 
 ## 3. Custo (preços da API da AWS em 2026-10-09)
 
@@ -94,17 +94,63 @@ Depois de alguns dias estável, tirar o `54.94.231.248.sslip.io` do bloco do Cad
 `https://api.ronybrand.click` nas variáveis do projeto na Vercel e fazer um novo deploy. Sem isso, o
 React perde o backend no dia em que o `sslip.io` sair do Caddy.
 
-### Fase 5 (opcional): recriar a instância com disco de 16 GB
-Só depois das fases 1 a 4, quando o hostname já não depende do IP.
-1. Subir a instância nova (módulo `portfolio-instance`, `root_volume_size = 16`, tipo e região
-   escolhidos na decisão 3), com Docker, Caddy, Alloy, a swap de 2 GB e os timers.
-2. Restaurar o dump do Postgres do S3 (o banco tem ~1,4 KB).
-3. Copiar `.env` dos dois apps (por SSM, sem passar o conteúdo por chat) e os scripts de `deploy/`.
-4. Validar pelo IP novo com `curl --resolve api.<domínio>:443:<ip-novo>`.
-5. Trocar o registro `A` para o IP novo (TTL baixo antes) e desligar a instância antiga.
+### Fase 5: recriar a instância em `us-east-1`, `t4g.micro` (ARM), disco de 16 GB
+Decisão de 2026-10-09: `t4g.micro` em `us-east-1`, volume gp3 criptografado de 16 GB (uso estável medido:
+~7 GB). Economia estimada: ~US$ 9,4 por mês (~US$ 113 por ano) contra a `t3.micro` de 30 GB em `sa-east-1`.
+A máquina velha continua intacta até o corte ser validado; o rollback do corte é reverter um registro DNS.
 
-Se a região mudar: backups em S3, SSM e IAM continuam; a zona do Route 53 e o CloudFront são globais.
-O volume antigo e o snapshot ficam retidos alguns dias como volta.
+**Fase 5.0: pré-requisitos, sem nenhum efeito no servidor atual**
+1. **Imagens multi-arch (`amd64` e `arm64`) no CI**, nos dois repositórios. Um build por arquitetura em
+   runners nativos (`ubuntu-latest` e `ubuntu-24.04-arm`, este gratuito em repositório público), publicando
+   por digest, e um passo que junta os dois num manifesto com as tags `latest`, `<sha>`, `jvm-latest` e
+   `jvm-<sha>`. O native sob emulação QEMU seria lento demais, por isso não se usa `platforms:` num build só.
+   O check `Native Image` (PRs) também passa a rodar o smoke em `arm64`.
+2. **Módulo `portfolio-instance` sem região fixa**: hoje a AZ é `sa-east-1b` e o ARN do alarme de
+   auto-recuperação tem `sa-east-1`; o key pair é regional. Passam a ser variáveis (`availability_zone`,
+   região do alarme, `key_name` opcional, já que o acesso é por SSM).
+3. **Script de bootstrap versionado** (`deploy/bootstrap/`). A instância atual foi montada à mão (o módulo
+   não tem `user_data`), então a configuração só existia no servidor. O script, idempotente, reproduz: Docker
+   e plugin do Compose (`arm64`), redes `portfolio` e `estado_internal`, swap de 2 GB com `swappiness=10`,
+   limites do journald, diretórios `~/estado`, `~/estado-ai-agent` e `~/proxy`, unidades e timers do systemd,
+   Grafana Alloy (RPM `aarch64`) e o drop-in com o limite de memória.
+
+**Fase 5.1: provisionar (sem tráfego)**
+4. Segundo módulo da instância no Terraform, com `providers = { aws = aws.us_east_1 }`, `t4g.micro`,
+   `root_volume_size = 16`, AMI `arm64` do Amazon Linux 2023 fixada explicitamente (como já se faz hoje) e
+   um novo Elastic IP. O `terraform plan` deve mostrar só recursos novos.
+5. Rodar o bootstrap pela SSM e instalar os scripts de `deploy/`.
+6. **Segredos dos `.env`** (hoje só existem na máquina velha, não há Parameter Store): transferência direta
+   máquina a máquina por um objeto S3 temporário com URLs pré-assinadas de poucos minutos (a máquina velha
+   envia, a nova baixa, o objeto é apagado em seguida). Os valores não passam pelo meu terminal nem por
+   nenhum log, e eu só vejo se o arquivo chegou e quais chaves ele tem.
+7. Opcional: copiar também o volume de dados do Caddy (certificados e conta ACME), para o corte não ter
+   intervalo de TLS.
+
+**Fase 5.2: dados e validação**
+8. `pg_dump` lógico na máquina velha e restauração na nova (portável entre arquiteturas; o banco hoje é
+   minúsculo). Conferir contagem de linhas.
+9. Validar a máquina nova **antes** do corte, sem mexer em DNS: `curl --resolve api.<domínio>:443:<ip-novo>`
+   com o `native-smoke.sh` completo, `/ask` pela guarda de entrada, memória e swap sob um swap de deploy.
+
+**Fase 5.3: corte**
+10. Trocar o registro `A` de `api.<domínio>` (TTL 300) para o IP novo em `terraform/dns.tf`. Backups e deploys
+    automáticos passam a rodar nas duas máquinas durante a sobreposição; desligar o Alloy da velha para não
+    duplicar métricas.
+11. Observar 24 a 48 horas. **Rollback:** reverter o registro `A` para o IP antigo (propaga em ~5 min).
+
+**Fase 5.4: desativar a máquina velha**
+12. Parar, tirar um snapshot final, remover o módulo antigo do Terraform (instância, EIP, security group,
+    alarme) e liberar o IPv4 antigo. A zona, o CloudFront, o ACM e o bucket de backup (`sa-east-1`) não mudam.
+
+**Custo durante a sobreposição:** as duas máquinas ligadas por 1 a 2 dias, uns US$ 0,7 por dia a mais.
+
+**Riscos específicos desta fase**
+- **Latência:** o CloudFront do Brasil passa a buscar as chamadas de API não cacheadas nos EUA (uns 100 a
+  140 ms a mais). O `/ask` (15 a 30 s) nem sente.
+- **Residência de dados:** o Postgres passa a ficar nos EUA (hoje só há dados de demonstração).
+- **Imagem `arm64` nunca rodou em produção:** daí a validação da 5.2 antes do corte.
+- **Certificado do Caddy:** sem copiar o volume de dados, o novo host só obtém o certificado depois de o DNS
+  apontar para ele (poucos segundos de falha de TLS no corte).
 
 ## 5. Rollback por fase
 
@@ -142,4 +188,10 @@ Fases 1 a 4: uma tarde. Fase 5: mais meio dia, com uma janela curta fora do ar n
 - [ ] Antes da fase 4: `BACKEND_API_URL` na Vercel apontando para o nome novo
 - [ ] Extra: domínio raiz e `www` servindo o Angular (certificado ACM, aliases, CORS do backend e `og:url` do Angular)
 - [ ] Fase 4: `sslip.io` removido do Caddy
-- [ ] Fase 5, se escolhida
+- [ ] Fase 5.0: imagens multi-arch no CI (estado e agent)
+- [ ] Fase 5.0: módulo da instância sem região fixa
+- [ ] Fase 5.0: script de bootstrap versionado
+- [ ] Fase 5.1: instância nova provisionada e configurada, segredos transferidos
+- [ ] Fase 5.2: banco restaurado e máquina nova validada com `--resolve`
+- [ ] Fase 5.3: corte do registro `A` e observação de 24 a 48 h
+- [ ] Fase 5.4: máquina velha desativada e removida do Terraform
