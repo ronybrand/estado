@@ -1,4 +1,6 @@
-54.94.231.248.sslip.io {
+# Dois nomes durante a transicao para o dominio proprio (docs/plano-dominio-proprio.md):
+# o sslip.io sai quando o CloudFront e o resto ja usarem api.ronybrand.click.
+54.94.231.248.sslip.io, api.ronybrand.click {
 	# /actuator/health e /actuator/prometheus nunca deveriam ser alcançáveis de
 	# fora — o Alloy já faz scrape de /actuator/prometheus via rede Docker
 	# interna (estado-app:8080 direto, ver deploy/alloy/config.alloy) e o
