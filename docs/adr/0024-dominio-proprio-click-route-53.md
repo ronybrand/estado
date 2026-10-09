@@ -37,3 +37,10 @@ Registrar `ronybrand.click` no Route 53 e servir o backend em `api.ronybrand.cli
   automática ligada) e o contato precisa ter o e-mail verificado.
 - O React na Vercel usa a variável `BACKEND_API_URL`, fora do repositório: precisa apontar para o nome
   novo antes de o `sslip.io` ser removido do Caddy.
+
+## Atualização (2026-10-09): frontend no domínio raiz
+O domínio raiz (`ronybrand.click`) e o `www` passaram a servir o Angular pelo mesmo CloudFront, com
+certificado do ACM em `us-east-1` validado por DNS na zona do Route 53 e registros `A` de alias
+(`terraform/dns.tf`). O Angular chama `/api/*` em caminho relativo, então não mudou. O CORS do backend
+(`API_ORIGIN_PERMITIDA`) precisa listar as duas origens novas: atrás do CloudFront o backend vê o `Host`
+`api.ronybrand.click`, e um `Origin` `https://ronybrand.click` conta como outra origem.

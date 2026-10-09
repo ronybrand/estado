@@ -10,7 +10,7 @@ Projeto CRUD de unidades federativas do Brasil (estados).
 
 O Projeto Estado trata-se de um sistema sob arquitetura Java 25/Spring Boot 4, configuração de dependência em Gradle e banco de dados PostgreSQL para disponibilização de um serviço HTTP. O front-end (Angular, repo [`angular_estado`](https://github.com/ronybrand/angular_estado) separado) é servido estático via S3 + CloudFront, com a API acessível em `/api/*` sob o mesmo domínio (ver ADR 0013). Existe um segundo front-end alternativo pra mesma API, em React: [`react_state`](https://github.com/ronybrand/react_state). O `/ask` faz proxy (`AskProxyService`) pra um agente de LLM separado, o [`estado-ai-agent`](https://github.com/ronybrand/estado-ai-agent) (Spring AI + Gemini, com tool calling contra essa mesma API), então o front-end Angular nunca fala com ele diretamente.
 
-**No ar**: https://d3bqbg07tehy1h.cloudfront.net/ (frontend, S3 + CloudFront) · API em
+**No ar**: https://ronybrand.click/ (também em https://d3bqbg07tehy1h.cloudfront.net/) (frontend, S3 + CloudFront) · API em
 https://api.ronybrand.click/estado (acessível também via `/api/estado` sob o mesmo domínio do
 CloudFront) — deploy próprio na AWS (EC2 + Docker + Caddy pro backend, S3 + CloudFront pro frontend),
 com CI/CD, backup automático e recuperação de falhas. Infra provisionada via Terraform (importada da
