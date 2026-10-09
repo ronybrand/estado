@@ -8,23 +8,49 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-push:
+  build:
     # latest = imagem native (ADR 0022); a JVM continua sendo publicada como
     # jvm-latest / jvm-<sha> pra ter volta imediata (rollback.sh jvm-<sha>).
     # fail-fast desligado: se o native falhar (ex.: metadata de reflexao
-    # desatualizado), a latest nao muda e o timer da EC2 segue na imagem atual.
+    # desatualizado) num dos dois arches, o merge desse variante (job
+    # "publish") nao roda e a tag nao muda - o outro variante nao e afetado.
+    #
+    # Multi-arch (fase 5.0 de docs/plano-dominio-proprio.md, motivada pela
+    # migracao pra t4g.micro/arm64 em us-east-1): um job por combinacao
+    # variante x arquitetura, cada um num runner nativo da arquitetura
+    # (ubuntu-latest = amd64, ubuntu-24.04-arm = arm64, gratuito em repo
+    # publico) - native sob emulacao QEMU seria lento demais pra caber no
+    # orcamento de CI. Cada job publica so por digest (sem tag), o job
+    # "publish" seguinte junta os dois digests da mesma variante num
+    # manifesto multi-arch com as tags de verdade.
     strategy:
       fail-fast: false
       matrix:
         include:
           - variante: native
             arquivo: Dockerfile.native
-            tag_latest: latest
             prefixo: ""
+            arch: amd64
+            runner: ubuntu-latest
+            platform: linux/amd64
+          - variante: native
+            arquivo: Dockerfile.native
+            prefixo: ""
+            arch: arm64
+            runner: ubuntu-24.04-arm
+            platform: linux/arm64
           - variante: jvm
             arquivo: Dockerfile
-            tag_latest: jvm-latest
             prefixo: "jvm-"
+            arch: amd64
+            runner: ubuntu-latest
+            platform: linux/amd64
+          - variante: jvm
+            arquivo: Dockerfile
+            prefixo: "jvm-"
+            arch: arm64
+            runner: ubuntu-24.04-arm
+            platform: linux/arm64
     # workflow_run inclui PRs de fora (inclusive forks), ja que o CI roda em
     # pull_request - so builda/publica se o CI que passou foi disparado por um
     # push (codigo ja mergeado em master), nunca pelo head de um PR nao
@@ -36,10 +62,12 @@ jobs:
       (github.event.workflow_run.conclusion == 'success' &&
        github.event.workflow_run.event == 'push' &&
        github.event.workflow_run.head_repository.full_name == github.repository)
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
       packages: write
+    outputs:
+      sha: ${{ steps.sha.outputs.short }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -56,22 +84,78 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
+        with:
+          context: .
+          file: ${{ matrix.arquivo }}
+          platforms: ${{ matrix.platform }}
+          # Publica so por digest (sem tag) - o job "publish" monta o
+          # manifesto multi-arch e so ai aplica as tags reais.
+          outputs: type=image,name=ghcr.io/${{ github.repository }},push-by-digest=true,name-canonical=true,push=true
+          build-args: |
+            GIT_COMMIT=${{ steps.sha.outputs.short }}
+          cache-from: type=gha,scope=${{ matrix.variante }}-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.variante }}-${{ matrix.arch }}
+
+      - name: Exporta o digest
+        run: |
+          mkdir -p /tmp/digests/${{ matrix.variante }}
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${{ matrix.variante }}/${digest#sha256:}"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: digest-${{ matrix.variante }}-${{ matrix.arch }}
+          path: /tmp/digests/${{ matrix.variante }}/*
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    needs: build
+    if: always() && needs.build.result != 'skipped'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variante: native
+            tag_latest: latest
+            prefixo: ""
+          - variante: jvm
+            tag_latest: jvm-latest
+            prefixo: "jvm-"
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v6
+        with:
+          pattern: digest-${{ matrix.variante }}-*
+          path: /tmp/digests/${{ matrix.variante }}
+          merge-multiple: true
+
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6
         id: meta
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
             type=raw,value=${{ matrix.tag_latest }}
-            type=sha,prefix=${{ matrix.prefixo }},format=long
+            type=sha,prefix=${{ matrix.prefixo }},format=long,value=${{ needs.build.outputs.sha }}
 
-      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
-        with:
-          context: .
-          file: ${{ matrix.arquivo }}
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            GIT_COMMIT=${{ steps.sha.outputs.short }}
-          cache-from: type=gha,scope=${{ matrix.variante }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.variante }}
+      # Junta os dois digests (amd64 + arm64) da mesma variante num unico
+      # manifesto multi-arch e aplica todas as tags de uma vez. Se o build de
+      # algum dos dois arches desta variante falhou, o download acima falha
+      # antes de chegar aqui (artefato ausente) - a tag nao muda, mesmo
+      # comportamento do fail-fast:false anterior.
+      - working-directory: /tmp/digests/${{ matrix.variante }}
+        run: |
+          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf 'ghcr.io/${{ github.repository }}@sha256:%s ' *)
+        env:
+          DOCKER_METADATA_OUTPUT_JSON: ${{ steps.meta.outputs.json }}

@@ -27,7 +27,19 @@ concurrency:
 
 jobs:
   native-smoke:
-    runs-on: ubuntu-latest
+    # arm64 adicionado na fase 5.0 do plano de migracao (docs/plano-dominio-
+    # proprio.md) - a instancia nova e t4g.micro (ARM). Builda sob emulacao
+    # seria lento demais, por isso roda num runner nativo arm64 (gratuito em
+    # repo publico), nao via `platforms:` num build so.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     services:
       postgres:
         image: postgres:16
@@ -52,8 +64,8 @@ jobs:
           tags: estado:native
           build-args: |
             NATIVE_ARGS=-PnativeQuick
-          cache-from: type=gha,scope=native-image
-          cache-to: type=gha,mode=max,scope=native-image
+          cache-from: type=gha,scope=native-image-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=native-image-${{ matrix.arch }}
 
       - name: Sobe o container e roda o smoke
         run: |

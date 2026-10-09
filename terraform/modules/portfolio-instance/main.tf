@@ -7,11 +7,12 @@ data "aws_vpc" "default" {
 
 data "aws_subnet" "default_az" {
   vpc_id            = data.aws_vpc.default.id
-  availability_zone = "sa-east-1b"
+  availability_zone = var.availability_zone
   default_for_az    = true
 }
 
 data "aws_key_pair" "instance_key" {
+  count    = var.key_name == null ? 0 : 1
   key_name = var.key_name
 }
 
@@ -65,7 +66,7 @@ resource "aws_instance" "portfolio" {
   instance_type          = var.instance_type
   subnet_id              = data.aws_subnet.default_az.id
   vpc_security_group_ids = [aws_security_group.portfolio.id]
-  key_name               = data.aws_key_pair.instance_key.key_name
+  key_name               = var.key_name == null ? null : data.aws_key_pair.instance_key[0].key_name
   iam_instance_profile   = var.instance_profile_name
 
   root_block_device {
@@ -133,5 +134,5 @@ resource "aws_cloudwatch_metric_alarm" "ec2_auto_recovery" {
     InstanceId = aws_instance.portfolio.id
   }
 
-  alarm_actions = ["arn:aws:automate:sa-east-1:ec2:recover"]
+  alarm_actions = ["arn:aws:automate:${var.alarm_region}:ec2:recover"]
 }

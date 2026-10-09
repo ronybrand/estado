@@ -28,9 +28,28 @@ variable "admin_cidr" {
   type        = string
 }
 
+# Nulo = sem key pair (acesso e so por SSM, como ja e o caso hoje - ver
+# DEPLOY_AWS.md). O key pair e sempre regional, entao uma instancia em outra
+# regiao (plano em docs/plano-dominio-proprio.md, fase 5) precisaria de um
+# novo recurso de qualquer forma; deixar nulo evita recriar esse recurso por
+# regiao sem necessidade real.
 variable "key_name" {
   type    = string
-  default = "estado-key"
+  default = null
+}
+
+# AZ e regiao do alarme eram fixos em "sa-east-1b"/"sa-east-1" dentro deste
+# modulo - impedia reusar o modulo numa regiao diferente (plano de migracao
+# pra us-east-1/t4g.micro, docs/plano-dominio-proprio.md fase 5).
+variable "availability_zone" {
+  type    = string
+  default = "sa-east-1b"
+}
+
+variable "alarm_region" {
+  description = "Regiao usada no ARN da acao de auto-recuperacao do alarme (arn:aws:automate:<regiao>:ec2:recover) - deve bater com a regiao do provider usado pra instanciar este modulo."
+  type        = string
+  default     = "sa-east-1"
 }
 
 variable "instance_profile_name" {
