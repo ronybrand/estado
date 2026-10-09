@@ -63,3 +63,9 @@ Desde o [0022](0022-native-image-graalvm.md) a `latest` é a imagem native, e a 
 paralelo como `jvm-latest` e `jvm-<sha>`. `./rollback.sh jvm-<sha>` volta à JVM; com o
 `estado-deploy.timer` ativo, é preciso desabilitá-lo antes (`systemctl disable --now`), senão ele
 troca de volta para a `latest` no próximo tick.
+
+## Atualização (2026-10-09): volta local, sem depender do registry
+O `promote` marca a imagem que está saindo com a tag local `anterior`, e `./rollback.sh anterior` volta
+para ela usando só o que está no disco (medido: a mesma revisão restaurada, 0 falhas numa sonda durante o
+swap). Se o registry não responder, o `rollback.sh` sem argumento aceita a `anterior` apenas quando a
+revisão dela for a de `last-good-tag`. Baixar uma imagem fora do disco leva ~7 s (274 MB, `t3.micro`).

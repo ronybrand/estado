@@ -74,8 +74,20 @@ image_revision() {
 # tem o IP dele em cache (DNS da JVM, 30 s) ou uma conexao keep-alive aberta
 # com ele seria atendido por um container ja removido (connect timeout / EOF).
 # restart=no pro antigo nao voltar sozinho se o host reiniciar durante a espera.
+# A imagem que esta saindo ganha a tag local "anterior": o prune de drenar_antigo
+# nao a remove (deixa de ser dangling) e ./rollback.sh anterior funciona sem
+# depender do registry. Cada deploy move a tag, entao so uma versao extra fica.
+marcar_anterior() {
+    local id
+    id="$(docker inspect --format '{{.Image}}' "$CURRENT" 2>/dev/null || true)"
+    if [ -n "$id" ] && [ -n "${IMAGE:-}" ]; then
+        docker tag "$id" "${IMAGE%%:*}:anterior" >/dev/null 2>&1 || true
+    fi
+}
+
 promote() {
     local antigo="${CURRENT}-antigo"
+    marcar_anterior
     docker rm -f "$antigo" >/dev/null 2>&1 || true
     if docker rename "$CURRENT" "$antigo" >/dev/null 2>&1; then
         docker update --restart=no "$antigo" >/dev/null 2>&1 || true
@@ -92,6 +104,9 @@ drenar_antigo() {
     sleep "${DRAIN_SECONDS:-60}"
     docker stop -t 30 "$antigo" >/dev/null 2>&1 || true
     docker rm -f "$antigo" >/dev/null 2>&1 || true
+    # Cada deploy deixa uma imagem sem tag; limpar aqui mantem o disco perto do
+    # piso (a "anterior" fica). O timer semanal de prune segue como rede de seguranca.
+    docker image prune -f >/dev/null 2>&1 || true
 }
 
 # Registra o resultado do swap na aba Deployments do GitHub. O workflow so
