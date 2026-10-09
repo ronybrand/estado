@@ -85,6 +85,26 @@ sum(count_over_time({job="integrations/systemd-journal", unit="estado-backup.ser
   não ligou no horário sem o `Persistent=true` conseguir recuperar) com uma query só.
 - **Avaliação**: a cada 30-60min é suficiente — não é uma condição que muda rápido.
 
+**Especificação do alerta de disco** (a implementar na UI do Grafana Cloud — ver
+[`docs/plano-dominio-proprio.md`](../plano-dominio-proprio.md), fase 5.0; motivado pela decisão de
+reduzir o disco da instância nova de 16 para 12 GB, que só se justifica com este alerta no lugar):
+
+```promql
+100 - (node_filesystem_avail_bytes{instance="estado-portfolio", mountpoint="/"} / node_filesystem_size_bytes{instance="estado-portfolio", mountpoint="/"} * 100)
+```
+- **Limiar**: `> 80` (uso de disco em %) — mesma query do painel de disco do dashboard abaixo, só com
+  limiar adicionado.
+- **Janela**: avaliar a cada 5 min, `for` de 10 min antes de disparar (evita ruído de um pico
+  passageiro, ex. imagem nova baixada durante um deploy antes do prune).
+- **Contact point**: e-mail (o mesmo já usado nos outros dois alertas).
+- **No data**: `OK` — mesmo raciocínio do alerta de 5xx (ADR, achado de 2026-08-16): o Alloy fora do ar
+  já tem seu próprio sinal de alarme indireto (ausência de toda métrica de host, não só esta), não
+  precisa duplicar aqui.
+- **Por que criado agora, não antes**: só passa a importar de verdade quando o disco da instância
+  encolhe de 30 GB (folga enorme, ver ADR 0010) para 12 GB (uso previsto ~42-58%) na migração da fase
+  5 — antes disso o risco de disco cheio era baixo o bastante pra não justificar mais uma regra de
+  alerta (mesmo raciocínio de proporcionalidade do resto deste ADR).
+
 **Especificação do dashboard** (`estado — visão geral`, Grafana Cloud → Dashboards): consolidado num
 painel só o que antes só dava pra ver um sinal de cada vez no Explore. Queries por painel, pra
 reconstruir se o dashboard for perdido — nenhuma delas provisionada via código, mesmo raciocínio de

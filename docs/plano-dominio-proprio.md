@@ -3,7 +3,7 @@
 Status em 2026-10-09: domínio **`ronybrand.click` registrado pela CLI** (1 ano, US$ 3, renovação
 automática e proteção de WHOIS ligadas; operação `a354caf6-bce7-49c3-a8fd-0935030841f1`) e zona
 hospedada `Z1023450XBS9WJ1974JR` criada pelo registro. Fases 0 e 1 em andamento; as demais ainda não
-foram executadas. Escopo da fase 5 decidido: `t4g.micro` em `us-east-1`, 16 GB (detalhe na fase 5).
+foram executadas. Escopo da fase 5 decidido: `t4g.micro` em `us-east-1`, 12 GB (detalhe na fase 5).
 
 Progresso: fases 0, 1 e 2 concluídas (DNS aplicado, Caddy com certificado do Let's Encrypt para
 `api.ronybrand.click`); fase 3 em PR, com o `terraform apply` previsto para depois do merge.
@@ -24,7 +24,7 @@ máquina como etapa opcional, que só então fica barata.
 |---|---|---|
 | 1 | Nome do domínio | Disponíveis em 2026-10-09: `ronybrand.click`, `rony-brand.click`, `estado-ronybrand.click`, `estados-do-brasil.click`, `brazilian-states.click`, `ronybrand-portfolio.click`. Sugestão: `ronybrand.click`, com subdomínios por app (`api.`, `estado.`, ...), já que a instância foi pensada para hospedar mais apps. |
 | 2 | Quem registra | O registro pede dados de contato (nome, endereço, telefone, e-mail). Registrar no console (Route 53, *Registered domains*) com *Privacy protection* ligada. |
-| 3 | Escopo | (a) só domínio e troca de hostname; (b) também recriar a instância com disco de 16 GB em `sa-east-1`; (c) idem em `us-east-1` e/ou ARM (`t4g.micro`). **Decidido em 2026-10-09: (c) com `t4g.micro` em `us-east-1`, 16 GB.** |
+| 3 | Escopo | (a) só domínio e troca de hostname; (b) também recriar a instância com disco de 12 GB em `sa-east-1`; (c) idem em `us-east-1` e/ou ARM (`t4g.micro`). **Decidido em 2026-10-09: (c) com `t4g.micro` em `us-east-1`, 12 GB.** |
 
 ## 3. Custo (preços da API da AWS em 2026-10-09)
 
@@ -94,8 +94,8 @@ Depois de alguns dias estável, tirar o `54.94.231.248.sslip.io` do bloco do Cad
 `https://api.ronybrand.click` nas variáveis do projeto na Vercel e fazer um novo deploy. Sem isso, o
 React perde o backend no dia em que o `sslip.io` sair do Caddy.
 
-### Fase 5: recriar a instância em `us-east-1`, `t4g.micro` (ARM), disco de 16 GB
-Decisão de 2026-10-09: `t4g.micro` em `us-east-1`, volume gp3 criptografado de 16 GB (uso estável medido:
+### Fase 5: recriar a instância em `us-east-1`, `t4g.micro` (ARM), disco de 12 GB
+Decisão de 2026-10-09: `t4g.micro` em `us-east-1`, volume gp3 criptografado de 12 GB (uso estável medido:
 ~7 GB). Economia estimada: ~US$ 9,4 por mês (~US$ 113 por ano) contra a `t3.micro` de 30 GB em `sa-east-1`.
 A máquina velha continua intacta até o corte ser validado; o rollback do corte é reverter um registro DNS.
 
@@ -116,7 +116,7 @@ A máquina velha continua intacta até o corte ser validado; o rollback do corte
 
 **Fase 5.1: provisionar (sem tráfego)**
 4. Segundo módulo da instância no Terraform, com `providers = { aws = aws.us_east_1 }`, `t4g.micro`,
-   `root_volume_size = 16`, AMI `arm64` do Amazon Linux 2023 fixada explicitamente (como já se faz hoje) e
+   `root_volume_size = 12`, AMI `arm64` do Amazon Linux 2023 fixada explicitamente (como já se faz hoje) e
    um novo Elastic IP. O `terraform plan` deve mostrar só recursos novos.
 5. Rodar o bootstrap pela SSM e instalar os scripts de `deploy/`.
 6. **Segredos dos `.env`** (hoje só existem na máquina velha, não há Parameter Store): transferência direta
@@ -162,8 +162,9 @@ sobreposição soma ~0,7 GB (imagem nova baixada antes do prune).
 - Preço em `us-east-1`: 16 GB = US$ 1,28 por mês, 12 GB = 0,96, 10 GB = 0,80, 8 GB = 0,64. Ir de 16 para 12 GB
   economiza **US$ 0,32 por mês (~US$ 4 por ano)**, pouco para o risco de disco cheio (derruba o banco e os
   containers).
-- **Decisão: 16 GB** (uso previsto ~36%). O EBS cresce online, sem reboot, mas não encolhe; por isso 12 GB só
-  se justificaria com os itens abaixo e um alerta de disco.
+- **Decisão: 12 GB** (uso previsto ~42-58%, ver tabela acima), condicionada aos itens abaixo (rotação de
+  log, sem `jvm-latest`, cache limpo) **e** ao alerta de disco em 80%. O EBS cresce online, sem reboot,
+  mas não encolhe — por isso a decisão só vale com o alerta no lugar antes do corte da fase 5.3.
 
 Medidas que entram no bootstrap, qualquer que seja o tamanho do disco:
 1. `/etc/docker/daemon.json` com `log-driver: json-file`, `max-size: 10m`, `max-file: 3`. Hoje os containers
@@ -221,9 +222,9 @@ Fases 1 a 4: uma tarde. Fase 5: mais meio dia, com uma janela curta fora do ar n
 - [ ] Extra: domínio raiz e `www` servindo o Angular (certificado ACM, aliases, CORS do backend e `og:url` do Angular)
 - [ ] Fase 4: `sslip.io` removido do Caddy
 - [ ] Fase 5.0: imagens multi-arch no CI (estado e agent)
-- [ ] Fase 5.0: módulo da instância sem região fixa
-- [ ] Fase 5.0: script de bootstrap versionado (com rotação de logs do Docker, swap de 1 GB e `dnf clean all`)
-- [ ] Fase 5.0: alerta de disco em 80% no Grafana
+- [x] Fase 5.0: módulo da instância sem região fixa (`availability_zone`, `alarm_region`, `key_name` opcional — `terraform plan` real confirma zero drift contra a instância atual)
+- [x] Fase 5.0: script de bootstrap versionado (`deploy/bootstrap/bootstrap.sh` — Docker/Compose, rotação de logs, swap de 1 GB, `dnf clean all`, journald, redes, diretórios, Alloy; ainda não executado numa instância real)
+- [x] Fase 5.0: alerta de disco em 80% especificado na ADR 0012 (mesmo padrão manual na UI dos outros dois alertas — ainda não criado de fato no Grafana Cloud, pendente de Rony)
 - [ ] Fase 5.1: instância nova provisionada e configurada, segredos transferidos
 - [ ] Fase 5.2: banco restaurado e máquina nova validada com `--resolve`
 - [ ] Fase 5.3: corte do registro `A` e observação de 24 a 48 h

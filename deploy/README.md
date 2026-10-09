@@ -31,6 +31,7 @@ instalado localmente) — login como `ssm-user`, não `ec2-user`, o que muda cam
 | `deploy/alloy/config.alloy` | `/etc/alloy/config.alloy` | Coleta métricas de host (disco/memória/CPU) e empurra pro Grafana Cloud — ver [ADR 0012](../docs/adr/0012-grafana-cloud-alloy-observabilidade.md) |
 | `deploy/alloy/.env.example` | `~/alloy/.env` (real, `chmod 600`) | Template — credenciais do Grafana Cloud, nunca vão pro repo |
 | `deploy/systemd/*.service`, `*.timer` | `/etc/systemd/system/` | Timers de deploy (5 min), backup (diário 06:00 UTC) e prune de imagens dangling (semanal, ADR 0009) |
+| `deploy/bootstrap/bootstrap.sh` | Rodado uma vez, não copiado | Reproduz numa instância nova o que hoje só existe feito à mão na atual: Docker/Compose, redes, swap de 1 GB, limites do journald, rotação de log do Docker, diretórios de app e a instalação do Alloy — ver fase 5.0 de [`docs/plano-dominio-proprio.md`](../docs/plano-dominio-proprio.md) |
 
 Redes Docker (`estado_internal`, `portfolio`) não são arquivo — criadas pelo Compose/`docker network
 create`, documentadas nas ADRs.

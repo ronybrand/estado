@@ -15,6 +15,11 @@ module "portfolio" {
   ami_id                = var.ami_id
   admin_cidr            = var.admin_cidr
   instance_profile_name = module.estado_backup.instance_profile_name
+  # Explicito pra nao mudar o key_name da instancia real: o default do
+  # modulo virou null (fase 5 do plano de migracao, docs/plano-dominio-
+  # proprio.md) para permitir uma instancia nova sem key pair proprio, mas
+  # key_name forca destroy+recreate quando muda - manter o valor atual aqui.
+  key_name = "estado-key"
 }
 
 # Frontend Angular estatico (S3 + CloudFront) na frente do mesmo backend
