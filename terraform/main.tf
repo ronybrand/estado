@@ -23,7 +23,7 @@ module "estado_frontend" {
   source = "./modules/frontend-static"
 
   bucket_name       = var.frontend_bucket_name
-  api_origin_domain = "${module.portfolio.public_ip}.sslip.io"
+  api_origin_domain = "api.${var.domain_name}" # ADR 0024; o Caddy atende este nome (deploy/proxy/Caddyfile)
   proxy_secret      = var.proxy_secret
 }
 

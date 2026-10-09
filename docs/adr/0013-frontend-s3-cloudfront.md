@@ -115,3 +115,7 @@ distribution).
   ser atualizado pro domínio do CloudFront (`*.cloudfront.net`) depois do
   primeiro `terraform apply`, já que esse valor só existe depois de criada a
   distribution.
+
+## Atualização (2026-10-09)
+A origem do CloudFront deixou de ser `<elastic-ip>.sslip.io` e passou a ser `api.ronybrand.click`
+(ver [0024](0024-dominio-proprio-click-route-53.md)). O restante da decisão segue valendo.

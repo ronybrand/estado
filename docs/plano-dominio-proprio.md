@@ -5,6 +5,9 @@ automática e proteção de WHOIS ligadas; operação `a354caf6-bce7-49c3-a8fd-0
 hospedada `Z1023450XBS9WJ1974JR` criada pelo registro. Fases 0 e 1 em andamento; as demais ainda não
 foram executadas. O escopo (fase 5) segue em aberto.
 
+Progresso: fases 0, 1 e 2 concluídas (DNS aplicado, Caddy com certificado do Let's Encrypt para
+`api.ronybrand.click`); fase 3 em PR, com o `terraform apply` previsto para depois do merge.
+
 ## 1. Por que, e o que o ADR 0003 já dizia
 
 O [ADR 0003](adr/0003-sslip-io-vs-dominio-proprio.md) escolheu `<ip>.sslip.io` e já apontava o domínio
@@ -86,6 +89,11 @@ Validação: o site do CloudFront continua carregando e as chamadas `/api/*` seg
 ### Fase 4: aposentar o `sslip.io`
 Depois de alguns dias estável, tirar o `54.94.231.248.sslip.io` do bloco do Caddy.
 
+**Antes disso (você):** o React na Vercel chama o backend pela variável de ambiente `BACKEND_API_URL`
+(fora do repositório), que provavelmente ainda aponta para o `sslip.io`. Trocar o valor para
+`https://api.ronybrand.click` nas variáveis do projeto na Vercel e fazer um novo deploy. Sem isso, o
+React perde o backend no dia em que o `sslip.io` sair do Caddy.
+
 ### Fase 5 (opcional): recriar a instância com disco de 16 GB
 Só depois das fases 1 a 4, quando o hostname já não depende do IP.
 1. Subir a instância nova (módulo `portfolio-instance`, `root_volume_size = 16`, tipo e região
@@ -129,7 +137,8 @@ Fases 1 a 4: uma tarde. Fase 5: mais meio dia, com uma janela curta fora do ar n
 - [x] Domínio registrado (operação enviada), ID da zona anotado
 - [ ] Registro concluído e e-mail de verificação do contato clicado
 - [ ] Fase 1: registro `A` criado (`terraform apply` após o merge), `dig` confere
-- [ ] Fase 2: Caddy com os dois hostnames, `curl` com certificado válido
-- [ ] Fase 3: CloudFront, CSP, `lib-swap.sh`, READMEs e ADR 0024
+- [x] Fase 2: Caddy com os dois hostnames, `curl` com certificado válido
+- [ ] Fase 3: CloudFront, CSP, `lib-swap.sh`, READMEs e ADR 0024 (PR aberta; `apply` após o merge)
+- [ ] Antes da fase 4: `BACKEND_API_URL` na Vercel apontando para o nome novo
 - [ ] Fase 4: `sslip.io` removido do Caddy
 - [ ] Fase 5, se escolhida

@@ -1,7 +1,7 @@
 # ADR 0003: sslip.io + Caddy para HTTPS, em vez de domínio próprio
 
 ## Status
-Aceito
+Substituído pelo [0024](0024-dominio-proprio-click-route-53.md) (2026-10-09)
 
 ## Contexto
 A aplicação precisava de um endereço público com HTTPS real (não autoassinado)
