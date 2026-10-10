@@ -118,8 +118,8 @@ Account token do Grafana, papel Editor, escopo diferente do token de métrica/lo
 deploy — feito via `sudo tee -a /home/ec2-user/estado/.env` (caminho absoluto, não `~`, se o acesso
 for por SSM — usuário `ssm-user` não tem permissão de escrita no `.env` do `ec2-user` sem `sudo`).
 
-Preencher `GITHUB_DEPLOY_TOKEN` no mesmo `.env` (fine-grained, só o repo `estado`, só *Deployments:
-Read and write*) faz `deploy.sh`/`rollback.sh` registrarem `success`/`failure` na aba Deployments do
+Preencher `GITHUB_DEPLOY_TOKEN` no mesmo `.env` (fine-grained, *Deployments: Read and write*; o mesmo
+token pode cobrir `estado` e `estado-ai-agent`, que registra no próprio repo) faz `deploy.sh`/`rollback.sh` registrarem `success`/`failure` na aba Deployments do
 GitHub. Sem o token, ou com a API fora do ar, o deploy segue normalmente. Falha repetida da mesma
 imagem só é registrada uma vez (`last-failed-image`), já que o timer reexecuta a cada 5 min.
 
