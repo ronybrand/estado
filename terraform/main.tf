@@ -9,25 +9,12 @@ module "estado_backup" {
   bucket_name = "estado-db-backups-70a63b1a"
 }
 
-module "portfolio" {
-  source = "./modules/portfolio-instance"
-
-  ami_id                = var.ami_id
-  admin_cidr            = var.admin_cidr
-  instance_profile_name = module.estado_backup.instance_profile_name
-  # Explicito pra nao mudar o key_name da instancia real: o default do
-  # modulo virou null (fase 5 do plano de migracao, docs/plano-dominio-
-  # proprio.md) para permitir uma instancia nova sem key pair proprio, mas
-  # key_name forca destroy+recreate quando muda - manter o valor atual aqui.
-  key_name = "estado-key"
-}
-
-# Fase 5.1 do plano de migracao (docs/plano-dominio-proprio.md): instancia
-# nova em paralelo, sem trafego ainda (nenhum DNS aponta pra ela). Reusa o
-# mesmo instance_profile do estado_backup (role global, ja tem
-# AmazonSSMManagedInstanceCore via ssm.tf + permissao de escrita no bucket de
-# backup) - nao precisa de IAM novo so por causa da regiao. key_name nulo
-# (default do modulo): acesso so por SSM, sem key pair proprio nesta regiao.
+# Fase 5.4 do plano de migracao (docs/plano-dominio-proprio.md, 2026-10-10):
+# a instancia antiga (sa-east-1, t3.micro) foi parada, snapshot final tirado
+# (snap-089a592a7663c251a) e removida daqui - o corte de DNS (fase 5.3) e a
+# correcao do BACKEND_API_URL do react_estado na Vercel ja confirmaram zero
+# trafego real indo pra ela havia mais de 24h. module.portfolio_us_east_1
+# abaixo e agora a unica instancia do portfolio.
 module "portfolio_us_east_1" {
   source = "./modules/portfolio-instance"
   providers = {
