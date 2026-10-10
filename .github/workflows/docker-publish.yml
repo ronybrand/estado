@@ -93,6 +93,11 @@ jobs:
           # Publica so por digest (sem tag) - o job "publish" monta o
           # manifesto multi-arch e so ai aplica as tags reais.
           outputs: type=image,name=ghcr.io/${{ github.repository }},push-by-digest=true,name-canonical=true,push=true
+          # O deploy.sh/rollback.sh leem este label (image_revision) pra gravar
+          # last-good-tag e registrar o deployment no GitHub. Sem ele a imagem
+          # multi-arch fica sem revisao: o job "publish" so junta digests e nao
+          # propaga labels pra config de cada arch.
+          labels: org.opencontainers.image.revision=${{ github.event.workflow_run.head_sha || github.sha }}
           build-args: |
             GIT_COMMIT=${{ steps.sha.outputs.short }}
           cache-from: type=gha,scope=${{ matrix.variante }}-${{ matrix.arch }}
