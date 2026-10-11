@@ -6,15 +6,14 @@ são gerenciados por Terraform em [`../terraform/`](../terraform/) — este dire
 dentro da instância, que o Terraform não gerencia de propósito (ver
 [ADR 0011](../docs/adr/0011-terraform-import-sem-terragrunt.md)).
 
-**Acesso à instância**: SSH restrito por IP (`admin_cidr` no Terraform — precisa reaplicar toda vez
-que o IP do administrador mudar) é o caminho principal, usado pros comandos `scp`/`ssh` abaixo. Como
-alternativa que não depende de IP nenhum (útil em rede móvel, que às vezes bloqueia a porta 22 de
-saída), a instância também aceita **AWS Systems Manager Session Manager**
-(`aws ssm start-session --target i-07cffc5ce75898ad0 --region sa-east-1`, requer o
+**Acesso à instância**: só **AWS Systems Manager Session Manager**
+(`aws ssm start-session --target i-0208b4902902e7dd6 --region us-east-1`, requer o
 [Session Manager Plugin](https://s3.amazonaws.com/session-manager-downloads/plugin/latest/windows/SessionManagerPluginSetup.exe)
-instalado localmente) — login como `ssm-user`, não `ec2-user`, o que muda caminhos tipo
-`~/alloy/.env`. `scp` não funciona por SSM; nesse caso, criar arquivo via heredoc
-(`cat > arquivo << 'EOF' ... EOF`) direto na sessão.
+instalado localmente) — login como `ec2-user`. Desde a migração pra us-east-1/t4g.micro (fase 5 de
+[`docs/plano-dominio-proprio.md`](../docs/plano-dominio-proprio.md), ver [ADR 0025](../docs/adr/0025-migracao-regiao-arquitetura-arm64.md))
+a instância nova não tem key pair próprio (`key_name = null` no Terraform) — SSH não é uma opção, só
+SSM. `scp` não funciona por SSM; criar arquivo via heredoc (`cat > arquivo << 'EOF' ... EOF`) direto na
+sessão, ou `aws ssm send-command` com o conteúdo em base64 (visto nos PRs da migração).
 
 ## Layout
 
@@ -39,58 +38,48 @@ create`, documentadas nas ADRs.
 ## Sem sincronização automática
 
 Nada aqui é empurrado pra EC2 sozinho — deploy dessas configs continua manual, deliberadamente (ver
-ADR 0004: não existe canal automatizado de push pra dentro da instância). Depois de editar um arquivo:
+ADR 0004: não existe canal automatizado de push pra dentro da instância). Sem `scp` (só SSM, ver acima),
+o caminho é uma sessão SSM com heredoc, ou `aws ssm send-command` com o conteúdo do arquivo em base64.
+Exemplo via sessão interativa (`aws ssm start-session --target i-0208b4902902e7dd6 --region us-east-1`),
+depois de editar um arquivo local:
 
 ```
-scp -i ~/.ssh/estado-key.pem deploy/estado/docker-compose.yml deploy/estado/deploy.sh deploy/estado/rollback.sh deploy/estado/lib-swap.sh deploy/estado/backup.sh ec2-user@54.94.231.248:~/estado/
-scp -i ~/.ssh/estado-key.pem deploy/proxy/docker-compose.yml deploy/proxy/Caddyfile ec2-user@54.94.231.248:~/proxy/
+# Dentro da sessão SSM, pra cada arquivo:
+cat > ~/estado/deploy.sh << 'EOF'
+<conteudo do arquivo colado aqui>
+EOF
+chmod +x ~/estado/deploy.sh
 
-scp -i ~/.ssh/estado-key.pem deploy/systemd/estado-deploy.* deploy/systemd/estado-backup.* deploy/systemd/estado-prune.* ec2-user@54.94.231.248:/tmp/
-ssh -i ~/.ssh/estado-key.pem ec2-user@54.94.231.248 '
-  sudo mv /tmp/estado-*.service /tmp/estado-*.timer /etc/systemd/system/ &&
-  sudo systemctl daemon-reload
-'
+# Units systemd precisam de sudo pra ir em /etc/systemd/system/:
+sudo tee /etc/systemd/system/estado-deploy.timer << 'EOF' > /dev/null
+<conteudo do arquivo colado aqui>
+EOF
+sudo systemctl daemon-reload
 
-scp -i ~/.ssh/estado-key.pem deploy/alloy/config.alloy ec2-user@54.94.231.248:/tmp/
-ssh -i ~/.ssh/estado-key.pem ec2-user@54.94.231.248 'sudo mv /tmp/config.alloy /etc/alloy/config.alloy && sudo systemctl restart alloy'
+# O Caddyfile e lido do bind mount (~/proxy/Caddyfile), reload sem downtime:
+cat > ~/proxy/Caddyfile << 'EOF'
+<conteudo do arquivo colado aqui>
+EOF
+docker exec proxy-caddy-1 caddy reload --config /etc/caddy/Caddyfile
 ```
 
 ## Instalar o Grafana Alloy (uma vez)
 
-Ver [ADR 0012](../docs/adr/0012-grafana-cloud-alloy-observabilidade.md). Antes de tudo, criar uma
-conta free no [Grafana Cloud](https://grafana.com/auth/sign-up/create-user) e pegar, em *Connections
-→ Add new connection → Hosted Prometheus metrics*, a URL de `remote_write`, o instance ID, e um API
-token com escopo `metrics:write` (em *Access Policies*).
+Numa instância nova, [`deploy/bootstrap/bootstrap.sh`](bootstrap/bootstrap.sh) já instala o pacote,
+cria o `EnvironmentFile` em `~/alloy/.env` (sempre sob `ec2-user` — ver comentário no próprio script)
+e configura os grupos (`docker`, `systemd-journal`) — ver fase 5.0 de
+[`docs/plano-dominio-proprio.md`](../docs/plano-dominio-proprio.md). Só falta, depois do bootstrap:
 
-```
-ssh -i ~/.ssh/estado-key.pem ec2-user@54.94.231.248 '
-  wget -q -O /tmp/gpg.key https://rpm.grafana.com/gpg.key &&
-  sudo rpm --import /tmp/gpg.key &&
-  echo -e "[grafana]\nname=grafana\nbaseurl=https://rpm.grafana.com\nrepo_gpgcheck=1\nenabled=1\ngpgcheck=1\ngpgkey=https://rpm.grafana.com/gpg.key\nsslverify=1\nsslcacert=/etc/pki/tls/certs/ca-bundle.crt" | sudo tee /etc/yum.repos.d/grafana.repo &&
-  sudo dnf install -y alloy
-'
+1. Criar uma conta free no [Grafana Cloud](https://grafana.com/auth/sign-up/create-user) (se ainda não
+   existir) e pegar, em *Connections → Add new connection → Hosted Prometheus metrics*, a URL de
+   `remote_write`, o instance ID, e um API token com escopo `metrics:write` (em *Access Policies*).
+2. Preencher `deploy/alloy/.env.example` com os valores reais e colar o conteúdo em `~/alloy/.env` na
+   instância (via heredoc numa sessão SSM, `chmod 600` depois).
+3. Copiar `deploy/alloy/config.alloy` pra `/etc/alloy/config.alloy` (sudo) na instância.
+4. `sudo systemctl enable --now alloy && sudo systemctl status alloy --no-pager`.
 
-# preencher deploy/alloy/.env.example com os valores reais antes deste passo
-scp -i ~/.ssh/estado-key.pem deploy/alloy/config.alloy ec2-user@54.94.231.248:/tmp/
-scp -i ~/.ssh/estado-key.pem <caminho-local-do-.env-preenchido> ec2-user@54.94.231.248:/tmp/.env
-
-ssh -i ~/.ssh/estado-key.pem ec2-user@54.94.231.248 '
-  sudo mv /tmp/config.alloy /etc/alloy/config.alloy &&
-  mkdir -p ~/alloy && mv /tmp/.env ~/alloy/.env && chmod 600 ~/alloy/.env &&
-  sudo usermod -aG docker alloy &&
-  sudo usermod -aG systemd-journal alloy &&
-  sudo mkdir -p /etc/systemd/system/alloy.service.d &&
-  echo -e "[Service]\nEnvironmentFile=/home/ec2-user/alloy/.env" | sudo tee /etc/systemd/system/alloy.service.d/override.conf &&
-  sudo systemctl daemon-reload &&
-  sudo systemctl enable --now alloy &&
-  sudo systemctl status alloy --no-pager
-'
-```
-
-Se o acesso for via SSM em vez de SSH, o usuário logado é `ssm-user`, não `ec2-user` — o
-`EnvironmentFile` no override precisa apontar pra `/home/ssm-user/alloy/.env` nesse caso (confirmar
-com `pwd`/`whoami` na sessão antes de escrever o override, os dois caminhos coexistem sem problema
-dependendo de por onde a instalação foi feita).
+Ver [ADR 0012](../docs/adr/0012-grafana-cloud-alloy-observabilidade.md) pro racional completo da stack
+de observabilidade.
 
 `usermod -aG docker alloy` é o que dá ao agente permissão de ler `/var/run/docker.sock` pra coletar
 logs dos containers (`loki.source.docker`) — sem isso, essa parte falha silenciosamente.
@@ -123,11 +112,15 @@ token pode cobrir `estado` e `estado-ai-agent`, que registra no próprio repo) f
 GitHub. Sem o token, ou com a API fora do ar, o deploy segue normalmente. Falha repetida da mesma
 imagem só é registrada uma vez (`last-failed-image`), já que o timer reexecuta a cada 5 min.
 
-Isso também significa que uma mudança feita direto no servidor por SSH, sem passar por aqui, faz este
+Isso também significa que uma mudança feita direto no servidor, sem passar por aqui, faz este
 diretório divergir sem aviso. Pra conferir se ainda bate com a realidade:
 
 ```
-ssh -i ~/.ssh/estado-key.pem ec2-user@54.94.231.248 'cat ~/estado/docker-compose.yml'
+aws ssm send-command --region us-east-1 --instance-ids i-0208b4902902e7dd6 \
+  --document-name AWS-RunShellScript \
+  --parameters commands='cat /home/ec2-user/estado/docker-compose.yml' \
+  --query Command.CommandId --output text
+# depois: aws ssm get-command-invocation --region us-east-1 --command-id <id> --instance-id i-0208b4902902e7dd6
 ```
 
 ## Adicionar um novo app de portfólio

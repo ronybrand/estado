@@ -1,15 +1,8 @@
-# Fase 5.4 do plano de migracao (docs/plano-dominio-proprio.md): a instancia
-# antiga (sa-east-1) foi desativada e removida - "public_ip" passou a
-# apontar pra instancia nova, unica que resta.
 output "public_ip" {
   value = module.portfolio_us_east_1.public_ip
 }
 
-output "public_ip_us_east_1" {
-  value = module.portfolio_us_east_1.public_ip
-}
-
-output "instance_id_us_east_1" {
+output "instance_id" {
   value = module.portfolio_us_east_1.instance_id
 }
 

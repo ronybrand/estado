@@ -1,12 +1,11 @@
 # Plano: domínio próprio (`.click` na AWS) e, opcionalmente, recriar a instância com disco menor
 
-Status em 2026-10-09: domínio **`ronybrand.click` registrado pela CLI** (1 ano, US$ 3, renovação
-automática e proteção de WHOIS ligadas; operação `a354caf6-bce7-49c3-a8fd-0935030841f1`) e zona
-hospedada `Z1023450XBS9WJ1974JR` criada pelo registro. Fases 0 e 1 em andamento; as demais ainda não
-foram executadas. Escopo da fase 5 decidido: `t4g.micro` em `us-east-1`, 12 GB (detalhe na fase 5).
-
-Progresso: fases 0, 1 e 2 concluídas (DNS aplicado, Caddy com certificado do Let's Encrypt para
-`api.ronybrand.click`); fase 3 em PR, com o `terraform apply` previsto para depois do merge.
+**Status em 2026-10-11: plano concluído.** Domínio **`ronybrand.click`** registrado, todas as fases
+(0 a 5.4) executadas e validadas em produção real — ver [ADR 0025](adr/0025-migracao-regiao-arquitetura-arm64.md)
+pro registro da decisão e do resultado final. A instância do portfólio roda em `us-east-1`, `t4g.micro`
+(arm64), disco de 12 GB; a instância antiga em `sa-east-1` foi desativada e removida do Terraform. O
+restante deste documento é mantido como registro operacional do planejamento e da execução (decisões,
+riscos considerados, checklist) — não é mais um plano em andamento.
 
 ## 1. Por que, e o que o ADR 0003 já dizia
 
@@ -218,9 +217,9 @@ Fases 1 a 4: uma tarde. Fase 5: mais meio dia, com uma janela curta fora do ar n
 - [ ] Fase 1: registro `A` criado (`terraform apply` após o merge), `dig` confere
 - [x] Fase 2: Caddy com os dois hostnames, `curl` com certificado válido
 - [ ] Fase 3: CloudFront, CSP, `lib-swap.sh`, READMEs e ADR 0024 (PR aberta; `apply` após o merge)
-- [ ] Antes da fase 4: `BACKEND_API_URL` na Vercel apontando para o nome novo
+- [x] Antes da fase 4: `BACKEND_API_URL` na Vercel apontando para o nome novo (achado tarde — ainda apontava pro IP antigo via sslip.io até a véspera da fase 5.4; ver ADR 0025)
 - [ ] Extra: domínio raiz e `www` servindo o Angular (certificado ACM, aliases, CORS do backend e `og:url` do Angular)
-- [ ] Fase 4: `sslip.io` removido do Caddy
+- [x] Fase 4: `sslip.io` removido do Caddy (feito junto com a limpeza pós-migração, não na ordem original do plano — a instância só tinha um IP novo depois da fase 5, então fez mais sentido remover o sslip.io ali)
 - [x] Fase 5.0: imagens multi-arch no CI (estado — PR #126; agent — estado-ai-agent#50, validado via `workflow_dispatch` antes de mergear)
 - [x] Fase 5.0: módulo da instância sem região fixa (`availability_zone`, `alarm_region`, `key_name` opcional — `terraform plan` real confirma zero drift contra a instância atual)
 - [x] Fase 5.0: script de bootstrap versionado (`deploy/bootstrap/bootstrap.sh` — Docker/Compose, rotação de logs, swap de 1 GB, `dnf clean all`, journald, redes, diretórios, Alloy; executado e corrigido 2x na instância real, ver PR #128)
@@ -228,4 +227,4 @@ Fases 1 a 4: uma tarde. Fase 5: mais meio dia, com uma janela curta fora do ar n
 - [x] Fase 5.1: instância nova provisionada e configurada, segredos transferidos (PR #127; configs/segredos do backend E do agent já instalados)
 - [x] Fase 5.2: banco restaurado e máquina nova validada — `pg_dump`/restore com contagem de linhas conferida, smoke completo, native arm64 confirmado rodando de verdade (PR #128). `/ask` fim-a-fim validado depois do corte (backend→agent→Gemini, agent também em arm64 real)
 - [x] Fase 5.3: corte do registro `A` executado (PR #131) e confirmado com tráfego real; observação de 24-48h em andamento desde 2026-10-09 ~16:36 UTC
-- [ ] Fase 5.4: máquina velha desativada e removida do Terraform
+- [x] Fase 5.4: máquina velha desativada e removida do Terraform (parada, snapshot final `snap-089a592a7663c251a`, módulo removido — PR #133; ver ADR 0025)

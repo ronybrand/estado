@@ -1,6 +1,4 @@
-# Dois nomes durante a transicao para o dominio proprio (docs/plano-dominio-proprio.md):
-# o sslip.io sai quando o CloudFront e o resto ja usarem api.ronybrand.click.
-54.94.231.248.sslip.io, api.ronybrand.click {
+api.ronybrand.click {
 	# /actuator/health e /actuator/prometheus nunca deveriam ser alcançáveis de
 	# fora — o Alloy já faz scrape de /actuator/prometheus via rede Docker
 	# interna (estado-app:8080 direto, ver deploy/alloy/config.alloy) e o
@@ -32,15 +30,15 @@
 }
 
 # Exemplo pra adicionar o proximo app do portfolio (ver deploy/README.md):
-# <app>.54.94.231.248.sslip.io {
+# <app>.ronybrand.click {
 # 	reverse_proxy <app>-app:8080
 # }
 
-# ai-agent.54.94.231.248.sslip.io removido: o estado-ai-agent nao deveria
-# mais ser alcancavel diretamente de fora - o backend estado agora fala com
-# ele via rede Docker interna (estado_internal, ASK_API_BASE_URL), como BFF
-# guardando a ASK_API_KEY server-side (ver AskProxyService). Expor
-# publicamente permitia a qualquer um com a key (e o
-# forward-headers-strategy=framework do ai-agent confia cegamente em
-# X-Forwarded-For) forjar esse header e furar o rate limit por IP - fechar
-# a rota nega essa conexao a nivel de rede, nao so de aplicacao.
+# ai-agent.ronybrand.click (ou qualquer hostname publico pro estado-ai-agent)
+# nunca existiu de proposito: ele nao deveria ser alcancavel diretamente de
+# fora - o backend estado fala com ele via rede Docker interna
+# (estado_internal, ASK_API_BASE_URL), como BFF guardando a ASK_API_KEY
+# server-side (ver AskProxyService). Expor publicamente permitia a qualquer
+# um com a key (e o forward-headers-strategy=framework do ai-agent confia
+# cegamente em X-Forwarded-For) forjar esse header e furar o rate limit por
+# IP - fechar a rota nega essa conexao a nivel de rede, nao so de aplicacao.
