@@ -22,7 +22,7 @@ module "portfolio_us_east_1" {
   }
 
   instance_name         = "estado-portfolio-us-east-1"
-  ami_id                = var.ami_id_us_east_1
+  ami_id                = var.ami_id
   instance_type         = "t4g.micro"
   root_volume_size      = 12
   availability_zone     = "us-east-1a"

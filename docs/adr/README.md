@@ -28,3 +28,4 @@ consequências (incluindo as que ficaram conscientemente sem mitigação).
 - [0022 — Backend em native image (GraalVM) para caber em instância menor](0022-native-image-graalvm.md)
 - [0023 — Drenar o container antigo no swap em vez de removê-lo na hora](0023-drenar-container-antigo-no-swap.md)
 - [0024 — Domínio próprio `.click` no Route 53, em lugar do sslip.io](0024-dominio-proprio-click-route-53.md)
+- [0025 — Migração da instância para `us-east-1`/`t4g.micro` (arm64)](0025-migracao-regiao-arquitetura-arm64.md)

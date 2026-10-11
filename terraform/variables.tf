@@ -9,12 +9,6 @@ variable "admin_cidr" {
   }
 }
 
-variable "ami_id" {
-  description = "AMI atualmente rodando na instancia - ver comentario em modules/portfolio-instance/variables.tf"
-  type        = string
-  default     = "ami-064f44895dd6e892a"
-}
-
 variable "frontend_bucket_name" {
   description = "Nome do bucket S3 que serve o build do Angular via CloudFront - precisa ser globalmente unico, ver ADR 0013"
   type        = string
@@ -44,8 +38,8 @@ variable "domain_name" {
   default     = "ronybrand.click"
 }
 
-variable "ami_id_us_east_1" {
-  description = "AMI arm64 (Amazon Linux 2023) da instancia nova em us-east-1 - fase 5 de docs/plano-dominio-proprio.md. Fixada explicitamente, mesmo raciocinio do ami_id original: resolver a AMI mais recente a cada apply arriscaria substituir a instancia sem isso ser uma decisao deliberada."
+variable "ami_id" {
+  description = "AMI arm64 (Amazon Linux 2023) da instancia do portfolio em us-east-1 - ver ADR 0025. Fixada explicitamente: resolver a AMI mais recente a cada apply arriscaria substituir a instancia sem isso ser uma decisao deliberada."
   type        = string
   default     = "ami-0ae8605ed708e3c3e" # al2023-ami-2023.12.20260930.0-kernel-6.1-arm64
 }
