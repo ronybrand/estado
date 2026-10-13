@@ -5,7 +5,7 @@ plugins {
     java
     id("org.springframework.boot") version "4.1.1"
     id("jacoco")
-    id("org.graalvm.buildtools.native") version "0.11.0"
+    id("org.graalvm.buildtools.native") version "1.1.14"
 }
 
 group = "br.com.rony.spring.boot"
@@ -73,10 +73,10 @@ dependencies {
             because("Multiplos CVEs corrigidos em 2.22.2/2.22.3 (BOM resolve 2.22.1)")
         }
         // Jackson 3.x: o ObjectMapper nativo do Spring Boot 4 (tools.jackson.*).
-        implementation("tools.jackson.core:jackson-core:3.1.7") {
+        implementation("tools.jackson.core:jackson-core:3.2.3") {
             because("ReDoS/DoS corrigidos em 3.1.7 (BOM resolve 3.1.5)")
         }
-        implementation("tools.jackson.core:jackson-databind:3.1.7") {
+        implementation("tools.jackson.core:jackson-databind:3.2.3") {
             because("Multiplos CVEs corrigidos em 3.1.6/3.1.7 (BOM resolve 3.1.5)")
         }
         // Uncontrolled Recursion (StackOverflow) processando entrada longa -
@@ -85,7 +85,7 @@ dependencies {
         // seguranca), mas sem versao explicita o job de "security update" do
         // Dependabot nao encontra nada literal pra reconhecer como corrigido
         // e falha com security_update_dependency_not_found a cada tentativa.
-        implementation("org.apache.commons:commons-lang3:3.20.0") {
+        implementation("org.apache.commons:commons-lang3:3.21.0") {
             because("Uncontrolled Recursion corrigido em 3.18.0+ (ja resolvido em 3.20.0 via BOM/conflict resolution, versao explicita so pro Dependabot reconhecer)")
         }
     }
