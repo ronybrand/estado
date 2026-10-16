@@ -17,6 +17,11 @@ ARG NATIVE_ARGS=""
 RUN ./gradlew --no-daemon nativeCompile -x test -PgitCommit=${GIT_COMMIT} ${NATIVE_ARGS}
 
 FROM debian:bookworm-slim
+# The base image is rebuilt on Debian's schedule, not ours: security fixes already in the archive
+# (perl-base had three CRITICAL ones) can be missing from it. Trivy flags exactly those.
+RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 RUN useradd --create-home --shell /bin/bash appuser
 WORKDIR /app
 COPY --from=build /app/build/native/nativeCompile/estado ./estado

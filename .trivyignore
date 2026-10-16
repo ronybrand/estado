@@ -1,0 +1,7 @@
+# pebble is Ubuntu's service manager, shipped in the Eclipse Temurin base image; this container
+# never starts it. These are Go standard library findings fixed upstream that the base image has
+# not rebuilt pebble with yet. Expires on its own: when it does, the scan says whether the base
+# image has caught up.
+CVE-2026-78667 exp:2026-12-31
+CVE-2026-78669 exp:2026-12-31
+CVE-2026-97031 exp:2026-12-31
