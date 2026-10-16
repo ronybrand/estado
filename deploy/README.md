@@ -164,6 +164,12 @@ em paralelo como `jvm-<sha>` e `jvm-latest`. Para voltar à JVM: **parar e desab
 próximo tick, e `disable` é necessário para sobreviver a um reboot) e `./rollback.sh jvm-<sha>`. Para
 retomar o fluxo automático: `systemctl enable --now estado-deploy.timer`.
 
+**Tags por sha só existem para commits que mudaram a imagem.** O `docker-publish` pula o build quando
+nada que entra na imagem mudou desde as revisões de `latest` e `jvm-latest` (`.github/image-needs-build.sh`).
+Para voltar a um commit sem tag, use o sha do último commit que mexeu na imagem:
+`git log -1 --format=%H -- Dockerfile Dockerfile.native gradle build.gradle.kts settings.gradle.kts src/main`.
+Um commit só de docs também deixa de reiniciar a produção, porque o `deploy.sh` compara IDs de imagem.
+
 ## Histórico
 
 A primeira versão deste diretório foi escrita a partir da documentação (não do servidor real) e tinha
