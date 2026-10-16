@@ -1,0 +1,39 @@
+name: Image scan
+
+# Scans the images already published to GHCR every week, and on demand. A new CVE in a base
+# image shows up without any commit in this repository, so a scan that only ran on pull requests
+# would never see it. HIGH/CRITICAL findings with a fix available fail the run (unfixed ones are
+# noise nobody can act on yet); to clear one, publish again (Docker Publish > Run workflow).
+on:
+  schedule:
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  trivy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix:
+        tag: [latest, jvm-latest]
+    env:
+      TRIVY_USERNAME: ${{ github.actor }}
+      TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      # Only for .trivyignore, which Trivy reads from the working directory.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ghcr.io/${{ github.repository }}:${{ matrix.tag }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
