@@ -59,7 +59,7 @@ dependencies {
         // Tomcat embutido: Incorrect Authorization (FORM auth), Authentication
         // Bypass (DIGEST, capture-replay) e Improper Access Control - todos
         // criticos, corrigidos em 11.0.25 (BOM resolvia 11.0.24).
-        implementation("org.apache.tomcat.embed:tomcat-embed-core:11.0.26") {
+        implementation("org.apache.tomcat.embed:tomcat-embed-core:11.0.27") {
             because("CVEs criticos corrigidos em 11.0.25+ (BOM do Spring Boot 4.1.1 ainda resolve 11.0.24)")
         }
         // Jackson 2.x: puxado pelo springdoc-openapi/swagger-core, que ainda
