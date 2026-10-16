@@ -74,7 +74,8 @@ sem dev server com live-reload).
 O backend também pode ser buildado como native image do GraalVM
 ([`Dockerfile.native`](Dockerfile.native)): cerca de 77 MB de memória e ~1 s de
 subida, contra ~210 MB e 12 a 21 s na JVM. Ela é a imagem `latest` publicada
-pelo `docker-publish` a cada merge no `master` (a imagem JVM sai em paralelo como
+pelo `docker-publish` a cada merge no `master` que muda a imagem (merge só de docs, testes
+ou workflows não publica nada) (a imagem JVM sai em paralelo como
 `jvm-latest` / `jvm-<sha>`, para uma volta imediata), e o check `Native Image`
 builda a imagem e roda um smoke contra um Postgres real em cada PR relevante. O metadata de reflexão é gerado pelo agente de rastreamento do
 GraalVM (workflow `Native Metadata`) e precisa ser regerado quando o código ou
