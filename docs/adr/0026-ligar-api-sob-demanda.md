@@ -16,8 +16,8 @@ a instância que **ela** ligou há mais de 2 horas.
 - **Estado em tags da própria instância** (`AutoStartedAt`, `AutoStoppedAt`), sem DynamoDB: o desligamento
   só vale para quem tem `AutoStartedAt` e cuja `LaunchTime` bate com a tag, então ligar na mão
   (`aws-power.ps1 on`) nunca é desligado pela função.
-- **Teto de custo:** concorrência reservada em 2, cooldown de 15 min após um desligamento automático
-  e desligamento em no máximo 2 h. No pior caso, uma `t4g.micro` ligada por algumas horas.
+- **Teto de custo:** cooldown de 15 min após um desligamento automático e desligamento em no máximo 2 h.
+  Não há concorrência reservada: o limite da conta é baixo e a AWS recusa reservar. No pior caso, uma `t4g.micro` ligada por algumas horas.
 - **IAM mínimo:** Start/Stop/Tag só na ARN da instância; `DescribeInstances` não aceita restrição de recurso.
 - **Function URL sem auth:** a proteção é o desafio Turnstile validado no servidor, mais o CORS restrito
   aos frontends (CORS não é segurança contra bot, só evita uso acidental de outras origens).

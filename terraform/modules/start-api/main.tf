@@ -56,9 +56,9 @@ resource "aws_lambda_function" "start_api" {
   timeout          = 15
   architectures    = ["arm64"]
 
-  # Teto de concorrencia: uma rajada de chamadas nao vira rajada de chamadas
-  # a API do EC2 nem a do Turnstile.
-  reserved_concurrent_executions = 2
+  # Sem reserved_concurrent_executions: a conta tem o limite de concorrencia
+  # baixo (minimo nao reservado de 10) e a AWS recusa reservar. O teto de abuso
+  # fica por conta do Turnstile, do cooldown e do desligamento automatico.
 
   environment {
     variables = {
