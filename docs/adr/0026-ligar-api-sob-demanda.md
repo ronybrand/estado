@@ -1,7 +1,7 @@
 # ADR 0026: Botão "Ligar a API" (Lambda + Turnstile) com desligamento automático
 
 ## Status
-Proposto (código no PR; falta criar o site Turnstile e aplicar o Terraform)
+Aceito e aplicado em produção (2026-10-18)
 
 ## Contexto
 Para gastar o mínimo, a EC2 pode ficar parada quando o portfólio não está em uso
