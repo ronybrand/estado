@@ -1,0 +1,10 @@
+subscription_id = "00000000-0000-0000-0000-000000000000"
+
+# Origens permitidas no CORS, separadas por virgula
+allowed_origins = "https://seu-front.example.com"
+
+# Hash BCrypt da senha do admin. O "$" nao precisa de escape aqui (so em .env
+# lido via "source" no bash, como no deploy da AWS).
+admin_password_hash = "$2a$10$..."
+
+gemini_api_key = "..."
