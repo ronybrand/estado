@@ -263,3 +263,16 @@ Com a instância parada a API fica fora do ar (o frontend estático no CloudFron
 chamadas à API falham). O Elastic IP e o disco EBS continuam cobrados (~US$ 4-5/mês). Opcionalmente,
 defina `GRAFANA_URL`, `GRAFANA_TOKEN` e `GRAFANA_BACKUP_ALERTNAME` pro `off` silenciar o alerta de backup
 do Grafana (que dispararia após ~26h sem o backup diário) e o `on` remover o silêncio.
+
+### Ligando pelos clientes
+
+Quem visita pode ligar a instância sozinho: todos os clientes (Angular, React, Vue, Android, Flutter e
+React Native) mostram o link **Ligar a API** quando a API não responde. Ele abre uma página servida pela
+Lambda `estado-start-api` ([ADR 0026](docs/adr/0026-ligar-api-sob-demanda.md), módulo
+[`terraform/modules/start-api/`](terraform/modules/start-api/)): desafio do Cloudflare Turnstile, depois
+liga a instância e espera a API responder. A instância desliga sozinha depois de 2 horas (só se foi a
+Lambda que ligou, nunca depois de um `aws-power.ps1 on`). A página é bilíngue (`?lang=pt|en`) e o
+`?back=` volta à página que chamou, restrito às origens de `start_api_allowed_origins`.
+
+Exige a variável `turnstile_secret_key` do Terraform (no `terraform.tfvars`, não versionado) e o secret
+`TURNSTILE_SECRET_KEY` do repositório, usado pelo drift-check semanal.

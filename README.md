@@ -263,3 +263,16 @@ While stopped, the API is down (the static frontend on CloudFront still loads, b
 The Elastic IP and EBS volume keep being billed (~US$ 4-5/month). Optionally, set `GRAFANA_URL`,
 `GRAFANA_TOKEN` and `GRAFANA_BACKUP_ALERTNAME` so `off` silences the Grafana backup alert (which would
 otherwise fire after ~26h without the daily backup) and `on` removes the silence.
+
+### Turn it on from the clients
+
+Visitors can start the instance themselves: every client (Angular, React, Vue, Android, Flutter, React
+Native) shows a **Turn on the API** link when the API doesn't answer. It opens a page served by the
+`estado-start-api` Lambda ([ADR 0026](docs/adr/0026-ligar-api-sob-demanda.md), module
+[`terraform/modules/start-api/`](terraform/modules/start-api/)): a Cloudflare Turnstile challenge, then it
+starts the instance and waits for the API to answer. The instance stops by itself after 2 hours (only
+when the Lambda started it, never after `aws-power.ps1 on`). The page is bilingual (`?lang=pt|en`) and
+`?back=` returns to the page that called it, restricted to the origins in `start_api_allowed_origins`.
+
+It needs the `turnstile_secret_key` Terraform variable (in `terraform.tfvars`, not versioned) and the
+`TURNSTILE_SECRET_KEY` repository secret for the weekly drift check.
