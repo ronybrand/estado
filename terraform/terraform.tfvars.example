@@ -15,3 +15,8 @@ frontend_github_repo = "<owner>/angular_estado"
 # real do visitante ao rate limit por IP (ADR 0016). Gerar com
 # `openssl rand -base64 32`. Vazio = limite por no de borda, como antes.
 # proxy_secret = "<segredo>"
+
+# Secret key do Cloudflare Turnstile (dash.cloudflare.com > Turnstile), usada
+# pela Lambda start-api pra validar o desafio anti-bot (ADR 0026). A site key
+# (publica) vai nos frontends, nao aqui.
+# turnstile_secret_key = "<secret key>"

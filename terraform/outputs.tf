@@ -37,3 +37,7 @@ output "terraform_state_bucket" {
 output "terraform_plan_role_arn" {
   value = module.estado_terraform_plan.role_arn
 }
+
+output "start_api_url" {
+  value = module.start_api.function_url
+}

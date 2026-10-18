@@ -28,6 +28,9 @@ jobs:
       # ele o plan enxerga o header X-Proxy-Secret do origin como "a remover"
       # e o drift-check falha toda semana.
       TF_VAR_proxy_secret: ${{ secrets.RATE_LIMIT_PROXY_SECRET }}
+      # Obrigatoria (ADR 0026): vai como env da Lambda start-api, entao o plan
+      # precisa do mesmo valor aplicado, senao enxerga a env como alterada.
+      TF_VAR_turnstile_secret_key: ${{ secrets.TURNSTILE_SECRET_KEY }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
