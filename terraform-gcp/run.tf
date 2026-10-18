@@ -46,6 +46,10 @@ resource "google_cloud_run_v2_service" "ai_agent" {
   name     = local.ai_agent_name
   location = var.region
 
+  lifecycle {
+    ignore_changes = [scaling]
+  }
+
   # So o backend (BFF) fala com o agente: exposto, quem tivesse a chave poderia
   # forjar X-Forwarded-For e furar o rate limit por IP.
   ingress = "INGRESS_TRAFFIC_INTERNAL_ONLY"
@@ -109,6 +113,10 @@ resource "google_cloud_run_v2_service" "backend" {
   name     = local.backend_name
   location = var.region
   ingress  = "INGRESS_TRAFFIC_ALL"
+
+  lifecycle {
+    ignore_changes = [scaling]
+  }
 
   template {
     service_account = google_service_account.run.email
