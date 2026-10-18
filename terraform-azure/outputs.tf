@@ -4,7 +4,7 @@ output "backend_url" {
 }
 
 output "postgres_fqdn" {
-  description = "FQDN privado do Postgres (so resolve dentro da VNet)"
+  description = "FQDN do Postgres (endpoint publico, protegido por TLS e senha)"
   value       = azurerm_postgresql_flexible_server.main.fqdn
 }
 
