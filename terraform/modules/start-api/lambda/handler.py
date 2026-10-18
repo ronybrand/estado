@@ -114,55 +114,105 @@ def _autostop():
 
 
 PAGE = """<!doctype html>
-<html lang="pt-BR"><head><meta charset="utf-8">
+<html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Ligar a API</title>
+<title>Turn on the API</title>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <style>
 body{font-family:system-ui,sans-serif;max-width:32rem;margin:10vh auto;padding:0 1rem;line-height:1.5}
-button,a.btn{font:inherit;padding:.6rem 1rem;border:0;border-radius:.4rem;background:#0d6efd;color:#fff;text-decoration:none;display:inline-block}
+a.btn{font:inherit;padding:.6rem 1rem;border-radius:.4rem;background:#0d6efd;color:#fff;text-decoration:none;display:inline-block}
 #status{margin:1rem 0;font-weight:600}
+#lang{float:right;font:inherit;background:none;border:0;color:#0d6efd;cursor:pointer;text-decoration:underline}
 </style></head><body>
-<h1>Ligar a API</h1>
-<p>A API do projeto Estado fica desligada para economizar custo. Confirme que voce nao e um robo e ela liga sozinha (leva cerca de 1 minuto) e desliga depois de 2 horas.</p>
-<p lang="en"><small>The API is switched off to save cost. Verify you are human and it starts by itself (about 1 minute), then stops after 2 hours.</small></p>
+<button id="lang" type="button"></button>
+<h1 id="title"></h1>
+<p id="intro"></p>
 <div class="cf-turnstile" data-sitekey="__SITE_KEY__" data-callback="onVerified"></div>
 <p id="status" role="status"></p>
 <script>
-const status = document.getElementById("status");
+const TEXT = {
+  pt: {
+    title: "Ligar a API",
+    intro: "A API do projeto Estado fica desligada para economizar custo. Confirme que você não é um robô e ela liga sozinha (leva cerca de 1 minuto) e desliga depois de 2 horas.",
+    sending: "Enviando pedido...",
+    starting: "Ligando... aguardando a API",
+    waiting: (s) => "Ligando... aguardando a API (" + s + "s)",
+    already: "A API já está ligada, verificando...",
+    cooldown: "Aguarde alguns minutos e tente de novo (desligou há pouco).",
+    failed: (c) => "Não foi possível ligar (" + c + "). Tente recarregar a página.",
+    network: "Erro de rede. Tente recarregar a página.",
+    done: "Pronto! A API respondeu.",
+    back: "Voltar ao site",
+    other: "English"
+  },
+  en: {
+    title: "Turn on the API",
+    intro: "The Estado project API is switched off to save cost. Verify you are human and it starts by itself (about 1 minute), then stops after 2 hours.",
+    sending: "Sending request...",
+    starting: "Starting... waiting for the API",
+    waiting: (s) => "Starting... waiting for the API (" + s + "s)",
+    already: "The API is already on, checking...",
+    cooldown: "Please wait a few minutes and try again (it was stopped a moment ago).",
+    failed: (c) => "Could not start it (" + c + "). Try reloading the page.",
+    network: "Network error. Try reloading the page.",
+    done: "Done! The API responded.",
+    back: "Back to the site",
+    other: "Português"
+  }
+};
+const query = new URLSearchParams(location.search).get("lang");
+let lang = query === "pt" || query === "en" ? query : (navigator.language || "en").toLowerCase().startsWith("pt") ? "pt" : "en";
+const statusEl = document.getElementById("status");
 const started = Date.now();
-function say(t){ status.textContent = t; }
+let current = () => "";
+let backLink = null;
 let requested = false;
 let finished = false;
+
+function say(fn){ current = fn; statusEl.textContent = fn(TEXT[lang]); }
+function render(){
+  const t = TEXT[lang];
+  document.documentElement.lang = lang === "pt" ? "pt-BR" : "en";
+  document.title = t.title;
+  document.getElementById("title").textContent = t.title;
+  document.getElementById("intro").textContent = t.intro;
+  document.getElementById("lang").textContent = t.other;
+  statusEl.textContent = current(t);
+  if (backLink) backLink.textContent = t.back;
+}
+document.getElementById("lang").onclick = () => { lang = lang === "pt" ? "en" : "pt"; render(); };
+
 function done(){
   if (finished) return;
   finished = true;
-  say("Pronto! A API respondeu.");
-  const a = document.createElement("a");
-  a.className = "btn"; a.href = "__SITE_URL__"; a.textContent = "Voltar ao site";
-  status.after(a);
+  say((t) => t.done);
+  backLink = document.createElement("a");
+  backLink.className = "btn"; backLink.href = "__SITE_URL__";
+  statusEl.after(backLink);
+  render();
 }
 function ping(){
   if (finished) return;
   const s = Math.round((Date.now() - started) / 1000);
   fetch("__PING_URL__", {mode: "no-cors", cache: "no-store"})
     .then(done)
-    .catch(() => { say("Ligando... aguardando a API (" + s + "s)"); setTimeout(ping, 5000); });
+    .catch(() => { say((t) => t.waiting(s)); setTimeout(ping, 5000); });
 }
 async function onVerified(token){
   // O Turnstile pode chamar o callback de novo ao renovar o token; um unico ciclo basta.
   if (requested) return;
   requested = true;
-  say("Enviando pedido...");
+  say((t) => t.sending);
   try {
     const r = await fetch(location.pathname, {method: "POST", headers: {"content-type": "application/json"}, body: JSON.stringify({token})});
     const j = await r.json().catch(() => ({}));
-    if (r.status === 429) { requested = false; say("Aguarde alguns minutos e tente de novo (desligou ha pouco)."); return; }
-    if (!r.ok) { requested = false; say("Nao foi possivel ligar (" + r.status + "). Tente recarregar a pagina."); return; }
-    say(j.state === "running" ? "A API ja esta ligada, verificando..." : "Ligando... aguardando a API");
+    if (r.status === 429) { requested = false; say((t) => t.cooldown); return; }
+    if (!r.ok) { requested = false; say((t) => t.failed(r.status)); return; }
+    say((t) => j.state === "running" ? t.already : t.starting);
     ping();
-  } catch (e) { requested = false; say("Erro de rede. Tente recarregar a pagina."); }
+  } catch (e) { requested = false; say((t) => t.network); }
 }
+render();
 </script></body></html>"""
 
 
