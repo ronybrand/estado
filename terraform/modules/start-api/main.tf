@@ -64,6 +64,9 @@ resource "aws_lambda_function" "start_api" {
     variables = {
       INSTANCE_ID        = var.instance_id
       TURNSTILE_SECRET   = var.turnstile_secret_key
+      TURNSTILE_SITE_KEY = var.turnstile_site_key
+      API_PING_URL       = var.api_ping_url
+      SITE_URL           = var.site_url
       MAX_UPTIME_MINUTES = tostring(var.max_uptime_minutes)
       COOLDOWN_MINUTES   = tostring(var.cooldown_minutes)
     }

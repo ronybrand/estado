@@ -9,8 +9,11 @@ Para gastar o mínimo, a EC2 pode ficar parada quando o portfólio não está em
 religá-la sem acesso à AWS.
 
 ## Decisão
-Uma Lambda (`estado-start-api`, Python, Function URL pública) liga a instância quando o frontend
-envia um token do Cloudflare Turnstile válido. Um EventBridge a invoca a cada 15 minutos para desligar
+Uma Lambda (`estado-start-api`, Python, Function URL pública) serve ela mesma a página com o widget do
+Turnstile (GET) e liga a instância quando recebe um token válido (POST). Os frontends só linkam para essa
+URL: assim nenhum precisa carregar o widget nem relaxar o próprio CSP (`script-src 'self'`,
+`connect-src 'self'`), e os apps mobile abrem a mesma página no navegador. A página consulta
+`/actuator/info` (`no-cors`, só pra saber se respondeu) até a API voltar. Um EventBridge a invoca a cada 15 minutos para desligar
 a instância que **ela** ligou há mais de 2 horas.
 
 - **Estado em tags da própria instância** (`AutoStartedAt`, `AutoStoppedAt`), sem DynamoDB: o desligamento
@@ -24,6 +27,7 @@ a instância que **ela** ligou há mais de 2 horas.
 
 ## Alternativas descartadas
 - Ligar sozinho em qualquer erro, sem desafio: qualquer crawler religaria a máquina.
+- Widget embutido em cada frontend: exigiria relaxar o CSP de cada um e repetir a integração em seis clientes.
 - API Gateway com API key: key no frontend é pública, não protege nada e custa mais.
 
 ## Consequências

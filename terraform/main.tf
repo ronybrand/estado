@@ -76,6 +76,9 @@ module "start_api" {
   instance_arn         = module.portfolio_us_east_1.instance_arn
   turnstile_secret_key = var.turnstile_secret_key
   allowed_origins      = var.start_api_allowed_origins
+  turnstile_site_key   = var.turnstile_site_key
+  api_ping_url         = "https://api.${var.domain_name}/actuator/info"
+  site_url             = "https://${var.domain_name}"
 }
 
 # Pra adicionar um novo app de portfolio depois:

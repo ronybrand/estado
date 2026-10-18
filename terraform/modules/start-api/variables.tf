@@ -30,3 +30,18 @@ variable "cooldown_minutes" {
   type        = number
   default     = 15
 }
+
+variable "turnstile_site_key" {
+  description = "Site key (publica) do Cloudflare Turnstile, embutida na pagina que a Lambda serve"
+  type        = string
+}
+
+variable "api_ping_url" {
+  description = "URL que a pagina consulta pra saber se a API voltou (publica, /actuator/info)"
+  type        = string
+}
+
+variable "site_url" {
+  description = "Pra onde o botao 'Voltar ao site' leva"
+  type        = string
+}

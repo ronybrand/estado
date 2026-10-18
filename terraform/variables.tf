@@ -55,3 +55,9 @@ variable "start_api_allowed_origins" {
   type        = list(string)
   default     = ["https://ronybrand.click", "https://www.ronybrand.click"]
 }
+
+variable "turnstile_site_key" {
+  description = "Site key (publica) do Cloudflare Turnstile - ADR 0026"
+  type        = string
+  default     = "0x4AAAAAAFZ_93IQ8j5qhKWH"
+}
