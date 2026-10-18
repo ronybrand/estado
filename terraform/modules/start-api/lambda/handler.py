@@ -132,28 +132,36 @@ button,a.btn{font:inherit;padding:.6rem 1rem;border:0;border-radius:.4rem;backgr
 const status = document.getElementById("status");
 const started = Date.now();
 function say(t){ status.textContent = t; }
+let requested = false;
+let finished = false;
 function done(){
+  if (finished) return;
+  finished = true;
   say("Pronto! A API respondeu.");
   const a = document.createElement("a");
   a.className = "btn"; a.href = "__SITE_URL__"; a.textContent = "Voltar ao site";
   status.after(a);
 }
 function ping(){
+  if (finished) return;
   const s = Math.round((Date.now() - started) / 1000);
   fetch("__PING_URL__", {mode: "no-cors", cache: "no-store"})
     .then(done)
     .catch(() => { say("Ligando... aguardando a API (" + s + "s)"); setTimeout(ping, 5000); });
 }
 async function onVerified(token){
+  // O Turnstile pode chamar o callback de novo ao renovar o token; um unico ciclo basta.
+  if (requested) return;
+  requested = true;
   say("Enviando pedido...");
   try {
     const r = await fetch(location.pathname, {method: "POST", headers: {"content-type": "application/json"}, body: JSON.stringify({token})});
     const j = await r.json().catch(() => ({}));
-    if (r.status === 429) { say("Aguarde alguns minutos e tente de novo (desligou ha pouco)."); return; }
-    if (!r.ok) { say("Nao foi possivel ligar (" + r.status + "). Tente recarregar a pagina."); return; }
+    if (r.status === 429) { requested = false; say("Aguarde alguns minutos e tente de novo (desligou ha pouco)."); return; }
+    if (!r.ok) { requested = false; say("Nao foi possivel ligar (" + r.status + "). Tente recarregar a pagina."); return; }
     say(j.state === "running" ? "A API ja esta ligada, verificando..." : "Ligando... aguardando a API");
     ping();
-  } catch (e) { say("Erro de rede. Tente recarregar a pagina."); }
+  } catch (e) { requested = false; say("Erro de rede. Tente recarregar a pagina."); }
 }
 </script></body></html>"""
 
