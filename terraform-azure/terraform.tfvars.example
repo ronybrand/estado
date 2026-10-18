@@ -8,6 +8,3 @@ allowed_origins = "https://seu-front.example.com"
 admin_password_hash = "$2a$10$..."
 
 gemini_api_key = "..."
-
-# Segundo apply: IPs de saida dos Container Apps (saem do output do primeiro apply)
-# container_apps_outbound_ips = ["20.0.0.1", "20.0.0.2"]

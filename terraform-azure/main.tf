@@ -5,8 +5,8 @@
 # Sem VNet de proposito: um ambiente de Container Apps numa VNet propria cria um
 # Load Balancer Standard e um IP publico Standard (~US$ 22/mes, fora do free
 # tier), mesmo com ingress interno. Na rede gerenciada nao ha esse custo, e o
-# preco e o Postgres com endpoint publico, protegido por TLS, senha e firewall
-# liberando so os IPs de saida dos Container Apps.
+# preco e o Postgres com endpoint publico, protegido por TLS e senha, com o
+# firewall aberto aos servicos do Azure.
 
 locals {
   # Os dois apps se enxergam pelo FQDN derivado do dominio do ambiente + nome
@@ -88,17 +88,16 @@ resource "azurerm_postgresql_flexible_server_database" "estado" {
   collation = "en_US.utf8"
 }
 
-# Um IP por regra. Os IPs de saida so existem depois que os apps sao criados, e
-# for_each exige chaves conhecidas no plan: por isso entram por variavel, num
-# segundo apply (ver README). O Azure avisa que esses IPs podem mudar com o
-# tempo; se o backend perder o banco, repita o passo.
-resource "azurerm_postgresql_flexible_server_firewall_rule" "container_apps" {
-  for_each = toset(var.container_apps_outbound_ips)
-
-  name             = "aca-${replace(each.value, ".", "-")}"
+# A regra 0.0.0.0-0.0.0.0 e o "permitir servicos do Azure". Restringir por IP de
+# saida nao ajuda: o ambiente de Container Apps sem VNet usa um pool regional
+# compartilhado (~190 IPs, de outros clientes tambem), entao o filtro seria so
+# aparente e quebraria sempre que o Azure mudasse o pool. A protecao real aqui e
+# TLS + a senha aleatoria de 32 caracteres.
+resource "azurerm_postgresql_flexible_server_firewall_rule" "azure_services" {
+  name             = "AllowAzureServices"
   server_id        = azurerm_postgresql_flexible_server.main.id
-  start_ip_address = each.value
-  end_ip_address   = each.value
+  start_ip_address = "0.0.0.0"
+  end_ip_address   = "0.0.0.0"
 }
 
 # ---- Observabilidade basica do ambiente ------------------------------------
