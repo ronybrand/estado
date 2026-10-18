@@ -169,13 +169,13 @@ let current = () => "";
 let backLink = null;
 let requested = false;
 let finished = false;
-// "Voltar ao site" leva a quem chamou (?back=), mas so se a origem estiver na lista
-// permitida: sem isso a pagina viraria um redirecionamento aberto.
+// "Voltar ao site" leva a pagina exata de quem chamou (?back=), mas so se a origem estiver
+// na lista permitida: sem isso a pagina viraria um redirecionamento aberto.
 const ALLOWED_BACK = __ALLOWED_BACK__;
 function backUrl(){
   try {
     const back = new URLSearchParams(location.search).get("back");
-    if (back && ALLOWED_BACK.includes(new URL(back).origin)) return new URL(back).origin + "/";
+    if (back && ALLOWED_BACK.includes(new URL(back).origin)) return new URL(back).href;
   } catch (e) { /* URL invalida: cai no padrao */ }
   return "__SITE_URL__";
 }
