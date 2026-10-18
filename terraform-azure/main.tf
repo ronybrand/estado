@@ -1,6 +1,12 @@
 # Ambiente de teste do backend no Azure (free tier): Container Apps com scale a
-# zero + PostgreSQL Flexible Server privado em VNet. Espelha o que a AWS roda
-# em EC2 + Docker Compose, sem Caddy e sem Lambda de liga/desliga.
+# zero + PostgreSQL Flexible Server. Espelha o que a AWS roda em EC2 + Docker
+# Compose, sem Caddy e sem Lambda de liga/desliga.
+#
+# Sem VNet de proposito: um ambiente de Container Apps numa VNet propria cria um
+# Load Balancer Standard e um IP publico Standard (~US$ 22/mes, fora do free
+# tier), mesmo com ingress interno. Na rede gerenciada nao ha esse custo, e o
+# preco e o Postgres com endpoint publico, protegido por TLS, senha e firewall
+# liberando so os IPs de saida dos Container Apps.
 
 locals {
   # Os dois apps se enxergam pelo FQDN derivado do dominio do ambiente + nome
@@ -48,61 +54,6 @@ resource "azurerm_resource_group" "main" {
   location = var.location
 }
 
-# ---- Rede ------------------------------------------------------------------
-
-resource "azurerm_virtual_network" "main" {
-  name                = "${var.name_prefix}-vnet"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
-  address_space       = ["10.20.0.0/16"]
-}
-
-resource "azurerm_subnet" "container_apps" {
-  name                 = "container-apps"
-  resource_group_name  = azurerm_resource_group.main.name
-  virtual_network_name = azurerm_virtual_network.main.name
-  address_prefixes     = ["10.20.0.0/27"]
-
-  delegation {
-    name = "container-apps"
-    service_delegation {
-      name    = "Microsoft.App/environments"
-      actions = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
-    }
-  }
-}
-
-resource "azurerm_subnet" "postgres" {
-  name                 = "postgres"
-  resource_group_name  = azurerm_resource_group.main.name
-  virtual_network_name = azurerm_virtual_network.main.name
-  address_prefixes     = ["10.20.1.0/24"]
-
-  # O Azure adiciona este endpoint sozinho em subnet delegada ao Postgres;
-  # sem declarar, todo plan mostraria drift.
-  service_endpoints = ["Microsoft.Storage"]
-
-  delegation {
-    name = "postgres"
-    service_delegation {
-      name    = "Microsoft.DBforPostgreSQL/flexibleServers"
-      actions = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
-    }
-  }
-}
-
-resource "azurerm_private_dns_zone" "postgres" {
-  name                = "${var.name_prefix}.private.postgres.database.azure.com"
-  resource_group_name = azurerm_resource_group.main.name
-}
-
-resource "azurerm_private_dns_zone_virtual_network_link" "postgres" {
-  name                  = "${var.name_prefix}-postgres"
-  resource_group_name   = azurerm_resource_group.main.name
-  private_dns_zone_name = azurerm_private_dns_zone.postgres.name
-  virtual_network_id    = azurerm_virtual_network.main.id
-}
-
 # ---- Banco -----------------------------------------------------------------
 
 resource "azurerm_postgresql_flexible_server" "main" {
@@ -118,14 +69,10 @@ resource "azurerm_postgresql_flexible_server" "main" {
   administrator_login    = "estado"
   administrator_password = random_password.postgres.result
 
-  delegated_subnet_id           = azurerm_subnet.postgres.id
-  private_dns_zone_id           = azurerm_private_dns_zone.postgres.id
-  public_network_access_enabled = false
+  public_network_access_enabled = true
 
   backup_retention_days        = 7
   geo_redundant_backup_enabled = false
-
-  depends_on = [azurerm_private_dns_zone_virtual_network_link.postgres]
 
   lifecycle {
     # O Azure escolhe a zona de disponibilidade na criacao; sem isso o proximo
@@ -139,6 +86,19 @@ resource "azurerm_postgresql_flexible_server_database" "estado" {
   server_id = azurerm_postgresql_flexible_server.main.id
   charset   = "UTF8"
   collation = "en_US.utf8"
+}
+
+# Um IP por regra. Os IPs de saida so existem depois que os apps sao criados, e
+# for_each exige chaves conhecidas no plan: por isso entram por variavel, num
+# segundo apply (ver README). O Azure avisa que esses IPs podem mudar com o
+# tempo; se o backend perder o banco, repita o passo.
+resource "azurerm_postgresql_flexible_server_firewall_rule" "container_apps" {
+  for_each = toset(var.container_apps_outbound_ips)
+
+  name             = "aca-${replace(each.value, ".", "-")}"
+  server_id        = azurerm_postgresql_flexible_server.main.id
+  start_ip_address = each.value
+  end_ip_address   = each.value
 }
 
 # ---- Observabilidade basica do ambiente ------------------------------------
@@ -162,9 +122,6 @@ resource "azurerm_container_app_environment" "main" {
   location                   = azurerm_resource_group.main.location
   resource_group_name        = azurerm_resource_group.main.name
   log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
-
-  infrastructure_subnet_id       = azurerm_subnet.container_apps.id
-  internal_load_balancer_enabled = false
 
   workload_profile {
     name                  = "Consumption"

@@ -43,3 +43,9 @@ variable "gemini_api_key" {
   type        = string
   sensitive   = true
 }
+
+variable "container_apps_outbound_ips" {
+  description = "IPs de saida dos Container Apps liberados no firewall do Postgres. Vazio no primeiro apply: so existem depois que os apps sao criados (veja o output container_apps_outbound_ips)"
+  type        = list(string)
+  default     = []
+}
