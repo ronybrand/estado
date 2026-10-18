@@ -65,6 +65,19 @@ module "estado_terraform_plan" {
   state_bucket_arn  = aws_s3_bucket.terraform_state.arn
 }
 
+# Botao "Ligar a API" dos frontends + desligamento automatico - ADR 0026.
+module "start_api" {
+  source = "./modules/start-api"
+  providers = {
+    aws = aws.us_east_1
+  }
+
+  instance_id          = module.portfolio_us_east_1.instance_id
+  instance_arn         = module.portfolio_us_east_1.instance_arn
+  turnstile_secret_key = var.turnstile_secret_key
+  allowed_origins      = var.start_api_allowed_origins
+}
+
 # Pra adicionar um novo app de portfolio depois:
 #   module "outroapp_backup" {
 #     source      = "./modules/app-backup"

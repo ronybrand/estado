@@ -33,3 +33,6 @@ build/
 # do projeto.
 /.scratch-*/
 /scratch_*
+
+# Gerado pelo data.archive_file da Lambda start-api a cada plan
+terraform/modules/start-api/lambda/handler.zip

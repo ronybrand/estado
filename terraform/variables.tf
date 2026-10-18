@@ -43,3 +43,15 @@ variable "ami_id" {
   type        = string
   default     = "ami-0ae8605ed708e3c3e" # al2023-ami-2023.12.20260930.0-kernel-6.1-arm64
 }
+
+variable "turnstile_secret_key" {
+  description = "Secret key do Cloudflare Turnstile usada pela Lambda start-api - ADR 0026"
+  type        = string
+  sensitive   = true
+}
+
+variable "start_api_allowed_origins" {
+  description = "Origens dos frontends autorizadas (CORS) a chamar a Function URL que liga a API"
+  type        = list(string)
+  default     = ["https://ronybrand.click", "https://www.ronybrand.click"]
+}

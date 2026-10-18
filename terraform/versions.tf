@@ -29,4 +29,10 @@ provider "aws" {
 provider "aws" {
   alias  = "us_east_1"
   region = "us-east-1"
+
+  # A Lambda start-api (ADR 0026) grava essas tags na instancia em runtime;
+  # sem isso o drift-check semanal as enxergaria como "a remover".
+  ignore_tags {
+    keys = ["AutoStartedAt", "AutoStoppedAt"]
+  }
 }
