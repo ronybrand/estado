@@ -15,7 +15,7 @@ variable "turnstile_secret_key" {
 }
 
 variable "allowed_origins" {
-  description = "Origens autorizadas a chamar a Function URL (CORS)"
+  description = "Origens dos frontends: CORS da Function URL e destinos permitidos do botao Voltar ao site (?back=)"
   type        = list(string)
 }
 

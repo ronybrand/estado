@@ -21,6 +21,7 @@ TURNSTILE_SECRET = os.environ["TURNSTILE_SECRET"]
 TURNSTILE_SITE_KEY = os.environ["TURNSTILE_SITE_KEY"]
 API_PING_URL = os.environ["API_PING_URL"]
 SITE_URL = os.environ["SITE_URL"]
+ALLOWED_BACK_ORIGINS = [o for o in os.environ["ALLOWED_BACK_ORIGINS"].split(",") if o]
 MAX_UPTIME_MINUTES = int(os.environ["MAX_UPTIME_MINUTES"])
 COOLDOWN_MINUTES = int(os.environ["COOLDOWN_MINUTES"])
 STARTED_TAG = "AutoStartedAt"
@@ -168,6 +169,16 @@ let current = () => "";
 let backLink = null;
 let requested = false;
 let finished = false;
+// "Voltar ao site" leva a quem chamou (?back=), mas so se a origem estiver na lista
+// permitida: sem isso a pagina viraria um redirecionamento aberto.
+const ALLOWED_BACK = __ALLOWED_BACK__;
+function backUrl(){
+  try {
+    const back = new URLSearchParams(location.search).get("back");
+    if (back && ALLOWED_BACK.includes(new URL(back).origin)) return new URL(back).origin + "/";
+  } catch (e) { /* URL invalida: cai no padrao */ }
+  return "__SITE_URL__";
+}
 
 function say(fn){ current = fn; statusEl.textContent = fn(TEXT[lang]); }
 function render(){
@@ -187,7 +198,7 @@ function done(){
   finished = true;
   say((t) => t.done);
   backLink = document.createElement("a");
-  backLink.className = "btn"; backLink.href = "__SITE_URL__";
+  backLink.className = "btn"; backLink.href = backUrl();
   statusEl.after(backLink);
   render();
 }
@@ -221,6 +232,7 @@ def _page():
         PAGE.replace("__SITE_KEY__", TURNSTILE_SITE_KEY)
         .replace("__PING_URL__", API_PING_URL)
         .replace("__SITE_URL__", SITE_URL)
+        .replace("__ALLOWED_BACK__", json.dumps(ALLOWED_BACK_ORIGINS))
     )
     return {"statusCode": 200, "headers": {"Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store"}, "body": html}
 

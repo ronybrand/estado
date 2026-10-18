@@ -51,9 +51,9 @@ variable "turnstile_secret_key" {
 }
 
 variable "start_api_allowed_origins" {
-  description = "Origens dos frontends autorizadas (CORS) a chamar a Function URL que liga a API"
+  description = "Origens dos frontends: CORS da Function URL que liga a API e destinos permitidos do botao Voltar ao site"
   type        = list(string)
-  default     = ["https://ronybrand.click", "https://www.ronybrand.click"]
+  default     = ["https://ronybrand.click", "https://www.ronybrand.click", "https://react-state-flax.vercel.app", "https://vue-state.vercel.app"]
 }
 
 variable "turnstile_site_key" {
