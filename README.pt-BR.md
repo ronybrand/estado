@@ -245,3 +245,20 @@ em produção.
 
 O commit e a versão do build em execução ficam expostos em `/actuator/info`, útil pra confirmar que
 um deploy (ou rollback) aplicou o commit esperado sem precisar consultar o log do `deploy.sh`.
+
+## Desligando e ligando a instância da AWS
+
+Pra gastar o mínimo enquanto o projeto não está em uso, [`deploy/aws-power.ps1`](deploy/aws-power.ps1)
+para e inicia a EC2 (único recurso cobrado por hora). Disco, Elastic IP e DNS são preservados, então
+nada precisa ser reconfigurado.
+
+```powershell
+.\deploy\aws-power.ps1 off      # desliga
+.\deploy\aws-power.ps1 on       # liga e espera o /actuator/info responder 200
+.\deploy\aws-power.ps1 status
+```
+
+Com a instância parada a API fica fora do ar (o frontend estático no CloudFront ainda carrega, mas as
+chamadas à API falham). O Elastic IP e o disco EBS continuam cobrados (~US$ 4-5/mês). Opcionalmente,
+defina `GRAFANA_URL`, `GRAFANA_TOKEN` e `GRAFANA_BACKUP_ALERTNAME` pro `off` silenciar o alerta de backup
+do Grafana (que dispararia após ~26h sem o backup diário) e o `on` remover o silêncio.

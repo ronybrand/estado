@@ -245,3 +245,20 @@ Log in with the demo credentials above to try create/update/delete on the live i
 
 The running build's commit and version are exposed at `/actuator/info`, handy for confirming that
 a deploy (or rollback) applied the expected commit without having to check the `deploy.sh` log.
+
+## Turning the AWS instance off and on
+
+To keep costs down while the project isn't being used, [`deploy/aws-power.ps1`](deploy/aws-power.ps1)
+stops and starts the EC2 instance (the only resource billed by the hour). The disk, Elastic IP and DNS
+are preserved, so nothing needs reconfiguring.
+
+```powershell
+.\deploy\aws-power.ps1 off      # stop
+.\deploy\aws-power.ps1 on       # start, then waits for /actuator/info to answer 200
+.\deploy\aws-power.ps1 status
+```
+
+While stopped, the API is down (the static frontend on CloudFront still loads, but its API calls fail).
+The Elastic IP and EBS volume keep being billed (~US$ 4-5/month). Optionally, set `GRAFANA_URL`,
+`GRAFANA_TOKEN` and `GRAFANA_BACKUP_ALERTNAME` so `off` silences the Grafana backup alert (which would
+otherwise fire after ~26h without the daily backup) and `on` removes the silence.
