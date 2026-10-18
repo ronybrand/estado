@@ -1,0 +1,5 @@
+management:
+  server:
+    # health e prometheus ficam fora do ingress (so a 8080 e exposta); o
+    # /actuator/info publico volta pela porta principal via PublicInfoController.
+    port: ${MANAGEMENT_SERVER_PORT:8081}
