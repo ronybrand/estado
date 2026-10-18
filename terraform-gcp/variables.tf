@@ -37,3 +37,32 @@ variable "kill_switch_dry_run" {
   type        = bool
   default     = false
 }
+
+variable "backend_image" {
+  description = "Imagem do backend no ghcr.io (JVM: o profile azure so abre a porta de gerenciamento fora do native)"
+  type        = string
+  default     = "ronybrand/estado:jvm-latest"
+}
+
+variable "ai_agent_image" {
+  description = "Imagem do estado-ai-agent no ghcr.io"
+  type        = string
+  default     = "ronybrand/estado-ai-agent:latest"
+}
+
+variable "allowed_origins" {
+  description = "Origens permitidas no CORS do backend (API_ORIGIN_PERMITIDA), separadas por virgula"
+  type        = string
+}
+
+variable "admin_password_hash" {
+  description = "Hash BCrypt da senha do admin (ADMIN_PASSWORD_HASH)"
+  type        = string
+  sensitive   = true
+}
+
+variable "gemini_api_key" {
+  description = "Chave da API do Gemini usada pelo estado-ai-agent"
+  type        = string
+  sensitive   = true
+}

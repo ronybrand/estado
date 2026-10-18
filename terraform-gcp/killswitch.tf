@@ -22,6 +22,8 @@ locals {
     "logging.googleapis.com",
     "iam.googleapis.com",
     "compute.googleapis.com",
+    "secretmanager.googleapis.com",
+    "dns.googleapis.com",
   ]
 }
 
