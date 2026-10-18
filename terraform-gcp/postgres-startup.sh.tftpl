@@ -1,0 +1,22 @@
+﻿#!/bin/bash
+# Roda a cada boot da VM (COS). Dados em /mnt/stateful_partition, que sobrevive
+# a reboots.
+set -euo pipefail
+
+export DOCKER_CONFIG=/var/tmp/docker-config
+mkdir -p "$DOCKER_CONFIG"
+docker-credential-gcr configure-docker --registries=${region}-docker.pkg.dev
+
+META=http://metadata.google.internal/computeMetadata/v1
+TOKEN=$(curl -s -H "Metadata-Flavor: Google" "$META/instance/service-accounts/default/token" | sed -n 's/.*"access_token":"\([^"]*\)".*/\1/p')
+PASSWORD=$(curl -s -H "Authorization: Bearer $TOKEN" \
+  "https://secretmanager.googleapis.com/v1/projects/${project}/secrets/${secret}/versions/latest:access" \
+  | sed -n 's/.*"data": *"\([^"]*\)".*/\1/p' | tr '_-' '/+' | base64 -d)
+
+docker rm -f postgres 2>/dev/null || true
+# Limites baixos de proposito: a e2-micro tem 1 GB de RAM para o sistema e o banco.
+docker run -d --name postgres --restart=always -p 5432:5432 \
+  -e POSTGRES_USER=estado -e POSTGRES_DB=estado -e POSTGRES_PASSWORD="$PASSWORD" \
+  -v /mnt/stateful_partition/pgdata:/var/lib/postgresql/data \
+  ${image} \
+  -c shared_buffers=64MB -c max_connections=20 -c work_mem=2MB -c maintenance_work_mem=32MB
