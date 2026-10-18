@@ -41,6 +41,14 @@ flowchart LR
     Grafana["Grafana Cloud"]
     Gemini["Google Gemini"]
 
+
+    subgraph OnDemand["Ligar a API sob demanda"]
+        direction LR
+        Lambda["Lambda start-api\n(Function URL)"]
+        Turnstile["Cloudflare Turnstile"]
+        Autostop["EventBridge\n(regra autostop)"]
+    end
+
     Browser -- "/ (estático)" --> S3
     Browser -- "/api/*" --> Caddy
     Caddy --> App
@@ -50,6 +58,10 @@ flowchart LR
     Agent --> Gemini
     Alloy -- "scrape /actuator/prometheus" --> App
     Alloy -- métricas/logs --> Grafana
+    Browser -. "API fora do ar:\nLigar a API" .-> Lambda
+    Lambda -. "valida o desafio" .-> Turnstile
+    Lambda -. "liga / desliga" .-> EC2
+    Autostop -. "desliga 2h depois" .-> Lambda
 ```
 
 Um único EC2 roda os quatro containers Docker (app, Postgres, Alloy,
