@@ -8,7 +8,6 @@ import java.util.Locale;
 import org.slf4j.MDC;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -38,7 +37,7 @@ public class AskProxyController {
     public AskProxyResponseDto ask(
             @Valid @RequestBody AskProxyRequestDto request,
             HttpServletRequest httpRequest,
-            @RequestHeader(value = "Accept-Language", defaultValue = "pt") Locale locale,
+            Locale locale,
             @RequestParam(value = "lang", required = false) String langOverride) {
         // Usa o mesmo ClientIpResolver do RateLimitFilter (X-Client-IP + segredo):
         // atras do CloudFront, getRemoteAddr() sozinho resolve pro IP de borda do

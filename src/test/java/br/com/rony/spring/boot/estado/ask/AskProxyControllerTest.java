@@ -161,9 +161,10 @@ class AskProxyControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Accept-Language", "en-US,en;q=0.9")
                 .content("{\"question\":\"What is the capital of Paraná?\"}"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.language").value("en"));
 
-        verify(askProxyService).ask(any(), any(), any(), eq(Locale.forLanguageTag("en-US")));
+        verify(askProxyService).ask(any(), any(), any(), eq(Locale.ENGLISH));
     }
 
     @Test
