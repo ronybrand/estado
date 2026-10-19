@@ -7,10 +7,16 @@
       "type": "ContributorValidationMessages_en"
     },
     {
+      "type": "ContributorValidationMessages_pt"
+    },
+    {
       "type": "ValidationMessages"
     },
     {
       "type": "ValidationMessages_en"
+    },
+    {
+      "type": "ValidationMessages_pt"
     },
     {
       "type": "boolean"
@@ -251,7 +257,9 @@
       "methods": [
         {
           "name": "restClientBuilder",
-          "parameterTypes": []
+          "parameterTypes": [
+            "br.com.rony.spring.boot.estado.property.AskApiProperty"
+          ]
         }
       ]
     },
@@ -317,7 +325,9 @@
           "name": "ask",
           "parameterTypes": [
             "br.com.rony.spring.boot.estado.ask.AskProxyRequestDto",
-            "jakarta.servlet.http.HttpServletRequest"
+            "jakarta.servlet.http.HttpServletRequest",
+            "java.util.Locale",
+            "java.lang.String"
           ]
         }
       ]
@@ -649,6 +659,14 @@
           ]
         },
         {
+          "name": "localeResolver",
+          "parameterTypes": []
+        },
+        {
+          "name": "messageSource",
+          "parameterTypes": []
+        },
+        {
           "name": "pageableCustomizer",
           "parameterTypes": []
         },
@@ -719,13 +737,15 @@
         {
           "name": "askUpstreamFalhou",
           "parameterTypes": [
-            "br.com.rony.spring.boot.estado.ask.AskUpstreamException"
+            "br.com.rony.spring.boot.estado.ask.AskUpstreamException",
+            "java.util.Locale"
           ]
         },
         {
           "name": "credenciaisInvalidas",
           "parameterTypes": [
-            "br.com.rony.spring.boot.estado.auth.InvalidCredentialsException"
+            "br.com.rony.spring.boot.estado.auth.InvalidCredentialsException",
+            "java.util.Locale"
           ]
         },
         {
@@ -737,7 +757,8 @@
         {
           "name": "validacaoFalhou",
           "parameterTypes": [
-            "org.springframework.web.bind.MethodArgumentNotValidException"
+            "org.springframework.web.bind.MethodArgumentNotValidException",
+            "java.util.Locale"
           ]
         }
       ]
@@ -785,6 +806,12 @@
         },
         {
           "name": "baseUrl"
+        },
+        {
+          "name": "connectTimeoutMs"
+        },
+        {
+          "name": "readTimeoutMs"
         }
       ],
       "methods": [
@@ -802,6 +829,18 @@
           "name": "setBaseUrl",
           "parameterTypes": [
             "java.lang.String"
+          ]
+        },
+        {
+          "name": "setConnectTimeoutMs",
+          "parameterTypes": [
+            "long"
+          ]
+        },
+        {
+          "name": "setReadTimeoutMs",
+          "parameterTypes": [
+            "long"
           ]
         }
       ]
@@ -908,7 +947,13 @@
       "type": "com.fasterxml.jackson.annotation.JacksonAnnotation"
     },
     {
+      "type": "com.fasterxml.jackson.annotation.JsonCreator"
+    },
+    {
       "type": "com.fasterxml.jackson.annotation.JsonIgnore"
+    },
+    {
+      "type": "com.fasterxml.jackson.annotation.JsonValue"
     },
     {
       "type": "com.fasterxml.jackson.core.JsonGenerator"
@@ -5412,6 +5457,9 @@
       "type": "org.apache.hc.client5.http.classic.HttpClient"
     },
     {
+      "type": "org.apache.hc.client5.http.impl.classic.HttpClients"
+    },
+    {
       "type": "org.apache.jasper.compiler.JspConfig"
     },
     {
@@ -8271,7 +8319,7 @@
       "type": "org.hibernate.validator.ValidationMessages"
     },
     {
-      "type": "org.hibernate.validator.ValidationMessages_en"
+      "type": "org.hibernate.validator.ValidationMessages_pt"
     },
     {
       "type": "org.hibernate.validator.internal.constraintvalidators.bv.NotBlankValidator",
@@ -10575,6 +10623,118 @@
       ]
     },
     {
+      "type": "org.springframework.boot.http.client.AbstractClientHttpRequestFactoryBuilder"
+    },
+    {
+      "type": "org.springframework.boot.http.client.ClientHttpRequestFactoryBuilder"
+    },
+    {
+      "type": "org.springframework.boot.http.client.HttpClientSettings"
+    },
+    {
+      "type": "org.springframework.boot.http.client.JdkClientHttpRequestFactoryBuilder"
+    },
+    {
+      "type": "org.springframework.boot.http.client.autoconfigure.HttpClientAutoConfiguration",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "httpClientSettings",
+          "parameterTypes": [
+            "org.springframework.boot.http.client.autoconfigure.HttpClientsProperties",
+            "org.springframework.beans.factory.ObjectProvider",
+            "org.springframework.beans.factory.ObjectProvider"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.springframework.boot.http.client.autoconfigure.HttpClientSettingsProperties"
+    },
+    {
+      "type": "org.springframework.boot.http.client.autoconfigure.HttpClientsProperties",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.springframework.boot.http.client.autoconfigure.imperative.ImperativeHttpClientAutoConfiguration",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": [
+            "org.springframework.core.env.Environment"
+          ]
+        },
+        {
+          "name": "clientHttpRequestFactoryBuilder",
+          "parameterTypes": [
+            "org.springframework.core.io.ResourceLoader",
+            "org.springframework.boot.http.client.autoconfigure.imperative.ImperativeHttpClientsProperties",
+            "org.springframework.beans.factory.ObjectProvider"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.springframework.boot.http.client.autoconfigure.imperative.ImperativeHttpClientsProperties",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.springframework.boot.http.client.autoconfigure.imperative.NotReactiveWebApplicationCondition",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.springframework.boot.http.client.autoconfigure.metrics.HttpClientMetricsAutoConfiguration",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "metricsHttpClientUriTagFilter",
+          "parameterTypes": [
+            "org.springframework.boot.micrometer.observation.autoconfigure.ObservationProperties",
+            "org.springframework.boot.micrometer.metrics.autoconfigure.MetricsProperties"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.springframework.boot.http.client.autoconfigure.service.HttpServiceClientProperties"
+    },
+    {
+      "type": "org.springframework.boot.http.client.autoconfigure.service.HttpServiceClientPropertiesAutoConfiguration",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "httpServiceClientProperties",
+          "parameterTypes": [
+            "org.springframework.core.env.Environment"
+          ]
+        }
+      ]
+    },
+    {
       "type": "org.springframework.boot.http.converter.autoconfigure.ClientHttpMessageConvertersCustomizer"
     },
     {
@@ -11932,6 +12092,127 @@
       ]
     },
     {
+      "type": "org.springframework.boot.restclient.RestClientCustomizer"
+    },
+    {
+      "type": "org.springframework.boot.restclient.RestTemplateBuilder"
+    },
+    {
+      "type": "org.springframework.boot.restclient.RestTemplateCustomizer"
+    },
+    {
+      "type": "org.springframework.boot.restclient.autoconfigure.AutoConfiguredRestClientSsl"
+    },
+    {
+      "type": "org.springframework.boot.restclient.autoconfigure.HttpMessageConvertersRestClientCustomizer"
+    },
+    {
+      "type": "org.springframework.boot.restclient.autoconfigure.NotReactiveWebApplicationCondition",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.springframework.boot.restclient.autoconfigure.RestClientAutoConfiguration",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "restClientBuilderConfigurer",
+          "parameterTypes": [
+            "org.springframework.core.io.ResourceLoader",
+            "org.springframework.beans.factory.ObjectProvider",
+            "org.springframework.beans.factory.ObjectProvider",
+            "org.springframework.beans.factory.ObjectProvider"
+          ]
+        },
+        {
+          "name": "restClientSsl",
+          "parameterTypes": [
+            "org.springframework.core.io.ResourceLoader",
+            "org.springframework.beans.factory.ObjectProvider",
+            "org.springframework.beans.factory.ObjectProvider",
+            "org.springframework.boot.ssl.SslBundles"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.springframework.boot.restclient.autoconfigure.RestClientAutoConfiguration$HttpMessageConvertersConfiguration",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "httpMessageConvertersRestClientCustomizer",
+          "parameterTypes": [
+            "org.springframework.beans.factory.ObjectProvider"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.springframework.boot.restclient.autoconfigure.RestClientBuilderConfigurer"
+    },
+    {
+      "type": "org.springframework.boot.restclient.autoconfigure.RestClientObservationAutoConfiguration",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "observationRestClientCustomizer",
+          "parameterTypes": [
+            "io.micrometer.observation.ObservationRegistry",
+            "org.springframework.beans.factory.ObjectProvider",
+            "org.springframework.boot.micrometer.observation.autoconfigure.ObservationProperties"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.springframework.boot.restclient.autoconfigure.RestClientSsl"
+    },
+    {
+      "type": "org.springframework.boot.restclient.autoconfigure.RestTemplateAutoConfiguration",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "org.springframework.boot.restclient.autoconfigure.RestTemplateObservationAutoConfiguration",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        },
+        {
+          "name": "observationRestTemplateCustomizer",
+          "parameterTypes": [
+            "io.micrometer.observation.ObservationRegistry",
+            "org.springframework.beans.factory.ObjectProvider",
+            "org.springframework.boot.micrometer.observation.autoconfigure.ObservationProperties"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "org.springframework.boot.restclient.observation.ObservationRestClientCustomizer"
+    },
+    {
+      "type": "org.springframework.boot.restclient.observation.ObservationRestTemplateCustomizer"
+    },
+    {
       "type": "org.springframework.boot.rsocket.server.RSocketServerCustomizer"
     },
     {
@@ -12892,10 +13173,6 @@
           "parameterTypes": []
         },
         {
-          "name": "localeResolver",
-          "parameterTypes": []
-        },
-        {
           "name": "mvcApiVersionStrategy",
           "parameterTypes": []
         },
@@ -13252,10 +13529,16 @@
       "type": "org.springframework.context.EnvironmentAware"
     },
     {
+      "type": "org.springframework.context.HierarchicalMessageSource"
+    },
+    {
       "type": "org.springframework.context.Lifecycle"
     },
     {
       "type": "org.springframework.context.LifecycleProcessor"
+    },
+    {
+      "type": "org.springframework.context.MessageSource"
     },
     {
       "type": "org.springframework.context.MessageSourceAware"
@@ -13396,13 +13679,25 @@
       "type": "org.springframework.context.event.SmartApplicationListener"
     },
     {
+      "type": "org.springframework.context.support.AbstractMessageSource"
+    },
+    {
+      "type": "org.springframework.context.support.AbstractResourceBasedMessageSource"
+    },
+    {
       "type": "org.springframework.context.support.ApplicationObjectSupport"
     },
     {
       "type": "org.springframework.context.support.DefaultLifecycleProcessor"
     },
     {
+      "type": "org.springframework.context.support.MessageSourceSupport"
+    },
+    {
       "type": "org.springframework.context.support.PropertySourcesPlaceholderConfigurer"
+    },
+    {
+      "type": "org.springframework.context.support.ResourceBundleMessageSource"
     },
     {
       "type": "org.springframework.context.weaving.LoadTimeWeaverAware"
@@ -14148,7 +14443,13 @@
       "type": "org.springframework.http.ReactiveHttpInputMessage"
     },
     {
+      "type": "org.springframework.http.client.ClientHttpRequestFactory"
+    },
+    {
       "type": "org.springframework.http.converter.HttpMessageConverter"
+    },
+    {
+      "type": "org.springframework.http.converter.HttpMessageConverters"
     },
     {
       "type": "org.springframework.http.converter.StringHttpMessageConverter"
@@ -15123,6 +15424,9 @@
       "type": "org.springframework.web.client.DefaultRestClientBuilder"
     },
     {
+      "type": "org.springframework.web.client.RestClient"
+    },
+    {
       "type": "org.springframework.web.client.RestClient$Builder"
     },
     {
@@ -15130,6 +15434,12 @@
     },
     {
       "type": "org.springframework.web.client.RestClientException"
+    },
+    {
+      "type": "org.springframework.web.client.RestTemplate"
+    },
+    {
+      "type": "org.springframework.web.client.support.RestClientAdapter"
     },
     {
       "type": "org.springframework.web.context.ConfigurableWebApplicationContext"
@@ -15232,6 +15542,9 @@
     },
     {
       "type": "org.springframework.web.reactive.function.client.WebClientException"
+    },
+    {
+      "type": "org.springframework.web.service.registry.HttpServiceProxyRegistry"
     },
     {
       "type": "org.springframework.web.servlet.DispatcherServlet"
@@ -16417,6 +16730,9 @@
       "glob": "ContributorValidationMessages_en.properties"
     },
     {
+      "glob": "ContributorValidationMessages_pt.properties"
+    },
+    {
       "glob": "META-INF/build-info.properties"
     },
     {
@@ -16681,6 +16997,9 @@
       "glob": "ValidationMessages_en.properties"
     },
     {
+      "glob": "ValidationMessages_pt.properties"
+    },
+    {
       "glob": "application-default.properties"
     },
     {
@@ -16876,6 +17195,12 @@
       "glob": "messages.properties"
     },
     {
+      "glob": "messages_en.properties"
+    },
+    {
+      "glob": "messages_pt.properties"
+    },
+    {
       "glob": "org/apache/catalina/authenticator/LocalStrings.properties"
     },
     {
@@ -17038,7 +17363,7 @@
       "glob": "org/hibernate/validator/ValidationMessages.properties"
     },
     {
-      "glob": "org/hibernate/validator/ValidationMessages_en.properties"
+      "glob": "org/hibernate/validator/ValidationMessages_pt.properties"
     },
     {
       "glob": "org/postgresql/driverconfig.properties"
@@ -17470,6 +17795,24 @@
       "glob": "org/springframework/boot/hibernate/autoconfigure/HibernateJpaConfiguration.class"
     },
     {
+      "glob": "org/springframework/boot/http/client/autoconfigure/HttpClientAutoConfiguration.class"
+    },
+    {
+      "glob": "org/springframework/boot/http/client/autoconfigure/imperative/ImperativeHttpClientAutoConfiguration.class"
+    },
+    {
+      "glob": "org/springframework/boot/http/client/autoconfigure/imperative/NotReactiveWebApplicationCondition$ReactiveWebApplication.class"
+    },
+    {
+      "glob": "org/springframework/boot/http/client/autoconfigure/imperative/NotReactiveWebApplicationCondition.class"
+    },
+    {
+      "glob": "org/springframework/boot/http/client/autoconfigure/metrics/HttpClientMetricsAutoConfiguration.class"
+    },
+    {
+      "glob": "org/springframework/boot/http/client/autoconfigure/service/HttpServiceClientPropertiesAutoConfiguration.class"
+    },
+    {
       "glob": "org/springframework/boot/http/converter/autoconfigure/GsonHttpMessageConvertersConfiguration.class"
     },
     {
@@ -17825,6 +18168,30 @@
     },
     {
       "glob": "org/springframework/boot/persistence/autoconfigure/PersistenceExceptionTranslationAutoConfiguration.class"
+    },
+    {
+      "glob": "org/springframework/boot/restclient/autoconfigure/NotReactiveWebApplicationCondition$ReactiveWebApplication.class"
+    },
+    {
+      "glob": "org/springframework/boot/restclient/autoconfigure/NotReactiveWebApplicationCondition.class"
+    },
+    {
+      "glob": "org/springframework/boot/restclient/autoconfigure/RestClientAutoConfiguration$HttpMessageConvertersConfiguration.class"
+    },
+    {
+      "glob": "org/springframework/boot/restclient/autoconfigure/RestClientAutoConfiguration.class"
+    },
+    {
+      "glob": "org/springframework/boot/restclient/autoconfigure/RestClientObservationAutoConfiguration.class"
+    },
+    {
+      "glob": "org/springframework/boot/restclient/autoconfigure/RestTemplateAutoConfiguration.class"
+    },
+    {
+      "glob": "org/springframework/boot/restclient/autoconfigure/RestTemplateObservationAutoConfiguration.class"
+    },
+    {
+      "glob": "org/springframework/boot/restclient/autoconfigure/service/HttpServiceClientAutoConfiguration.class"
     },
     {
       "glob": "org/springframework/boot/rsocket/autoconfigure$RSocketMessagingAutoConfiguration.class"
@@ -18402,6 +18769,9 @@
     },
     {
       "bundle": "liquibase/i18n/liquibase-core"
+    },
+    {
+      "bundle": "messages"
     },
     {
       "bundle": "org.apache.catalina.authenticator.LocalStrings"

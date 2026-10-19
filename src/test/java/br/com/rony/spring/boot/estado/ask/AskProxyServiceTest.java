@@ -21,6 +21,8 @@ import org.springframework.web.client.RestClient;
 
 import br.com.rony.spring.boot.estado.property.AskApiProperty;
 
+import java.util.Locale;
+
 class AskProxyServiceTest {
 
     private static final String BASE_URL = "http://ai-agent.internal";
@@ -50,13 +52,40 @@ class AskProxyServiceTest {
                 .andExpect(header("X-API-Key", "chave-de-teste"))
                 .andExpect(header("X-Forwarded-For", CLIENT_IP))
                 .andExpect(header("X-Request-Id", REQUEST_ID))
+                .andExpect(header("Accept-Language", "pt"))
                 .andExpect(jsonPath("$.question").value("Qual a capital do Parana?"))
                 .andRespond(withSuccess("{\"answer\":\"Curitiba\"}", MediaType.APPLICATION_JSON));
 
         AskProxyResponseDto response = service.ask(
-                new AskProxyRequestDto("Qual a capital do Parana?"), CLIENT_IP, REQUEST_ID);
+                new AskProxyRequestDto("Qual a capital do Parana?"), CLIENT_IP, REQUEST_ID, Locale.forLanguageTag("pt"));
 
         assertThat(response.answer()).isEqualTo("Curitiba");
+        assertThat(response.language()).isEqualTo(Lang.PT);
+    }
+
+    @Test
+    void deveUsarIdiomaDaRespostaDoModeloQuandoPresente() {
+        server.expect(requestTo(BASE_URL + "/ask"))
+                .andExpect(header("Accept-Language", "pt"))
+                .andRespond(withSuccess("{\"answer\":\"Hello\",\"language\":\"en-US\"}", MediaType.APPLICATION_JSON));
+
+        AskProxyResponseDto response = service.ask(
+                new AskProxyRequestDto("Pergunta"), CLIENT_IP, REQUEST_ID, Locale.forLanguageTag("pt"));
+
+        assertThat(response.answer()).isEqualTo("Hello");
+        assertThat(response.language()).isEqualTo(Lang.EN);
+    }
+
+    @Test
+    void deveSolicitarRespostaEmInglesQuandoAcceptLanguageForIngles() {
+        server.expect(requestTo(BASE_URL + "/ask"))
+                .andExpect(header("Accept-Language", "en"))
+                .andRespond(withSuccess("{\"answer\":\"Hello\"}", MediaType.APPLICATION_JSON));
+
+        AskProxyResponseDto response = service.ask(
+                new AskProxyRequestDto("Question"), CLIENT_IP, REQUEST_ID, Locale.ENGLISH);
+
+        assertThat(response.language()).isEqualTo(Lang.EN);
     }
 
     @Test
@@ -122,6 +151,6 @@ class AskProxyServiceTest {
     }
 
     private ThrowingCallable callAsk(AskProxyRequestDto request) {
-        return () -> service.ask(request, CLIENT_IP, REQUEST_ID);
+        return () -> service.ask(request, CLIENT_IP, REQUEST_ID, Locale.forLanguageTag("pt"));
     }
 }
