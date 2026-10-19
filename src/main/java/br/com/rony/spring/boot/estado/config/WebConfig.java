@@ -1,15 +1,22 @@
 package br.com.rony.spring.boot.estado.config;
 
+import java.util.List;
+import java.util.Locale;
+
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.MessageSource;
+import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.data.web.config.PageableHandlerMethodArgumentResolverCustomizer;
 import org.springframework.data.web.config.EnableSpringDataWebSupport.PageSerializationMode;
 import org.springframework.web.filter.UrlHandlerFilter;
+import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver;
 
 import br.com.rony.spring.boot.estado.property.ApiProperty;
 import br.com.rony.spring.boot.estado.property.PaginationProperty;
@@ -25,6 +32,7 @@ public class WebConfig implements WebMvcConfigurer {
     private static final String OPTIONS = "OPTIONS";
     private static final String CONTENT_TYPE = "Content-Type";
     private static final String ACCEPT = "Accept";
+    private static final String ACCEPT_LANGUAGE = "Accept-Language";
 
     private final ApiProperty apiProperty;
     private final PaginationProperty paginationProperty;
@@ -39,14 +47,14 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addMapping("/estado/**")
                 .allowedOrigins(apiProperty.getOriginPermitida().toArray(new String[0]))
                 .allowedMethods("GET", "POST", "PUT", "DELETE", OPTIONS)
-                .allowedHeaders("Authorization", CONTENT_TYPE, ACCEPT)
+                .allowedHeaders("Authorization", CONTENT_TYPE, ACCEPT, ACCEPT_LANGUAGE)
                 .allowCredentials(true)
                 .maxAge(3600);
 
         registry.addMapping("/auth/**")
                 .allowedOrigins(apiProperty.getOriginPermitida().toArray(new String[0]))
                 .allowedMethods("POST", OPTIONS)
-                .allowedHeaders("Authorization", CONTENT_TYPE, ACCEPT)
+                .allowedHeaders("Authorization", CONTENT_TYPE, ACCEPT, ACCEPT_LANGUAGE)
                 .allowCredentials(true)
                 .maxAge(3600);
 
@@ -58,8 +66,25 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addMapping("/ask")
                 .allowedOrigins(apiProperty.getOriginPermitida().toArray(new String[0]))
                 .allowedMethods("POST", OPTIONS)
-                .allowedHeaders(CONTENT_TYPE, ACCEPT)
+                .allowedHeaders(CONTENT_TYPE, ACCEPT, ACCEPT_LANGUAGE, "X-Client-IP", "X-Proxy-Secret", "lang")
                 .maxAge(3600);
+    }
+
+    @Bean
+    public LocaleResolver localeResolver() {
+        AcceptHeaderLocaleResolver resolver = new AcceptHeaderLocaleResolver();
+        resolver.setDefaultLocale(Locale.forLanguageTag("pt"));
+        resolver.setSupportedLocales(List.of(Locale.forLanguageTag("pt"), Locale.ENGLISH));
+        return resolver;
+    }
+
+    @Bean
+    public MessageSource messageSource() {
+        ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
+        messageSource.setBasename("messages");
+        messageSource.setDefaultEncoding("UTF-8");
+        messageSource.setFallbackToSystemLocale(false);
+        return messageSource;
     }
 
     // Bean declarado aqui (nao delegado so a spring.data.web.pageable.max-page-size

@@ -2,6 +2,7 @@ package br.com.rony.spring.boot.estado.ask;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.Locale;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import br.com.rony.spring.boot.estado.property.AskApiProperty;
+import lombok.extern.slf4j.Slf4j;
 
 // Repassa a pergunta ao estado-ai-agent server-to-server: a ASK_API_KEY vive
 // so aqui, nunca no Angular (ver ADR do BFF). Encaminha o IP real do cliente
@@ -23,6 +25,7 @@ import br.com.rony.spring.boot.estado.property.AskApiProperty;
 // tambem o X-Request-Id ja gerado por este backend (RequestIdFilter) para
 // que o mesmo id correlacione o log das duas pontas da mesma requisicao.
 @Service
+@Slf4j
 public class AskProxyService {
 
     private static final String REQUEST_ID_HEADER = "X-Request-Id";
@@ -52,16 +55,27 @@ public class AskProxyService {
         this.askApiProperty = askApiProperty;
     }
 
-    public AskProxyResponseDto ask(AskProxyRequestDto request, String clientIp, String requestId) {
+    public AskProxyResponseDto ask(AskProxyRequestDto request, String clientIp, String requestId, Locale requestLocale) {
+        Locale resolvedLocale = requestLocale != null ? requestLocale : Locale.forLanguageTag("pt");
         try {
-            return restClient.post()
+            AskProxyResponseDto response = restClient.post()
                     .uri("/ask")
                     .header("X-API-Key", askApiProperty.getApiKey())
                     .header("X-Forwarded-For", clientIp)
                     .header(REQUEST_ID_HEADER, requestId)
+                    .header("Accept-Language", resolvedLocale.toLanguageTag())
                     .body(request)
                     .retrieve()
                     .body(AskProxyResponseDto.class);
+            if (response == null) {
+                throw new AskUpstreamException(GENERIC_UPSTREAM_FAILURE_MESSAGE,
+                        new IllegalStateException("estado-ai-agent returned an empty response"));
+            }
+            Lang answerLanguage = response.language() != null
+                    ? response.language()
+                    : Lang.fromLocale(resolvedLocale);
+            log.info("Answered in {} for language {}", answerLanguage.tag(), resolvedLocale.toLanguageTag());
+            return new AskProxyResponseDto(response.answer(), answerLanguage);
         } catch (RestClientResponseException e) {
             throw translate(e);
         } catch (RestClientException e) {

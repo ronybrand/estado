@@ -1,5 +1,7 @@
 package br.com.rony.spring.boot.estado.error;
 
+import java.util.Locale;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -14,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.core.MethodParameter;
+import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpMethod;
@@ -38,7 +41,16 @@ import br.com.rony.spring.boot.estado.config.RequestIdFilter;
 
 public class CustomGlobalExceptionHandlerTest {
 
-    private final CustomGlobalExceptionHandler handler = new CustomGlobalExceptionHandler();
+    private static final Locale PT = Locale.forLanguageTag("pt");
+    private final CustomGlobalExceptionHandler handler = new CustomGlobalExceptionHandler(messageSource());
+
+    private static ResourceBundleMessageSource messageSource() {
+        ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
+        messageSource.setBasename("messages");
+        messageSource.setDefaultEncoding("UTF-8");
+        messageSource.setFallbackToSystemLocale(false);
+        return messageSource;
+    }
 
     private Logger logger;
     private ListAppender<ILoggingEvent> logs;
@@ -67,7 +79,7 @@ public class CustomGlobalExceptionHandlerTest {
     void constraintViolationRetorna400SemVazarMensagemESemLog() {
         ConstraintViolationException ex = new ConstraintViolationException("sigla invalida", null);
 
-        ResponseEntity<ErrorResponseDto> resposta = handler.requisicaoInvalida(ex);
+        ResponseEntity<ErrorResponseDto> resposta = handler.requisicaoInvalida(ex, PT);
 
         assertEquals(HttpStatus.BAD_REQUEST, resposta.getStatusCode());
         assertEquals("Parametro de requisicao invalido", resposta.getBody().message());
@@ -79,7 +91,7 @@ public class CustomGlobalExceptionHandlerTest {
         MethodArgumentTypeMismatchException ex = mock(MethodArgumentTypeMismatchException.class);
         when(ex.getMessage()).thenReturn("tipo invalido pro parametro id");
 
-        ResponseEntity<ErrorResponseDto> resposta = handler.requisicaoInvalida(ex);
+        ResponseEntity<ErrorResponseDto> resposta = handler.requisicaoInvalida(ex, PT);
 
         assertEquals(HttpStatus.BAD_REQUEST, resposta.getStatusCode());
         assertEquals("Parametro de requisicao invalido", resposta.getBody().message());
@@ -96,7 +108,7 @@ public class CustomGlobalExceptionHandlerTest {
         PropertyReferenceException ex = mock(PropertyReferenceException.class);
         when(ex.getMessage()).thenReturn("No property 'campoInexistente' found for type 'Estado'");
 
-        ResponseEntity<ErrorResponseDto> resposta = handler.sortInvalido(ex);
+        ResponseEntity<ErrorResponseDto> resposta = handler.sortInvalido(ex, PT);
 
         assertEquals(HttpStatus.BAD_REQUEST, resposta.getStatusCode());
         assertEquals("Parametro de ordenacao invalido", resposta.getBody().message());
@@ -116,7 +128,7 @@ public class CustomGlobalExceptionHandlerTest {
         DataIntegrityViolationException ex = new DataIntegrityViolationException(
                 "could not execute statement [ERROR: duplicate key value violates unique constraint \"uniquenomeconstraint\"]");
 
-        ResponseEntity<ErrorResponseDto> resposta = handler.integridadeDeDadosViolada(ex);
+        ResponseEntity<ErrorResponseDto> resposta = handler.integridadeDeDadosViolada(ex, PT);
 
         assertEquals(HttpStatus.CONFLICT, resposta.getStatusCode());
         assertFalse(resposta.getBody().message().contains("uniquenomeconstraint"));
@@ -129,7 +141,7 @@ public class CustomGlobalExceptionHandlerTest {
     void excecaoInesperadaRetorna500ComErroENaoVazaMensagemInterna() {
         RuntimeException ex = new RuntimeException("detalhe interno sensivel de implementacao");
 
-        ResponseEntity<ErrorResponseDto> resposta = handler.erroInesperado(ex);
+        ResponseEntity<ErrorResponseDto> resposta = handler.erroInesperado(ex, PT);
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, resposta.getStatusCode());
         assertEquals("Erro interno do servidor", resposta.getBody().message());
@@ -152,7 +164,7 @@ public class CustomGlobalExceptionHandlerTest {
         root.addAppender(rootLogs);
 
         try {
-            handler.erroInesperado(new RuntimeException("detalhe interno sensivel de implementacao"));
+            handler.erroInesperado(new RuntimeException("detalhe interno sensivel de implementacao"), PT);
 
             assertTrue(rootLogs.list.isEmpty());
         } finally {
@@ -165,7 +177,7 @@ public class CustomGlobalExceptionHandlerTest {
         MDC.put(RequestIdFilter.MDC_KEY, "abc-123");
         ConstraintViolationException ex = new ConstraintViolationException("invalido", null);
 
-        ResponseEntity<ErrorResponseDto> resposta = handler.requisicaoInvalida(ex);
+        ResponseEntity<ErrorResponseDto> resposta = handler.requisicaoInvalida(ex, PT);
 
         assertEquals("abc-123", resposta.getBody().requestId());
     }
@@ -174,7 +186,7 @@ public class CustomGlobalExceptionHandlerTest {
     void corpoDeErroTemRequestIdNuloQuandoMdcVazio() {
         ConstraintViolationException ex = new ConstraintViolationException("invalido", null);
 
-        ResponseEntity<ErrorResponseDto> resposta = handler.requisicaoInvalida(ex);
+        ResponseEntity<ErrorResponseDto> resposta = handler.requisicaoInvalida(ex, PT);
 
         assertNull(resposta.getBody().requestId());
     }
@@ -187,7 +199,7 @@ public class CustomGlobalExceptionHandlerTest {
                 CustomGlobalExceptionHandlerTest.class.getDeclaredMethod("metodoFalso", String.class), 0);
         MethodArgumentNotValidException ex = new MethodArgumentNotValidException(parametro, bindingResult);
 
-        ResponseEntity<ErrorResponseDto> resposta = handler.validacaoFalhou(ex);
+        ResponseEntity<ErrorResponseDto> resposta = handler.validacaoFalhou(ex, PT);
 
         assertEquals(HttpStatus.BAD_REQUEST, resposta.getStatusCode());
         assertTrue(resposta.getBody().message().contains("sigla"));
@@ -215,7 +227,7 @@ public class CustomGlobalExceptionHandlerTest {
         AskUpstreamException ex = new AskUpstreamException(
                 "Falha ao consultar o estado-ai-agent", new RuntimeException("connection refused"));
 
-        ResponseEntity<ErrorResponseDto> resposta = handler.askUpstreamFalhou(ex);
+        ResponseEntity<ErrorResponseDto> resposta = handler.askUpstreamFalhou(ex, PT);
 
         assertEquals(HttpStatus.BAD_GATEWAY, resposta.getStatusCode());
         assertEquals("Falha ao consultar o estado-ai-agent", resposta.getBody().message());
@@ -231,7 +243,7 @@ public class CustomGlobalExceptionHandlerTest {
         // rota correspondente - nao so Swagger, qualquer path/typo incorreto.
         NoResourceFoundException ex = new NoResourceFoundException(HttpMethod.GET, "swagger-ui.html", null);
 
-        ResponseEntity<ErrorResponseDto> resposta = handler.rotaNaoEncontrada(ex);
+        ResponseEntity<ErrorResponseDto> resposta = handler.rotaNaoEncontrada(ex, PT);
 
         assertEquals(HttpStatus.NOT_FOUND, resposta.getStatusCode());
         assertTrue(logs.list.isEmpty());

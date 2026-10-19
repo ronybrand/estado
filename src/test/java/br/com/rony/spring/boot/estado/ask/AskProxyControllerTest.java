@@ -4,10 +4,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +47,7 @@ class AskProxyControllerTest {
 
     @Test
     void deveRepassarPerguntaSemExigirAutenticacaoEDevolverResposta() throws Exception {
-        when(askProxyService.ask(any(), any(), any())).thenReturn(new AskProxyResponseDto("Curitiba"));
+        when(askProxyService.ask(any(), any(), any(), any())).thenReturn(new AskProxyResponseDto("Curitiba"));
 
         mockMvc.perform(post("/ask")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -58,7 +61,7 @@ class AskProxyControllerTest {
     // repassado ao service - e isso que este teste protege contra regressao.
     @Test
     void deveRepassarIpRemotoDoClienteParaOService() throws Exception {
-        when(askProxyService.ask(any(), any(), any())).thenReturn(new AskProxyResponseDto("Curitiba"));
+        when(askProxyService.ask(any(), any(), any(), any())).thenReturn(new AskProxyResponseDto("Curitiba"));
 
         mockMvc.perform(post("/ask")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -69,7 +72,8 @@ class AskProxyControllerTest {
                 }))
                 .andExpect(status().isOk());
 
-        verify(askProxyService).ask(eq(new AskProxyRequestDto("Qual a capital do Parana?")), eq("203.0.113.5"), any());
+        verify(askProxyService).ask(eq(new AskProxyRequestDto("Qual a capital do Parana?")),
+                eq("203.0.113.5"), any(), eq(Locale.forLanguageTag("pt")));
     }
 
     // Atras do CloudFront, getRemoteAddr() resolve pro IP de borda do CDN, nao
@@ -79,7 +83,7 @@ class AskProxyControllerTest {
     // RateLimitFilter ja usa pro rate limit deste proprio backend.
     @Test
     void deveRepassarIpDoHeaderXClientIpQuandoSegredoConfere() throws Exception {
-        when(askProxyService.ask(any(), any(), any())).thenReturn(new AskProxyResponseDto("Curitiba"));
+        when(askProxyService.ask(any(), any(), any(), any())).thenReturn(new AskProxyResponseDto("Curitiba"));
 
         mockMvc.perform(post("/ask")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -92,12 +96,13 @@ class AskProxyControllerTest {
                 }))
                 .andExpect(status().isOk());
 
-        verify(askProxyService).ask(eq(new AskProxyRequestDto("Qual a capital do Parana?")), eq("198.51.100.7"), any());
+        verify(askProxyService).ask(eq(new AskProxyRequestDto("Qual a capital do Parana?")),
+                eq("198.51.100.7"), any(), eq(Locale.forLanguageTag("pt")));
     }
 
     @Test
     void deveIgnorarHeaderXClientIpQuandoSegredoErrado() throws Exception {
-        when(askProxyService.ask(any(), any(), any())).thenReturn(new AskProxyResponseDto("Curitiba"));
+        when(askProxyService.ask(any(), any(), any(), any())).thenReturn(new AskProxyResponseDto("Curitiba"));
 
         mockMvc.perform(post("/ask")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -110,7 +115,8 @@ class AskProxyControllerTest {
                 }))
                 .andExpect(status().isOk());
 
-        verify(askProxyService).ask(eq(new AskProxyRequestDto("Qual a capital do Parana?")), eq("64.252.128.1"), any());
+        verify(askProxyService).ask(eq(new AskProxyRequestDto("Qual a capital do Parana?")),
+                eq("64.252.128.1"), any(), eq(Locale.forLanguageTag("pt")));
     }
 
     @Test
@@ -136,7 +142,7 @@ class AskProxyControllerTest {
     // rewrite same-origin) tinha /ask bloqueado mesmo com a origem na allowlist.
     @Test
     void perguntaComOrigemPermitidaEcoaOAccessControlAllowOrigin() throws Exception {
-        when(askProxyService.ask(any(), any(), any())).thenReturn(new AskProxyResponseDto("Curitiba"));
+        when(askProxyService.ask(any(), any(), any(), any())).thenReturn(new AskProxyResponseDto("Curitiba"));
 
         mockMvc.perform(post("/ask")
                 .header("Origin", "http://localhost:8000")
@@ -144,5 +150,38 @@ class AskProxyControllerTest {
                 .content("{\"question\":\"Qual a capital do Parana?\"}"))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:8000"));
+    }
+
+    @Test
+    void deveUsarAcceptLanguageNaRespostaERepassarLocaleAoService() throws Exception {
+        when(askProxyService.ask(any(), any(), any(), any()))
+                .thenReturn(new AskProxyResponseDto("Hello", Lang.EN));
+
+        mockMvc.perform(post("/ask")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Accept-Language", "en-US,en;q=0.9")
+                .content("{\"question\":\"What is the capital of Paraná?\"}"))
+                .andExpect(status().isOk());
+
+        verify(askProxyService).ask(any(), any(), any(), eq(Locale.forLanguageTag("en-US")));
+    }
+
+    @Test
+    void deveLocalizarValidacaoEPermitirAcceptLanguageNoPreflightCors() throws Exception {
+        mockMvc.perform(post("/ask")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Accept-Language", "en")
+                .content("{\"question\":\"\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("question: The question is required"));
+
+        mockMvc.perform(options("/ask")
+                .header("Origin", "http://localhost:8000")
+                .header("Access-Control-Request-Method", "POST")
+                .header("Access-Control-Request-Headers", "accept-language,content-type"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:8000"))
+                .andExpect(header().string("Access-Control-Allow-Headers",
+                        org.hamcrest.Matchers.containsString("accept-language")));
     }
 }

@@ -3,9 +3,13 @@ package br.com.rony.spring.boot.estado.ask;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
+import java.util.Locale;
+
 import org.slf4j.MDC;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.rony.spring.boot.estado.config.ClientIpResolver;
@@ -31,13 +35,20 @@ public class AskProxyController {
     @ApiResponse(responseCode = "400", description = "Pergunta ausente ou excede o tamanho maximo")
     @ApiResponse(responseCode = "502", description = "Falha ao consultar o estado-ai-agent")
     @PostMapping("/ask")
-    public AskProxyResponseDto ask(@Valid @RequestBody AskProxyRequestDto request, HttpServletRequest httpRequest) {
+    public AskProxyResponseDto ask(
+            @Valid @RequestBody AskProxyRequestDto request,
+            HttpServletRequest httpRequest,
+            @RequestHeader(value = "Accept-Language", defaultValue = "pt") Locale locale,
+            @RequestParam(value = "lang", required = false) String langOverride) {
         // Usa o mesmo ClientIpResolver do RateLimitFilter (X-Client-IP + segredo):
         // atras do CloudFront, getRemoteAddr() sozinho resolve pro IP de borda do
         // CDN, nao o visitante real (ver ADR 0013/0016) - sem isso, o rate limit
         // do estado-ai-agent agruparia todo mundo que passa pelo mesmo no de
         // borda no mesmo bucket.
         String clientIp = clientIpResolver.resolve(httpRequest);
-        return askProxyService.ask(request, clientIp, MDC.get(RequestIdFilter.MDC_KEY));
+        Locale resolvedLocale = langOverride != null && !langOverride.isBlank()
+                ? Locale.forLanguageTag(langOverride)
+                : locale;
+        return askProxyService.ask(request, clientIp, MDC.get(RequestIdFilter.MDC_KEY), resolvedLocale);
     }
 }
