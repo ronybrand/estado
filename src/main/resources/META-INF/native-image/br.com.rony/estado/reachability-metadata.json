@@ -18501,6 +18501,9 @@
     },
     {
       "bundle": "org.springframework.security.messages"
+    },
+    {
+      "bundle": "messages"
     }
   ]
 }
