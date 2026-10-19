@@ -43,30 +43,3 @@ resource "google_compute_firewall" "ssh_iap" {
   target_tags   = ["postgres"]
 }
 
-# O ingress interno do Cloud Run so aceita trafego que chega pelo caminho
-# privado do Google. Dentro da VPC, *.run.app tem que resolver pra
-# private.googleapis.com (199.36.153.8/30); sem isso o backend sai pela internet
-# publica e o agente o recusa. Unica peca desta stack fora do free tier
-# (~US$ 0,20/mes pela zona privada).
-resource "google_dns_managed_zone" "run_app" {
-  name        = "${var.name_prefix}-run-app"
-  dns_name    = "run.app."
-  description = "Resolve *.run.app pro caminho privado do Google (ingress interno)"
-  visibility  = "private"
-
-  private_visibility_config {
-    networks {
-      network_url = google_compute_network.main.id
-    }
-  }
-
-  depends_on = [google_project_service.apis]
-}
-
-resource "google_dns_record_set" "run_app" {
-  managed_zone = google_dns_managed_zone.run_app.name
-  name         = "*.run.app."
-  type         = "A"
-  ttl          = 300
-  rrdatas      = ["199.36.153.8", "199.36.153.9", "199.36.153.10", "199.36.153.11"]
-}
