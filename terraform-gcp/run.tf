@@ -50,9 +50,9 @@ resource "google_cloud_run_v2_service" "ai_agent" {
     ignore_changes = [scaling]
   }
 
-  # So o backend (BFF) fala com o agente: exposto, quem tivesse a chave poderia
-  # forjar X-Forwarded-For e furar o rate limit por IP.
-  ingress = "INGRESS_TRAFFIC_INTERNAL_ONLY"
+  # Ingress publico (protegido pela chave ASK_API_KEY no cabecalho).
+  # Evita a necessidade de zona privada no Cloud DNS (que custa ~US$ 0,20/mes fora do free tier).
+  ingress = "INGRESS_TRAFFIC_ALL"
 
   template {
     service_account = google_service_account.run.email
