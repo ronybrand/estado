@@ -13,7 +13,10 @@ permissions:
 
 jobs:
   plan:
-    runs-on: ubuntu-latest
+    # archive_file gera metadados ZIP dependentes do sistema operacional.
+    # O artefato da Lambda e aplicado a partir do ambiente Windows, portanto o
+    # check tambem usa Windows para que source_code_hash seja comparavel.
+    runs-on: windows-latest
     defaults:
       run:
         working-directory: terraform
