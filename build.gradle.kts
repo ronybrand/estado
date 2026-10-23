@@ -5,7 +5,7 @@ plugins {
     java
     id("org.springframework.boot") version "4.1.1"
     id("jacoco")
-    id("org.graalvm.buildtools.native") version "1.1.14"
+    id("org.graalvm.buildtools.native") version "1.1.16"
 }
 
 group = "br.com.rony.spring.boot"
@@ -66,17 +66,17 @@ dependencies {
         // nao migrou pro Jackson 3 nativo do Spring Boot 4 - ver comentario
         // em AskProxyService/RateLimitFilter sobre os dois ObjectMapper
         // coexistindo.
-        implementation("com.fasterxml.jackson.core:jackson-core:2.22.3") {
+        implementation("com.fasterxml.jackson.core:jackson-core:2.22.4") {
             because("ReDoS/DoS corrigidos em 2.22.3 (BOM resolve 2.22.1)")
         }
-        implementation("com.fasterxml.jackson.core:jackson-databind:2.22.3") {
+        implementation("com.fasterxml.jackson.core:jackson-databind:2.22.4") {
             because("Multiplos CVEs corrigidos em 2.22.2/2.22.3 (BOM resolve 2.22.1)")
         }
         // Jackson 3.x: o ObjectMapper nativo do Spring Boot 4 (tools.jackson.*).
-        implementation("tools.jackson.core:jackson-core:3.2.3") {
+        implementation("tools.jackson.core:jackson-core:3.2.4") {
             because("ReDoS/DoS corrigidos em 3.1.7 (BOM resolve 3.1.5)")
         }
-        implementation("tools.jackson.core:jackson-databind:3.2.3") {
+        implementation("tools.jackson.core:jackson-databind:3.2.4") {
             because("Multiplos CVEs corrigidos em 3.1.6/3.1.7 (BOM resolve 3.1.5)")
         }
         // Uncontrolled Recursion (StackOverflow) processando entrada longa -
