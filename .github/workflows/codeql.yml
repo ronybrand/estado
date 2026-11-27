@@ -19,12 +19,12 @@ jobs:
           distribution: temurin
           java-version: "25"
           cache: gradle
-      - uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+      - uses: github/codeql-action/init@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
         with:
           languages: java-kotlin
           build-mode: manual
       - run: ./gradlew --no-daemon compileJava
-      - uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+      - uses: github/codeql-action/analyze@915412ff23e8b7659517e607487dbeae018f2934 # v4.39.5
 
   check-cve-overrides:
     # So roda no cron semanal, nao em todo PR/push - o objetivo e detectar um
