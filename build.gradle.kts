@@ -3,7 +3,7 @@ import org.gradle.testing.jacoco.plugins.JacocoTaskExtension
 
 plugins {
     java
-    id("org.springframework.boot") version "4.1.2"
+    id("org.springframework.boot") version "4.2.0"
     id("jacoco")
     id("org.graalvm.buildtools.native") version "1.1.19"
 }
@@ -105,7 +105,7 @@ dependencies {
     // Swagger UI + OpenAPI - habilitado por padrao (dev-friendly), desligado
     // explicitamente em producao via env var no lib-swap.sh, mesmo padrao ja
     // usado pro CORS (API_ORIGIN_PERMITIDA) neste application.yml.
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.2.0")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.2.1")
     // Rate limiting em memoria por IP (ADR 0016) - biblioteca Java pura, sem
     // dependencia de Redis/store externo, adequada a uma unica instancia.
     implementation("com.bucket4j:bucket4j-core:8.10.1")
